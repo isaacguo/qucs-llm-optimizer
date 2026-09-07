@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-run_step.py — CLI driver for the butterfly-stub LLM-optimizer pipeline.
+run_step.py — CLI driver for the butterfly band-stop LLM-optimizer pipeline.
 
 Architecture (per design discussion): the strategy layer ("LLM", currently
 played by a human/cursor-agent, later swappable for a fine-tuned small
@@ -26,7 +26,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 
-from cost import evaluate
+from cost import TARGET_DEPTH_DB, TARGET_NOTCH_HZ, TARGET_S21_MAG, evaluate, s21_db
 from intent import BOUNDS, INITIAL_GUESS, VARIABLES, apply_intent
 from qucs_sim import simulate
 from state import RunState
@@ -37,15 +37,28 @@ TARGET_BAND_HZ = (4e9, 6e9)
 
 def _print_report(entry: dict) -> None:
     p, c = entry["params"], entry["cost"]
+    target_mag = c.get("target_s21_mag", c["total_cost"])
+    target_hz = c.get("target_freq_hz", TARGET_NOTCH_HZ)
     print(f"--- iteration {entry['iteration']} ---")
     print("params: " + ", ".join(f"{k}={p[k]:.3f}" for k in VARIABLES))
-    print(f"total_cost (max |Zin|/Z0 in band)  = {c['total_cost']:.4f}")
-    print(f"mean_cost                          = {c['mean_cost']:.4f}")
-    print(f"low_edge  ({TARGET_BAND_HZ[0]/1e9:.1f} GHz)  cost = {c['low_edge_cost']:.4f}")
-    print(f"center    ({(sum(TARGET_BAND_HZ)/2)/1e9:.1f} GHz)  cost = {c['center_cost']:.4f}")
-    print(f"high_edge ({TARGET_BAND_HZ[1]/1e9:.1f} GHz)  cost = {c['high_edge_cost']:.4f}")
-    print(f"worst freq in-band  = {c['worst_freq_hz']/1e9:.3f} GHz")
-    print(f"global best |Zin|   = {c['best_zin_mag']:.2f} Ohm @ {c['best_freq_hz']/1e9:.3f} GHz")
+    print(
+        f"total_cost |S21| @ {target_hz/1e9:.2f} GHz = {target_mag:.6f} "
+        f"({s21_db(target_mag):.2f} dB)  [goal {TARGET_DEPTH_DB:.0f} dB / {TARGET_S21_MAG:.3e}]"
+    )
+    print(f"deepest notch |S21|       = {c['best_s21_mag']:.6f} "
+          f"({s21_db(c['best_s21_mag']):.2f} dB) @ {c['best_freq_hz']/1e9:.3f} GHz")
+    if "stopband_max_s21" in c:
+        print(f"stopband max |S21| (aux)  = {c['stopband_max_s21']:.4f} "
+              f"@ {c['worst_freq_hz']/1e9:.3f} GHz")
+    print(f"mean |S21| in stopband             = {c['mean_cost']:.4f}")
+    print(f"low_edge  ({TARGET_BAND_HZ[0]/1e9:.1f} GHz)  |S21| = {c['low_edge_cost']:.4f}")
+    print(f"band mid  ({(sum(TARGET_BAND_HZ)/2)/1e9:.1f} GHz)  |S21| = {c['center_cost']:.4f}")
+    print(f"high_edge ({TARGET_BAND_HZ[1]/1e9:.1f} GHz)  |S21| = {c['high_edge_cost']:.4f}")
+    if "passband_low_mean" in c:
+        print(f"passband |S21| mean (<{TARGET_BAND_HZ[0]/1e9:.1f} GHz) = {c['passband_low_mean']:.4f}")
+        print(f"passband |S21| mean (>{TARGET_BAND_HZ[1]/1e9:.1f} GHz) = {c['passband_high_mean']:.4f}")
+    if "zin_norm_at_center" in c:
+        print(f"|Zin|/Z0 at stopband mid (aux) = {c['zin_norm_at_center']:.4f}")
     if entry.get("intent"):
         print(f"intent used: {entry['intent']}")
     if entry.get("note"):
@@ -61,7 +74,7 @@ def cmd_init(args):
         sys.exit(1)
     params = dict(INITIAL_GUESS)
     res = simulate(params, workdir=run_dir / "iter_000")
-    cost = asdict(evaluate(res, TARGET_BAND_HZ))
+    cost = asdict(evaluate(res, TARGET_BAND_HZ, target_hz=TARGET_NOTCH_HZ))
     it = state.record(params, cost, intent=None, note="baseline initial guess")
     _print_report(state.history[it])
 
@@ -80,7 +93,7 @@ def cmd_step(args):
     new_iteration = state.iteration + 1
     new_params = apply_intent(state.params, intent, iteration=new_iteration)
     res = simulate(new_params, workdir=run_dir / f"iter_{new_iteration:03d}")
-    cost = asdict(evaluate(res, TARGET_BAND_HZ))
+    cost = asdict(evaluate(res, TARGET_BAND_HZ, target_hz=TARGET_NOTCH_HZ))
     it = state.record(new_params, cost, intent=intent, note=args.note or "")
     _print_report(state.history[it])
 

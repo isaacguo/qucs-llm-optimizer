@@ -18,13 +18,14 @@ intent.py (deterministic)     -->  precise numeric delta
                                     - hard bound clamping
         |
         v
-qucs_sim.py                   -->  renders netlist, invokes qucsator_rf.exe
-                                    (Windows host, via WSL interop), parses
-                                    the resulting S-parameter dataset
+qucs_sim.py                   -->  render circuit.sch from .sch.tpl
+                                    qucs-s -n  -> circuit.net
+                                    qucsrflayout -> layout.svg
+                                    qucsator_rf -> circuit.dat (S-params)
         |
         v
-cost.py                       -->  scalar total_cost (minimax |Zin|/Z0 in
-                                    band) + low/center/high edge breakdown
+cost.py                       -->  scalar total_cost = |S21| at 5.5 GHz
+                                    (goal ≤ −70 dB); stopband edges aux only
         |
         v
 state.py                      -->  JSON history log, iteration cap (20)
@@ -41,37 +42,42 @@ cost breakdown as evidence.
 
 ## Circuit and target
 
-Two `MRSTUB` (microstrip radial stub) elements tied to the same node,
-fed by a short `MLIN` from the junction — a circuit-level model of a
-symmetric butterfly/bowtie fan used as a shunt bias-decoupling element.
-Substrate: Rogers RO4003C (er=3.38, h=0.508mm, t=0.035mm, tand=0.0027).
+**Band-stop / notch** fixture: two-port through path
+(`P1`–`MLin`–`MCROSS`–`MLout`–`P2`) with a shunt butterfly (two `MRSTUB`
+wings) on the cross. The `MCROSS` is required so [Qucs-RFlayout](https://github.com/thomaslepoix/Qucs-RFlayout)
+can export layout (wires may connect only two ports). Substrate: Rogers
+RO4003C (er=3.38, h=0.508mm, t=0.035mm, tand=0.0027).
 
-Goal: from the junction, the stub should look like a broadband RF
-**short** (`|Zin| -> 0`) across 4-6 GHz (40% fractional bandwidth), so
-RF energy is diverted away from a DC bias line. Cost metric is the
-worst-case (minimax) `|Zin|/Z0` anywhere in that band — a single bad
-point counts as a real design failure, not just the average.
+When the stub looks like an RF short in-band, `S21` notches — that is the
+band-stop mechanism. Optimizer cost is **|S21| at 5.5 GHz** (minimize), with
+success target **−70 dB** (`|S21| ≤ 3.16×10⁻⁴`). Passband / stopband-edge
+stats remain diagnostics.
 
 Free variables (5, chosen for room to demonstrate more complex
 optimization later): `ri` (feed-to-fan transition radius), `ro` (fan
 radius), `alpha` (sector angle), `Wf` (feed line width), `Lc` (length of
 the connecting line from the junction to the stub root).
 
-## Toolchain notes (verified empirically this session)
+## Toolchain notes
 
-- Qucs-S is installed at `C:\Program Files\Qucs-S`; `qucsator_rf.exe` and
-  `qucs-s.exe` run fine when invoked from WSL via the transparent
-  `/mnt/c/...` interop — no `wine` needed.
-- We author the qucsator **netlist** format directly (see
-  `templates/butterfly_stub.net.tpl`) instead of building a `.sch`
-  schematic. Positional property ordering in `.sch` files does not
-  reliably match the internal C++ struct declaration order for every
-  component (confirmed by probing `MRSTUB`: the correct authoring order
-  is `Subst, ri, ro, Wf, alpha, EffDimens, Model`, which required
-  empirical verification, not just reading the struct dump) — the raw
-  `Key="Value"` netlist form sidesteps that whole class of bug.
-- Simulation directives use a **leading dot** in the raw netlist
-  (`.SP:SP1 ...`), unlike component instances.
+- **Schematic is authoritative.** Each iteration writes `circuit.sch` from
+  `templates/butterfly_stub.sch.tpl`, then derives `circuit.net` with
+  `qucs-s -n` before calling `qucsator_rf`. Open `circuit.sch` in Qucs-S
+  (backend: **QucsatorRF**) to inspect the circuit; after Simulate, the
+  embedded charts show `|Zin|/Z0`, `S11`/`S21` (dB and phase), a Smith
+  chart of `S[1,1]`, and Polar charts of `S[1,1]` and `S[2,1]`.
+- **Layout is Qucs-RFlayout.** Each iteration also runs `qucsrflayout` and
+  writes `layout.svg` (official copper geometry, not a hand-drawn preview).
+  macOS has no upstream binary — build from source with
+  `-DQRFL_MINIMAL=ON` (this repo looks for
+  `../third_party/Qucs-RFlayout/build/qucsrflayout`). Override with
+  `QUCS_RFLAYOUT`. A local patch teaches the parser Qucs-S `MRSTUB`
+  property order (`ri,ro,Wf,alpha`).
+- Tool binaries are auto-detected (macOS app bundle or Windows/WSL paths).
+  Override with `QUCS_S` / `QUCSATOR_RF` / `QUCS_RFLAYOUT` if needed.
+- `MRSTUB` schematic property order must remain
+  `Subst, ri, ro, Wf, alpha, EffDimens, Model` (matches Qucs-S). Deriving
+  the netlist via `qucs-s -n` keeps that mapping correct.
 
 ## Usage
 
@@ -87,15 +93,18 @@ Max 20 iterations per run (enforced in `state.py`).
 
 ## Demo run (`runs/demo`)
 
-18 hand-driven iterations (human acting as the strategy layer) converged
-from an initial guess (`total_cost=1.54`) to `total_cost≈0.31`
-(iteration 14: `ri=0.51mm, ro=3.00mm(bound), alpha=99.1deg, Wf=0.60mm,
-Lc=2.78mm`), i.e. worst-case `|Zin|` in-band ≈ 15.3 Ω against a 50 Ω
-reference. The run plateaued around iteration 13-17, consistent with a
-single symmetric butterfly stub reaching its practical bandwidth limit
-for a 40%-fractional-bandwidth target — extending further (asymmetric
-wings, multi-stage stubs) is a natural next step for demonstrating a
-more capable optimizer.
+The checked-in `runs/demo/state.json` history was collected under older
+cost definitions (1-port `|Zin|`, then briefly 2-port `|Zin|`). After the
+band-stop retarget, start a fresh run:
+
+```bash
+python3 run_step.py init --run bandstop1
+python3 run_step.py step --run bandstop1 --intent '{"ro":"decrease_strong"}'
+python3 run_step.py best --run bandstop1
+```
+
+Lower `total_cost` means a deeper worst-case stopband notch (smaller max `|S21|`
+in 4–6 GHz).
 
 ## Next steps (not yet implemented)
 
@@ -104,5 +113,7 @@ more capable optimizer.
   `run_step.py`'s `cmd_step`), then later a fine-tuned small model.
 - Relax the wing symmetry constraint (independent `ro`/`alpha` per wing)
   for a harder, higher-dimensional optimization problem.
-- Add a proper `MTEE` junction discontinuity model and a through-path
-  to a second port if two-port (insertion-loss) behavior matters.
+- Multi-stage / asymmetric stubs to widen the 4–6 GHz stopband rejection.
+- Explicit passband constraint in `total_cost` (keep out-of-band `|S21|`
+  high while deepening the notch).
+- Optionally also export `.kicad_pcb` via `qucsrflayout -f .kicad_pcb`.

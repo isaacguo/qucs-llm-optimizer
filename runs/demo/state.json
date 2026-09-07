@@ -1,11 +1,11 @@
 {
   "iteration": 17,
   "params": {
-    "ri": 0.5267,
-    "ro": 3.0,
-    "alpha": 99.137,
-    "Wf": 0.6288,
-    "Lc": 2.7844
+    "ri": 0.2591,
+    "ro": 5.2431,
+    "alpha": 98.1661,
+    "Wf": 0.5276,
+    "Lc": 3.5445
   },
   "history": [
     {
@@ -18,14 +18,20 @@
         "Lc": 3.0
       },
       "cost": {
-        "total_cost": 1.5405357551114418,
-        "mean_cost": 1.111137161786987,
-        "low_edge_cost": 0.7459817672162053,
-        "center_cost": 1.0942309870182798,
-        "high_edge_cost": 1.5405357551114418,
+        "total_cost": 0.2772451568044335,
+        "target_freq_hz": 5500000000.0,
+        "target_s21_mag": 0.2772451568044335,
+        "mean_cost": 0.22908058537106712,
+        "low_edge_cost": 0.12132798343904724,
+        "center_cost": 0.2355622923717826,
+        "high_edge_cost": 0.31237894088468166,
+        "stopband_max_s21": 0.31237894088468166,
         "worst_freq_hz": 6000000000.0,
-        "best_freq_hz": 1700000000.0,
-        "best_zin_mag": 0.293439425671304,
+        "best_freq_hz": 3300000000.0,
+        "best_s21_mag": 0.0030671496090854808,
+        "passband_low_mean": 0.2733213535807957,
+        "passband_high_mean": 0.42596219466976254,
+        "zin_norm_at_center": 1.07059301988763,
         "band_hz": [
           4000000000.0,
           6000000000.0
@@ -44,14 +50,20 @@
         "Lc": 3.0
       },
       "cost": {
-        "total_cost": 1.2586303025944168,
-        "mean_cost": 0.8882349750480154,
-        "low_edge_cost": 0.5539350896555835,
-        "center_cost": 0.8786485995295351,
-        "high_edge_cost": 1.2586303025944168,
+        "total_cost": 0.09749848189323654,
+        "target_freq_hz": 5500000000.0,
+        "target_s21_mag": 0.09749848189323654,
+        "mean_cost": 0.07865106076447796,
+        "low_edge_cost": 0.1473922246492611,
+        "center_cost": 0.03254549909027612,
+        "high_edge_cost": 0.15023785127657732,
+        "stopband_max_s21": 0.15023785127657732,
         "worst_freq_hz": 6000000000.0,
-        "best_freq_hz": 2300000000.0,
-        "best_zin_mag": 0.4428838720198134,
+        "best_freq_hz": 4800000000.0,
+        "best_s21_mag": 0.0024003620406796876,
+        "passband_low_mean": 0.5585842468882966,
+        "passband_high_mean": 0.2841456218495266,
+        "zin_norm_at_center": 0.8709342663346742,
         "band_hz": [
           4000000000.0,
           6000000000.0
@@ -60,54 +72,32 @@
       "intent": {
         "ro": "decrease_strong"
       },
-      "note": "resonance at 1.7GHz is far below 4-6GHz band; shrink ro to push resonance up"
+      "note": "notch 3.30G << 5.5; shrink ro strong"
     },
     {
       "iteration": 2,
       "params": {
         "ri": 0.3,
-        "ro": 4.0512,
+        "ro": 5.0026,
         "alpha": 90.0,
         "Wf": 0.6,
         "Lc": 3.0
       },
       "cost": {
-        "total_cost": 0.8159253865253895,
-        "mean_cost": 0.48818335010159547,
-        "low_edge_cost": 0.16568599099701214,
-        "center_cost": 0.4867129849054168,
-        "high_edge_cost": 0.8159253865253895,
-        "worst_freq_hz": 6000000000.0,
-        "best_freq_hz": 3500000000.0,
-        "best_zin_mag": 0.312450602555163,
-        "band_hz": [
-          4000000000.0,
-          6000000000.0
-        ]
-      },
-      "intent": {
-        "ro": "decrease_strong"
-      },
-      "note": "resonance moved 1.7->2.3GHz, still far below target; continue shrinking ro"
-    },
-    {
-      "iteration": 3,
-      "params": {
-        "ri": 0.3,
-        "ro": 3.1664,
-        "alpha": 90.0,
-        "Wf": 0.6,
-        "Lc": 3.0
-      },
-      "cost": {
-        "total_cost": 0.45656520169250764,
-        "mean_cost": 0.19602491781896894,
-        "low_edge_cost": 0.1964317919006655,
-        "center_cost": 0.14208040260913005,
-        "high_edge_cost": 0.45656520169250764,
-        "worst_freq_hz": 6000000000.0,
-        "best_freq_hz": 4550000000.0,
-        "best_zin_mag": 0.24812342929882003,
+        "total_cost": 0.07366697827604049,
+        "target_freq_hz": 5500000000.0,
+        "target_s21_mag": 0.07366697827604049,
+        "mean_cost": 0.1738387373310403,
+        "low_edge_cost": 0.3888464197005557,
+        "center_cost": 0.16226237810742777,
+        "high_edge_cost": 0.0005068905512945291,
+        "stopband_max_s21": 0.3888464197005557,
+        "worst_freq_hz": 4000000000.0,
+        "best_freq_hz": 6000000000.0,
+        "best_s21_mag": 0.0005068905512945291,
+        "passband_low_mean": 0.7394785646246863,
+        "passband_high_mean": 0.1764573621208077,
+        "zin_norm_at_center": 0.7115730767905514,
         "band_hz": [
           4000000000.0,
           6000000000.0
@@ -116,402 +106,522 @@
       "intent": {
         "ro": "decrease"
       },
-      "note": "resonance at 3.5GHz still below 5GHz center; low_edge already very good so ease off to normal step to avoid overshoot"
+      "note": "notch 4.80G < 5.5; shrink ro"
     },
     {
-      "iteration": 4,
+      "iteration": 3,
       "params": {
         "ri": 0.3,
-        "ro": 3.0,
+        "ro": 5.8874,
         "alpha": 90.0,
         "Wf": 0.6,
         "Lc": 3.0
       },
       "cost": {
-        "total_cost": 0.3694799997260131,
-        "mean_cost": 0.17161017072915596,
-        "low_edge_cost": 0.28876228522018377,
-        "center_cost": 0.056110285104621765,
-        "high_edge_cost": 0.3694799997260131,
-        "worst_freq_hz": 6000000000.0,
+        "total_cost": 0.08832667377060477,
+        "target_freq_hz": 5500000000.0,
+        "target_s21_mag": 0.08832667377060477,
+        "mean_cost": 0.07819884434408553,
+        "low_edge_cost": 0.16110634767751,
+        "center_cost": 0.022047067186854983,
+        "high_edge_cost": 0.14213974690131645,
+        "stopband_max_s21": 0.16110634767751,
+        "worst_freq_hz": 4000000000.0,
         "best_freq_hz": 4850000000.0,
-        "best_zin_mag": 0.38714670672716456,
+        "best_s21_mag": 0.0007620579467364895,
+        "passband_low_mean": 0.570903262220152,
+        "passband_high_mean": 0.27805609934867015,
+        "zin_norm_at_center": 0.8617112135460586,
         "band_hz": [
           4000000000.0,
           6000000000.0
         ]
       },
       "intent": {
-        "ro": "decrease_slight"
+        "ro": "increase"
       },
-      "note": "resonance 4.55GHz close to band center 5GHz; high_edge still worst so nudge ro down slightly more"
+      "note": "notch 6.00G > 5.5; grow ro"
+    },
+    {
+      "iteration": 4,
+      "params": {
+        "ri": 0.3,
+        "ro": 5.0645,
+        "alpha": 90.0,
+        "Wf": 0.6,
+        "Lc": 3.0
+      },
+      "cost": {
+        "total_cost": 0.05928979586933221,
+        "target_freq_hz": 5500000000.0,
+        "target_s21_mag": 0.05928979586933221,
+        "mean_cost": 0.15865862752699714,
+        "low_edge_cost": 0.37005113986683963,
+        "center_cost": 0.14607640770392957,
+        "high_edge_cost": 0.012181158736958296,
+        "stopband_max_s21": 0.37005113986683963,
+        "worst_freq_hz": 4000000000.0,
+        "best_freq_hz": 5900000000.0,
+        "best_s21_mag": 0.0010086770259206794,
+        "passband_low_mean": 0.7277264761443647,
+        "passband_high_mean": 0.18520421671792203,
+        "zin_norm_at_center": 0.7240146711259523,
+        "band_hz": [
+          4000000000.0,
+          6000000000.0
+        ]
+      },
+      "intent": {
+        "ro": "decrease"
+      },
+      "note": "notch 4.85G < 5.5; shrink ro"
     },
     {
       "iteration": 5,
       "params": {
         "ri": 0.3,
-        "ro": 3.0,
-        "alpha": 106.6965,
+        "ro": 5.8298,
+        "alpha": 90.0,
         "Wf": 0.6,
         "Lc": 3.0
       },
       "cost": {
-        "total_cost": 0.4556038417455403,
-        "mean_cost": 0.1964276068797034,
-        "low_edge_cost": 0.16747831175833194,
-        "center_cost": 0.15616697294718618,
-        "high_edge_cost": 0.4556038417455403,
-        "worst_freq_hz": 6000000000.0,
-        "best_freq_hz": 4500000000.0,
-        "best_zin_mag": 0.09785876290025666,
+        "total_cost": 0.08012281192958977,
+        "target_freq_hz": 5500000000.0,
+        "target_s21_mag": 0.08012281192958977,
+        "mean_cost": 0.07846473896337972,
+        "low_edge_cost": 0.17332385816728627,
+        "center_cost": 0.01265608296705753,
+        "high_edge_cost": 0.13490241343204945,
+        "stopband_max_s21": 0.17332385816728627,
+        "worst_freq_hz": 4000000000.0,
+        "best_freq_hz": 4900000000.0,
+        "best_s21_mag": 0.0026490327988300732,
+        "passband_low_mean": 0.5816343257506803,
+        "passband_high_mean": 0.2726551707875624,
+        "zin_norm_at_center": 0.853533629375602,
         "band_hz": [
           4000000000.0,
           6000000000.0
         ]
       },
       "intent": {
-        "alpha": "increase_strong"
+        "ro": "increase"
       },
-      "note": "ro hit lower bound (3mm); center excellent but both edges still weak -> widen sector angle alpha for broader bandwidth instead of further ro reduction"
+      "note": "notch 5.90G > 5.5; grow ro"
     },
     {
       "iteration": 6,
       "params": {
         "ri": 0.3,
-        "ro": 3.0,
-        "alpha": 91.1687,
+        "ro": 5.1181,
+        "alpha": 90.0,
         "Wf": 0.6,
         "Lc": 3.0
       },
       "cost": {
-        "total_cost": 0.37638050660003247,
-        "mean_cost": 0.17233060591129287,
-        "low_edge_cost": 0.279099045136198,
-        "center_cost": 0.06409777021612185,
-        "high_edge_cost": 0.37638050660003247,
-        "worst_freq_hz": 6000000000.0,
-        "best_freq_hz": 4800000000.0,
-        "best_zin_mag": 0.1073435568715799,
+        "total_cost": 0.04728437278217585,
+        "target_freq_hz": 5500000000.0,
+        "target_s21_mag": 0.04728437278217585,
+        "mean_cost": 0.14686703321184089,
+        "low_edge_cost": 0.35411452318773123,
+        "center_cost": 0.13252477200973756,
+        "high_edge_cost": 0.022765142847467543,
+        "stopband_max_s21": 0.35411452318773123,
+        "worst_freq_hz": 4000000000.0,
+        "best_freq_hz": 5850000000.0,
+        "best_s21_mag": 0.0031893032745294193,
+        "passband_low_mean": 0.7175010414412364,
+        "passband_high_mean": 0.1925291369045813,
+        "zin_norm_at_center": 0.7345245943514717,
         "band_hz": [
           4000000000.0,
           6000000000.0
         ]
       },
       "intent": {
-        "alpha": "decrease_strong"
+        "ro": "decrease"
       },
-      "note": "increasing alpha made things worse (shifted resonance down, similar effect to larger ro); ro is at its bound so try decreasing alpha instead to push resonance back up"
+      "note": "notch 4.90G < 5.5; shrink ro"
     },
     {
       "iteration": 7,
       "params": {
         "ri": 0.3,
-        "ro": 3.0,
-        "alpha": 91.1687,
+        "ro": 5.78,
+        "alpha": 90.0,
         "Wf": 0.6,
-        "Lc": 1.8207
+        "Lc": 3.0
       },
       "cost": {
-        "total_cost": 0.5190456770680681,
-        "mean_cost": 0.2279608888176538,
-        "low_edge_cost": 0.5190456770680681,
-        "center_cost": 0.2153339062574014,
-        "high_edge_cost": 0.03439169904766947,
+        "total_cost": 0.07281760456279426,
+        "target_freq_hz": 5500000000.0,
+        "target_s21_mag": 0.07281760456279426,
+        "mean_cost": 0.07916392095767039,
+        "low_edge_cost": 0.18415999948581455,
+        "center_cost": 0.004294270687897084,
+        "high_edge_cost": 0.12846213760600225,
+        "stopband_max_s21": 0.18415999948581455,
         "worst_freq_hz": 4000000000.0,
-        "best_freq_hz": 5850000000.0,
-        "best_zin_mag": 0.08772672005889443,
+        "best_freq_hz": 4950000000.0,
+        "best_s21_mag": 0.0033922127564739923,
+        "passband_low_mean": 0.5909654802906357,
+        "passband_high_mean": 0.2678798581106111,
+        "zin_norm_at_center": 0.8463082792059446,
         "band_hz": [
           4000000000.0,
           6000000000.0
         ]
       },
       "intent": {
-        "Lc": "decrease_strong"
+        "ro": "increase"
       },
-      "note": "ro and alpha are near their useful limits at this point; try shortening the connecting line Lc to shift the electrical reference plane and see if it pushes the short-circuit locus higher in frequency"
+      "note": "notch 5.85G > 5.5; grow ro"
     },
     {
       "iteration": 8,
       "params": {
         "ri": 0.3,
-        "ro": 3.0,
-        "alpha": 91.1687,
+        "ro": 5.1645,
+        "alpha": 90.0,
         "Wf": 0.6,
-        "Lc": 2.3691
+        "Lc": 3.0
       },
       "cost": {
-        "total_cost": 0.40482836965113506,
-        "mean_cost": 0.16305768457609948,
-        "low_edge_cost": 0.40482836965113506,
-        "center_cost": 0.08467076030937172,
-        "high_edge_cost": 0.19060484208530032,
+        "total_cost": 0.03721152087586893,
+        "target_freq_hz": 5500000000.0,
+        "target_s21_mag": 0.03721152087586893,
+        "mean_cost": 0.13756939411523275,
+        "low_edge_cost": 0.3405777256163591,
+        "center_cost": 0.1211312413595078,
+        "high_edge_cost": 0.03163888840993547,
+        "stopband_max_s21": 0.3405777256163591,
         "worst_freq_hz": 4000000000.0,
-        "best_freq_hz": 5300000000.0,
-        "best_zin_mag": 0.09691715655176762,
+        "best_freq_hz": 5750000000.0,
+        "best_s21_mag": 0.0010710218639273985,
+        "passband_low_mean": 0.7086204889008523,
+        "passband_high_mean": 0.19869278465400483,
+        "zin_norm_at_center": 0.7434293793058384,
         "band_hz": [
           4000000000.0,
           6000000000.0
         ]
       },
       "intent": {
-        "Lc": "increase"
+        "ro": "decrease"
       },
-      "note": "Lc is a strong, effective lever (confirmed); previous step overshot resonance to 5.85GHz (past band), now low_edge is the worst point -> back off with a normal increase to re-center near 5GHz"
+      "note": "notch 4.95G < 5.5; shrink ro"
     },
     {
       "iteration": 9,
       "params": {
         "ri": 0.3,
-        "ro": 3.0,
-        "alpha": 91.1687,
+        "ro": 5.3935,
+        "alpha": 90.0,
         "Wf": 0.6,
-        "Lc": 2.5731
+        "Lc": 3.0
       },
       "cost": {
-        "total_cost": 0.3636061277735452,
-        "mean_cost": 0.15765637497739257,
-        "low_edge_cost": 0.3636061277735452,
-        "center_cost": 0.03656595408343541,
-        "high_edge_cost": 0.24969852569498227,
+        "total_cost": 0.008492300528578524,
+        "target_freq_hz": 5500000000.0,
+        "target_s21_mag": 0.008492300528578524,
+        "mean_cost": 0.1032070658156925,
+        "low_edge_cost": 0.2773700188307224,
+        "center_cost": 0.06920700059435478,
+        "high_edge_cost": 0.07185423594771967,
+        "stopband_max_s21": 0.2773700188307224,
         "worst_freq_hz": 4000000000.0,
-        "best_freq_hz": 5100000000.0,
-        "best_zin_mag": 0.3490738468702325,
+        "best_freq_hz": 5450000000.0,
+        "best_s21_mag": 0.001416962617558135,
+        "passband_low_mean": 0.6646094890799314,
+        "passband_high_mean": 0.226936187019376,
+        "zin_norm_at_center": 0.7848703440792932,
         "band_hz": [
           4000000000.0,
           6000000000.0
         ]
       },
       "intent": {
-        "Lc": "increase_slight"
+        "ro": "increase_slight"
       },
-      "note": "resonance 5.3GHz, low_edge still worst; nudge Lc up slightly more to shift resonance down toward band center"
+      "note": "notch 5.75G slightly high; slight ro up"
     },
     {
       "iteration": 10,
       "params": {
         "ri": 0.3,
-        "ro": 3.0,
-        "alpha": 96.9765,
+        "ro": 5.3935,
+        "alpha": 90.0,
         "Wf": 0.6,
-        "Lc": 2.7628
+        "Lc": 3.1897
       },
       "cost": {
-        "total_cost": 0.33683758507812994,
-        "mean_cost": 0.15968509860191285,
-        "low_edge_cost": 0.2800290477623843,
-        "center_cost": 0.04542418232856364,
-        "high_edge_cost": 0.33683758507812994,
-        "worst_freq_hz": 6000000000.0,
-        "best_freq_hz": 4850000000.0,
-        "best_zin_mag": 0.09577504941982187,
+        "total_cost": 0.008283716259878325,
+        "target_freq_hz": 5500000000.0,
+        "target_s21_mag": 0.008283716259878325,
+        "mean_cost": 0.10131347357457822,
+        "low_edge_cost": 0.27359841455326084,
+        "center_cost": 0.06769433102469068,
+        "high_edge_cost": 0.06996385646479736,
+        "stopband_max_s21": 0.27359841455326084,
+        "worst_freq_hz": 4000000000.0,
+        "best_freq_hz": 5450000000.0,
+        "best_s21_mag": 0.0013824803796293804,
+        "passband_low_mean": 0.6639305317214901,
+        "passband_high_mean": 0.22185196265565477,
+        "zin_norm_at_center": 0.8442559202537349,
         "band_hz": [
           4000000000.0,
           6000000000.0
         ]
       },
       "intent": {
-        "alpha": "increase",
         "Lc": "increase_slight"
       },
-      "note": "center is excellent but response looks too peaky/narrowband for a 40% fractional bandwidth target; widen alpha for broader bandwidth while nudging Lc to compensate the expected downward resonance shift"
+      "note": "|S21|@5.5=-41.4dB notch@5.450G; slight Lc up"
     },
     {
       "iteration": 11,
       "params": {
         "ri": 0.3,
-        "ro": 3.0,
-        "alpha": 99.137,
-        "Wf": 0.6,
-        "Lc": 2.9392
+        "ro": 5.3935,
+        "alpha": 90.0,
+        "Wf": 0.5586,
+        "Lc": 3.1897
       },
       "cost": {
-        "total_cost": 0.40107382639715533,
-        "mean_cost": 0.17565093428093886,
-        "low_edge_cost": 0.229941496986499,
-        "center_cost": 0.09997247445396835,
-        "high_edge_cost": 0.40107382639715533,
-        "worst_freq_hz": 6000000000.0,
-        "best_freq_hz": 4700000000.0,
-        "best_zin_mag": 0.31424110843207553,
+        "total_cost": 0.005980160608931481,
+        "target_freq_hz": 5500000000.0,
+        "target_s21_mag": 0.005980160608931481,
+        "mean_cost": 0.10001261798075044,
+        "low_edge_cost": 0.2717105015156248,
+        "center_cost": 0.06792270912660334,
+        "high_edge_cost": 0.06537559697545231,
+        "stopband_max_s21": 0.2717105015156248,
+        "worst_freq_hz": 4000000000.0,
+        "best_freq_hz": 5450000000.0,
+        "best_s21_mag": 0.0006998927298863008,
+        "passband_low_mean": 0.6655594314846192,
+        "passband_high_mean": 0.20882137826415542,
+        "zin_norm_at_center": 0.8660590287450609,
         "band_hz": [
           4000000000.0,
           6000000000.0
         ]
       },
       "intent": {
-        "alpha": "increase_slight",
-        "Lc": "increase_slight"
+        "Wf": "decrease_slight"
       },
-      "note": "improving trend continues (0.3368 new best); keep widening alpha gently while compensating Lc"
+      "note": "|S21|@5.5=-41.6dB notch@5.450G; slight Wf down"
     },
     {
       "iteration": 12,
       "params": {
-        "ri": 0.3,
-        "ro": 3.0,
-        "alpha": 99.137,
-        "Wf": 0.6,
-        "Lc": 2.7751
+        "ri": 0.2766,
+        "ro": 5.3935,
+        "alpha": 90.0,
+        "Wf": 0.5586,
+        "Lc": 3.1897
       },
       "cost": {
-        "total_cost": 0.3513949665539819,
-        "mean_cost": 0.16149064087184323,
-        "low_edge_cost": 0.2617621169853797,
-        "center_cost": 0.061210511960242575,
-        "high_edge_cost": 0.3513949665539819,
-        "worst_freq_hz": 6000000000.0,
-        "best_freq_hz": 4800000000.0,
-        "best_zin_mag": 0.09836969970934331,
+        "total_cost": 0.022008314974844033,
+        "target_freq_hz": 5500000000.0,
+        "target_s21_mag": 0.022008314974844033,
+        "mean_cost": 0.09409606303667462,
+        "low_edge_cost": 0.25738364648996875,
+        "center_cost": 0.05188863620368214,
+        "high_edge_cost": 0.0811537634851564,
+        "stopband_max_s21": 0.25738364648996875,
+        "worst_freq_hz": 4000000000.0,
+        "best_freq_hz": 5350000000.0,
+        "best_s21_mag": 0.0015553657258211106,
+        "passband_low_mean": 0.6595445814738958,
+        "passband_high_mean": 0.22336653855220612,
+        "zin_norm_at_center": 0.8802633166279741,
         "band_hz": [
           4000000000.0,
           6000000000.0
         ]
       },
       "intent": {
-        "Lc": "decrease_slight"
+        "ri": "decrease_slight"
       },
-      "note": "overshot at iter11 (0.4011, worse); back off Lc slightly toward the iter10 sweet spot (0.3368) while keeping alpha fixed"
+      "note": "|S21|@5.5=-44.5dB notch@5.450G; slight ri down"
     },
     {
       "iteration": 13,
       "params": {
-        "ri": 0.409,
-        "ro": 3.0,
-        "alpha": 99.137,
-        "Wf": 0.6,
-        "Lc": 2.7751
+        "ri": 0.2766,
+        "ro": 5.2222,
+        "alpha": 94.6715,
+        "Wf": 0.5586,
+        "Lc": 3.1897
       },
       "cost": {
-        "total_cost": 0.30944093317376903,
-        "mean_cost": 0.15246690785288897,
-        "low_edge_cost": 0.2862588723338903,
-        "center_cost": 0.029500886810301493,
-        "high_edge_cost": 0.30944093317376903,
-        "worst_freq_hz": 6000000000.0,
-        "best_freq_hz": 4900000000.0,
-        "best_zin_mag": 0.09629962222786832,
+        "total_cost": 0.012293615718880014,
+        "target_freq_hz": 5500000000.0,
+        "target_s21_mag": 0.012293615718880014,
+        "mean_cost": 0.10990675464128939,
+        "low_edge_cost": 0.2905716481606026,
+        "center_cost": 0.08677267716295922,
+        "high_edge_cost": 0.04771753821535941,
+        "stopband_max_s21": 0.2905716481606026,
+        "worst_freq_hz": 4000000000.0,
+        "best_freq_hz": 5600000000.0,
+        "best_s21_mag": 0.0007600700311727549,
+        "passband_low_mean": 0.6760278887635951,
+        "passband_high_mean": 0.19209367439463798,
+        "zin_norm_at_center": 0.8495924622059181,
         "band_hz": [
           4000000000.0,
           6000000000.0
         ]
       },
       "intent": {
-        "ri": "increase_strong"
+        "ro": "decrease_slight",
+        "alpha": "increase"
       },
-      "note": "ri untouched so far (still initial 0.3mm); try widening the feed-to-fan transition radius to see if it broadens/flattens the matching bandwidth"
+      "note": "|S21|@5.5=-33.1dB notch@5.350G; fine ro down; widen alpha"
     },
     {
       "iteration": 14,
       "params": {
-        "ri": 0.5104,
-        "ro": 3.0,
-        "alpha": 99.137,
-        "Wf": 0.6,
-        "Lc": 2.7751
+        "ri": 0.2766,
+        "ro": 5.3815,
+        "alpha": 94.6715,
+        "Wf": 0.5586,
+        "Lc": 3.5445
       },
       "cost": {
-        "total_cost": 0.30602093721381235,
-        "mean_cost": 0.14832889430972698,
-        "low_edge_cost": 0.30602093721381235,
-        "center_cost": 0.005589743240709196,
-        "high_edge_cost": 0.27871499366006247,
+        "total_cost": 0.014772683220294873,
+        "target_freq_hz": 5500000000.0,
+        "target_s21_mag": 0.014772683220294873,
+        "mean_cost": 0.08771038569571238,
+        "low_edge_cost": 0.2419206206992914,
+        "center_cost": 0.05227394476502824,
+        "high_edge_cost": 0.06832715523849787,
+        "stopband_max_s21": 0.2419206206992914,
         "worst_freq_hz": 4000000000.0,
-        "best_freq_hz": 5000000000.0,
-        "best_zin_mag": 0.2794871620354598,
+        "best_freq_hz": 5400000000.0,
+        "best_s21_mag": 0.0025626833727094706,
+        "passband_low_mean": 0.6427331273768319,
+        "passband_high_mean": 0.20116254081985868,
+        "zin_norm_at_center": 0.9991426341863517,
         "band_hz": [
           4000000000.0,
           6000000000.0
         ]
       },
       "intent": {
-        "ri": "increase_strong"
+        "ro": "increase_slight",
+        "Lc": "increase"
       },
-      "note": "new best 0.3094; ri lever effective, continue increasing"
+      "note": "|S21|@5.5=-38.2dB notch@5.600G; fine ro up; lengthen Lc"
     },
     {
       "iteration": 15,
       "params": {
-        "ri": 0.5104,
-        "ro": 3.0,
-        "alpha": 99.137,
-        "Wf": 0.6,
-        "Lc": 2.9071
+        "ri": 0.2766,
+        "ro": 5.2334,
+        "alpha": 94.6715,
+        "Wf": 0.5276,
+        "Lc": 3.5445
       },
       "cost": {
-        "total_cost": 0.3176994356685417,
-        "mean_cost": 0.15380420382238336,
-        "low_edge_cost": 0.2801108244886624,
-        "center_cost": 0.036389416700689126,
-        "high_edge_cost": 0.3176994356685417,
-        "worst_freq_hz": 6000000000.0,
-        "best_freq_hz": 4900000000.0,
-        "best_zin_mag": 0.3604335662112022,
+        "total_cost": 0.010996550761444698,
+        "target_freq_hz": 5500000000.0,
+        "target_s21_mag": 0.010996550761444698,
+        "mean_cost": 0.10305150644295878,
+        "low_edge_cost": 0.2767451287972398,
+        "center_cost": 0.08020686890060023,
+        "high_edge_cost": 0.043904324075106985,
+        "stopband_max_s21": 0.2767451287972398,
+        "worst_freq_hz": 4000000000.0,
+        "best_freq_hz": 5600000000.0,
+        "best_s21_mag": 0.0010046382300232656,
+        "passband_low_mean": 0.6727411077291018,
+        "passband_high_mean": 0.17633016998708076,
+        "zin_norm_at_center": 0.9910846564433329,
         "band_hz": [
           4000000000.0,
           6000000000.0
         ]
       },
       "intent": {
-        "Lc": "increase_slight"
+        "ro": "decrease_slight",
+        "Wf": "decrease_slight"
       },
-      "note": "resonance now dead center at 5.0GHz; low_edge(4GHz) slightly worse than high_edge -> nudge Lc up slightly to shift a touch toward low_edge improvement"
+      "note": "|S21|@5.5=-36.6dB notch@5.400G; fine ro down; narrow Wf"
     },
     {
       "iteration": 16,
       "params": {
-        "ri": 0.5104,
-        "ro": 3.0,
-        "alpha": 99.137,
-        "Wf": 0.6288,
-        "Lc": 2.7844
+        "ri": 0.2591,
+        "ro": 5.3712,
+        "alpha": 94.6715,
+        "Wf": 0.5276,
+        "Lc": 3.5445
       },
       "cost": {
-        "total_cost": 0.31168385683504546,
-        "mean_cost": 0.14639282228880024,
-        "low_edge_cost": 0.31168385683504546,
-        "center_cost": 0.004669040673769404,
-        "high_edge_cost": 0.26554884815477686,
+        "total_cost": 0.02253345196408851,
+        "target_freq_hz": 5500000000.0,
+        "target_s21_mag": 0.02253345196408851,
+        "mean_cost": 0.08349977480687683,
+        "low_edge_cost": 0.23173784857758856,
+        "center_cost": 0.04295261265988283,
+        "high_edge_cost": 0.07431536468003204,
+        "stopband_max_s21": 0.23173784857758856,
         "worst_freq_hz": 4000000000.0,
-        "best_freq_hz": 5000000000.0,
-        "best_zin_mag": 0.2334520336884702,
+        "best_freq_hz": 5300000000.0,
+        "best_s21_mag": 0.0017894040076018045,
+        "passband_low_mean": 0.6408360140826423,
+        "passband_high_mean": 0.2007153206425266,
+        "zin_norm_at_center": 1.0289288349509338,
         "band_hz": [
           4000000000.0,
           6000000000.0
         ]
       },
       "intent": {
-        "Lc": "decrease_slight",
-        "Wf": "increase_slight"
+        "ro": "increase_slight",
+        "ri": "decrease_slight"
       },
-      "note": "iter15 Lc nudge was net-negative (0.3177 vs 0.3060 best); revert that Lc move and try widening Wf slightly instead for edge balance"
+      "note": "|S21|@5.5=-39.2dB notch@5.600G; fine ro up; trim ri"
     },
     {
       "iteration": 17,
       "params": {
-        "ri": 0.5267,
-        "ro": 3.0,
-        "alpha": 99.137,
-        "Wf": 0.6288,
-        "Lc": 2.7844
+        "ri": 0.2591,
+        "ro": 5.2431,
+        "alpha": 98.1661,
+        "Wf": 0.5276,
+        "Lc": 3.5445
       },
       "cost": {
-        "total_cost": 0.31469914974691765,
-        "mean_cost": 0.14611567357589558,
-        "low_edge_cost": 0.31469914974691765,
-        "center_cost": 0.008070385960200089,
-        "high_edge_cost": 0.26110740713611774,
+        "total_cost": 0.0003062380156582576,
+        "target_freq_hz": 5500000000.0,
+        "target_s21_mag": 0.0003062380156582576,
+        "mean_cost": 0.09327962614891205,
+        "low_edge_cost": 0.2555402757227541,
+        "center_cost": 0.06652462162832827,
+        "high_edge_cost": 0.05222256053427032,
+        "stopband_max_s21": 0.2555402757227541,
         "worst_freq_hz": 4000000000.0,
-        "best_freq_hz": 5050000000.0,
-        "best_zin_mag": 0.32373979835772443,
+        "best_freq_hz": 5500000000.0,
+        "best_s21_mag": 0.0003062380156582576,
+        "passband_low_mean": 0.6538931159617156,
+        "passband_high_mean": 0.1797146823669625,
+        "zin_norm_at_center": 1.0048280434077443,
         "band_hz": [
           4000000000.0,
           6000000000.0
         ]
       },
       "intent": {
-        "ri": "increase_slight"
+        "ro": "decrease_slight",
+        "alpha": "increase"
       },
-      "note": "cost plateauing around 0.30-0.32 across last several iterations -> likely approaching the practical bandwidth limit for a single symmetric butterfly stub; try one more small ri push before concluding"
+      "note": "|S21|@5.5=-32.9dB notch@5.300G; fine ro down; widen alpha"
     }
   ]
 }
