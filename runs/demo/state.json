@@ -1,0 +1,517 @@
+{
+  "iteration": 17,
+  "params": {
+    "ri": 0.5267,
+    "ro": 3.0,
+    "alpha": 99.137,
+    "Wf": 0.6288,
+    "Lc": 2.7844
+  },
+  "history": [
+    {
+      "iteration": 0,
+      "params": {
+        "ri": 0.3,
+        "ro": 8.0,
+        "alpha": 90.0,
+        "Wf": 0.6,
+        "Lc": 3.0
+      },
+      "cost": {
+        "total_cost": 1.5405357551114418,
+        "mean_cost": 1.111137161786987,
+        "low_edge_cost": 0.7459817672162053,
+        "center_cost": 1.0942309870182798,
+        "high_edge_cost": 1.5405357551114418,
+        "worst_freq_hz": 6000000000.0,
+        "best_freq_hz": 1700000000.0,
+        "best_zin_mag": 0.293439425671304,
+        "band_hz": [
+          4000000000.0,
+          6000000000.0
+        ]
+      },
+      "intent": null,
+      "note": "baseline initial guess"
+    },
+    {
+      "iteration": 1,
+      "params": {
+        "ri": 0.3,
+        "ro": 5.954,
+        "alpha": 90.0,
+        "Wf": 0.6,
+        "Lc": 3.0
+      },
+      "cost": {
+        "total_cost": 1.2586303025944168,
+        "mean_cost": 0.8882349750480154,
+        "low_edge_cost": 0.5539350896555835,
+        "center_cost": 0.8786485995295351,
+        "high_edge_cost": 1.2586303025944168,
+        "worst_freq_hz": 6000000000.0,
+        "best_freq_hz": 2300000000.0,
+        "best_zin_mag": 0.4428838720198134,
+        "band_hz": [
+          4000000000.0,
+          6000000000.0
+        ]
+      },
+      "intent": {
+        "ro": "decrease_strong"
+      },
+      "note": "resonance at 1.7GHz is far below 4-6GHz band; shrink ro to push resonance up"
+    },
+    {
+      "iteration": 2,
+      "params": {
+        "ri": 0.3,
+        "ro": 4.0512,
+        "alpha": 90.0,
+        "Wf": 0.6,
+        "Lc": 3.0
+      },
+      "cost": {
+        "total_cost": 0.8159253865253895,
+        "mean_cost": 0.48818335010159547,
+        "low_edge_cost": 0.16568599099701214,
+        "center_cost": 0.4867129849054168,
+        "high_edge_cost": 0.8159253865253895,
+        "worst_freq_hz": 6000000000.0,
+        "best_freq_hz": 3500000000.0,
+        "best_zin_mag": 0.312450602555163,
+        "band_hz": [
+          4000000000.0,
+          6000000000.0
+        ]
+      },
+      "intent": {
+        "ro": "decrease_strong"
+      },
+      "note": "resonance moved 1.7->2.3GHz, still far below target; continue shrinking ro"
+    },
+    {
+      "iteration": 3,
+      "params": {
+        "ri": 0.3,
+        "ro": 3.1664,
+        "alpha": 90.0,
+        "Wf": 0.6,
+        "Lc": 3.0
+      },
+      "cost": {
+        "total_cost": 0.45656520169250764,
+        "mean_cost": 0.19602491781896894,
+        "low_edge_cost": 0.1964317919006655,
+        "center_cost": 0.14208040260913005,
+        "high_edge_cost": 0.45656520169250764,
+        "worst_freq_hz": 6000000000.0,
+        "best_freq_hz": 4550000000.0,
+        "best_zin_mag": 0.24812342929882003,
+        "band_hz": [
+          4000000000.0,
+          6000000000.0
+        ]
+      },
+      "intent": {
+        "ro": "decrease"
+      },
+      "note": "resonance at 3.5GHz still below 5GHz center; low_edge already very good so ease off to normal step to avoid overshoot"
+    },
+    {
+      "iteration": 4,
+      "params": {
+        "ri": 0.3,
+        "ro": 3.0,
+        "alpha": 90.0,
+        "Wf": 0.6,
+        "Lc": 3.0
+      },
+      "cost": {
+        "total_cost": 0.3694799997260131,
+        "mean_cost": 0.17161017072915596,
+        "low_edge_cost": 0.28876228522018377,
+        "center_cost": 0.056110285104621765,
+        "high_edge_cost": 0.3694799997260131,
+        "worst_freq_hz": 6000000000.0,
+        "best_freq_hz": 4850000000.0,
+        "best_zin_mag": 0.38714670672716456,
+        "band_hz": [
+          4000000000.0,
+          6000000000.0
+        ]
+      },
+      "intent": {
+        "ro": "decrease_slight"
+      },
+      "note": "resonance 4.55GHz close to band center 5GHz; high_edge still worst so nudge ro down slightly more"
+    },
+    {
+      "iteration": 5,
+      "params": {
+        "ri": 0.3,
+        "ro": 3.0,
+        "alpha": 106.6965,
+        "Wf": 0.6,
+        "Lc": 3.0
+      },
+      "cost": {
+        "total_cost": 0.4556038417455403,
+        "mean_cost": 0.1964276068797034,
+        "low_edge_cost": 0.16747831175833194,
+        "center_cost": 0.15616697294718618,
+        "high_edge_cost": 0.4556038417455403,
+        "worst_freq_hz": 6000000000.0,
+        "best_freq_hz": 4500000000.0,
+        "best_zin_mag": 0.09785876290025666,
+        "band_hz": [
+          4000000000.0,
+          6000000000.0
+        ]
+      },
+      "intent": {
+        "alpha": "increase_strong"
+      },
+      "note": "ro hit lower bound (3mm); center excellent but both edges still weak -> widen sector angle alpha for broader bandwidth instead of further ro reduction"
+    },
+    {
+      "iteration": 6,
+      "params": {
+        "ri": 0.3,
+        "ro": 3.0,
+        "alpha": 91.1687,
+        "Wf": 0.6,
+        "Lc": 3.0
+      },
+      "cost": {
+        "total_cost": 0.37638050660003247,
+        "mean_cost": 0.17233060591129287,
+        "low_edge_cost": 0.279099045136198,
+        "center_cost": 0.06409777021612185,
+        "high_edge_cost": 0.37638050660003247,
+        "worst_freq_hz": 6000000000.0,
+        "best_freq_hz": 4800000000.0,
+        "best_zin_mag": 0.1073435568715799,
+        "band_hz": [
+          4000000000.0,
+          6000000000.0
+        ]
+      },
+      "intent": {
+        "alpha": "decrease_strong"
+      },
+      "note": "increasing alpha made things worse (shifted resonance down, similar effect to larger ro); ro is at its bound so try decreasing alpha instead to push resonance back up"
+    },
+    {
+      "iteration": 7,
+      "params": {
+        "ri": 0.3,
+        "ro": 3.0,
+        "alpha": 91.1687,
+        "Wf": 0.6,
+        "Lc": 1.8207
+      },
+      "cost": {
+        "total_cost": 0.5190456770680681,
+        "mean_cost": 0.2279608888176538,
+        "low_edge_cost": 0.5190456770680681,
+        "center_cost": 0.2153339062574014,
+        "high_edge_cost": 0.03439169904766947,
+        "worst_freq_hz": 4000000000.0,
+        "best_freq_hz": 5850000000.0,
+        "best_zin_mag": 0.08772672005889443,
+        "band_hz": [
+          4000000000.0,
+          6000000000.0
+        ]
+      },
+      "intent": {
+        "Lc": "decrease_strong"
+      },
+      "note": "ro and alpha are near their useful limits at this point; try shortening the connecting line Lc to shift the electrical reference plane and see if it pushes the short-circuit locus higher in frequency"
+    },
+    {
+      "iteration": 8,
+      "params": {
+        "ri": 0.3,
+        "ro": 3.0,
+        "alpha": 91.1687,
+        "Wf": 0.6,
+        "Lc": 2.3691
+      },
+      "cost": {
+        "total_cost": 0.40482836965113506,
+        "mean_cost": 0.16305768457609948,
+        "low_edge_cost": 0.40482836965113506,
+        "center_cost": 0.08467076030937172,
+        "high_edge_cost": 0.19060484208530032,
+        "worst_freq_hz": 4000000000.0,
+        "best_freq_hz": 5300000000.0,
+        "best_zin_mag": 0.09691715655176762,
+        "band_hz": [
+          4000000000.0,
+          6000000000.0
+        ]
+      },
+      "intent": {
+        "Lc": "increase"
+      },
+      "note": "Lc is a strong, effective lever (confirmed); previous step overshot resonance to 5.85GHz (past band), now low_edge is the worst point -> back off with a normal increase to re-center near 5GHz"
+    },
+    {
+      "iteration": 9,
+      "params": {
+        "ri": 0.3,
+        "ro": 3.0,
+        "alpha": 91.1687,
+        "Wf": 0.6,
+        "Lc": 2.5731
+      },
+      "cost": {
+        "total_cost": 0.3636061277735452,
+        "mean_cost": 0.15765637497739257,
+        "low_edge_cost": 0.3636061277735452,
+        "center_cost": 0.03656595408343541,
+        "high_edge_cost": 0.24969852569498227,
+        "worst_freq_hz": 4000000000.0,
+        "best_freq_hz": 5100000000.0,
+        "best_zin_mag": 0.3490738468702325,
+        "band_hz": [
+          4000000000.0,
+          6000000000.0
+        ]
+      },
+      "intent": {
+        "Lc": "increase_slight"
+      },
+      "note": "resonance 5.3GHz, low_edge still worst; nudge Lc up slightly more to shift resonance down toward band center"
+    },
+    {
+      "iteration": 10,
+      "params": {
+        "ri": 0.3,
+        "ro": 3.0,
+        "alpha": 96.9765,
+        "Wf": 0.6,
+        "Lc": 2.7628
+      },
+      "cost": {
+        "total_cost": 0.33683758507812994,
+        "mean_cost": 0.15968509860191285,
+        "low_edge_cost": 0.2800290477623843,
+        "center_cost": 0.04542418232856364,
+        "high_edge_cost": 0.33683758507812994,
+        "worst_freq_hz": 6000000000.0,
+        "best_freq_hz": 4850000000.0,
+        "best_zin_mag": 0.09577504941982187,
+        "band_hz": [
+          4000000000.0,
+          6000000000.0
+        ]
+      },
+      "intent": {
+        "alpha": "increase",
+        "Lc": "increase_slight"
+      },
+      "note": "center is excellent but response looks too peaky/narrowband for a 40% fractional bandwidth target; widen alpha for broader bandwidth while nudging Lc to compensate the expected downward resonance shift"
+    },
+    {
+      "iteration": 11,
+      "params": {
+        "ri": 0.3,
+        "ro": 3.0,
+        "alpha": 99.137,
+        "Wf": 0.6,
+        "Lc": 2.9392
+      },
+      "cost": {
+        "total_cost": 0.40107382639715533,
+        "mean_cost": 0.17565093428093886,
+        "low_edge_cost": 0.229941496986499,
+        "center_cost": 0.09997247445396835,
+        "high_edge_cost": 0.40107382639715533,
+        "worst_freq_hz": 6000000000.0,
+        "best_freq_hz": 4700000000.0,
+        "best_zin_mag": 0.31424110843207553,
+        "band_hz": [
+          4000000000.0,
+          6000000000.0
+        ]
+      },
+      "intent": {
+        "alpha": "increase_slight",
+        "Lc": "increase_slight"
+      },
+      "note": "improving trend continues (0.3368 new best); keep widening alpha gently while compensating Lc"
+    },
+    {
+      "iteration": 12,
+      "params": {
+        "ri": 0.3,
+        "ro": 3.0,
+        "alpha": 99.137,
+        "Wf": 0.6,
+        "Lc": 2.7751
+      },
+      "cost": {
+        "total_cost": 0.3513949665539819,
+        "mean_cost": 0.16149064087184323,
+        "low_edge_cost": 0.2617621169853797,
+        "center_cost": 0.061210511960242575,
+        "high_edge_cost": 0.3513949665539819,
+        "worst_freq_hz": 6000000000.0,
+        "best_freq_hz": 4800000000.0,
+        "best_zin_mag": 0.09836969970934331,
+        "band_hz": [
+          4000000000.0,
+          6000000000.0
+        ]
+      },
+      "intent": {
+        "Lc": "decrease_slight"
+      },
+      "note": "overshot at iter11 (0.4011, worse); back off Lc slightly toward the iter10 sweet spot (0.3368) while keeping alpha fixed"
+    },
+    {
+      "iteration": 13,
+      "params": {
+        "ri": 0.409,
+        "ro": 3.0,
+        "alpha": 99.137,
+        "Wf": 0.6,
+        "Lc": 2.7751
+      },
+      "cost": {
+        "total_cost": 0.30944093317376903,
+        "mean_cost": 0.15246690785288897,
+        "low_edge_cost": 0.2862588723338903,
+        "center_cost": 0.029500886810301493,
+        "high_edge_cost": 0.30944093317376903,
+        "worst_freq_hz": 6000000000.0,
+        "best_freq_hz": 4900000000.0,
+        "best_zin_mag": 0.09629962222786832,
+        "band_hz": [
+          4000000000.0,
+          6000000000.0
+        ]
+      },
+      "intent": {
+        "ri": "increase_strong"
+      },
+      "note": "ri untouched so far (still initial 0.3mm); try widening the feed-to-fan transition radius to see if it broadens/flattens the matching bandwidth"
+    },
+    {
+      "iteration": 14,
+      "params": {
+        "ri": 0.5104,
+        "ro": 3.0,
+        "alpha": 99.137,
+        "Wf": 0.6,
+        "Lc": 2.7751
+      },
+      "cost": {
+        "total_cost": 0.30602093721381235,
+        "mean_cost": 0.14832889430972698,
+        "low_edge_cost": 0.30602093721381235,
+        "center_cost": 0.005589743240709196,
+        "high_edge_cost": 0.27871499366006247,
+        "worst_freq_hz": 4000000000.0,
+        "best_freq_hz": 5000000000.0,
+        "best_zin_mag": 0.2794871620354598,
+        "band_hz": [
+          4000000000.0,
+          6000000000.0
+        ]
+      },
+      "intent": {
+        "ri": "increase_strong"
+      },
+      "note": "new best 0.3094; ri lever effective, continue increasing"
+    },
+    {
+      "iteration": 15,
+      "params": {
+        "ri": 0.5104,
+        "ro": 3.0,
+        "alpha": 99.137,
+        "Wf": 0.6,
+        "Lc": 2.9071
+      },
+      "cost": {
+        "total_cost": 0.3176994356685417,
+        "mean_cost": 0.15380420382238336,
+        "low_edge_cost": 0.2801108244886624,
+        "center_cost": 0.036389416700689126,
+        "high_edge_cost": 0.3176994356685417,
+        "worst_freq_hz": 6000000000.0,
+        "best_freq_hz": 4900000000.0,
+        "best_zin_mag": 0.3604335662112022,
+        "band_hz": [
+          4000000000.0,
+          6000000000.0
+        ]
+      },
+      "intent": {
+        "Lc": "increase_slight"
+      },
+      "note": "resonance now dead center at 5.0GHz; low_edge(4GHz) slightly worse than high_edge -> nudge Lc up slightly to shift a touch toward low_edge improvement"
+    },
+    {
+      "iteration": 16,
+      "params": {
+        "ri": 0.5104,
+        "ro": 3.0,
+        "alpha": 99.137,
+        "Wf": 0.6288,
+        "Lc": 2.7844
+      },
+      "cost": {
+        "total_cost": 0.31168385683504546,
+        "mean_cost": 0.14639282228880024,
+        "low_edge_cost": 0.31168385683504546,
+        "center_cost": 0.004669040673769404,
+        "high_edge_cost": 0.26554884815477686,
+        "worst_freq_hz": 4000000000.0,
+        "best_freq_hz": 5000000000.0,
+        "best_zin_mag": 0.2334520336884702,
+        "band_hz": [
+          4000000000.0,
+          6000000000.0
+        ]
+      },
+      "intent": {
+        "Lc": "decrease_slight",
+        "Wf": "increase_slight"
+      },
+      "note": "iter15 Lc nudge was net-negative (0.3177 vs 0.3060 best); revert that Lc move and try widening Wf slightly instead for edge balance"
+    },
+    {
+      "iteration": 17,
+      "params": {
+        "ri": 0.5267,
+        "ro": 3.0,
+        "alpha": 99.137,
+        "Wf": 0.6288,
+        "Lc": 2.7844
+      },
+      "cost": {
+        "total_cost": 0.31469914974691765,
+        "mean_cost": 0.14611567357589558,
+        "low_edge_cost": 0.31469914974691765,
+        "center_cost": 0.008070385960200089,
+        "high_edge_cost": 0.26110740713611774,
+        "worst_freq_hz": 4000000000.0,
+        "best_freq_hz": 5050000000.0,
+        "best_zin_mag": 0.32373979835772443,
+        "band_hz": [
+          4000000000.0,
+          6000000000.0
+        ]
+      },
+      "intent": {
+        "ri": "increase_slight"
+      },
+      "note": "cost plateauing around 0.30-0.32 across last several iterations -> likely approaching the practical bandwidth limit for a single symmetric butterfly stub; try one more small ri push before concluding"
+    }
+  ]
+}
