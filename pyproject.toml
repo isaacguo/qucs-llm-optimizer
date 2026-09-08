@@ -1,0 +1,33 @@
+[project]
+name = "qucs-llm-optimizer"
+version = "0.1.0"
+description = "Intent-driven Qucs optimization with optional Unsloth GRPO training"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = []
+
+[project.optional-dependencies]
+train = [
+    "accelerate",
+    "datasets",
+    "mergekit",
+    "peft",
+    "transformers==4.56.2",
+    "trl",
+    "unsloth",
+]
+
+[project.scripts]
+qucs-grpo = "training.grpo:main"
+qucs-probe = "training.probe:main"
+qucs-sft = "training.sft:main"
+
+[tool.uv]
+package = true
+
+[tool.setuptools]
+py-modules = []
+
+[tool.setuptools.packages.find]
+include = ["training*"]
+

@@ -29,40 +29,70 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 from cost import TARGET_DEPTH_DB, TARGET_NOTCH_HZ, TARGET_S21_MAG, evaluate, s21_db
 from intent import BOUNDS, INITIAL_GUESS, VARIABLES, apply_intent
 from qucs_sim import simulate
+from report_html import write_report
 from state import RunState
 
 RUNS_ROOT = Path(__file__).resolve().parent / "runs"
 TARGET_BAND_HZ = (4e9, 6e9)
 
 
-def _print_report(entry: dict) -> None:
+def format_report(entry: dict) -> str:
+    """Render one history entry as the plain-text block the CLI prints."""
     p, c = entry["params"], entry["cost"]
     target_mag = c.get("target_s21_mag", c["total_cost"])
     target_hz = c.get("target_freq_hz", TARGET_NOTCH_HZ)
-    print(f"--- iteration {entry['iteration']} ---")
-    print("params: " + ", ".join(f"{k}={p[k]:.3f}" for k in VARIABLES))
-    print(
+    lines = [
+        f"--- iteration {entry['iteration']} ---",
+        "params: " + ", ".join(f"{k}={p[k]:.3f}" for k in VARIABLES),
         f"total_cost |S21| @ {target_hz/1e9:.2f} GHz = {target_mag:.6f} "
-        f"({s21_db(target_mag):.2f} dB)  [goal {TARGET_DEPTH_DB:.0f} dB / {TARGET_S21_MAG:.3e}]"
-    )
-    print(f"deepest notch |S21|       = {c['best_s21_mag']:.6f} "
-          f"({s21_db(c['best_s21_mag']):.2f} dB) @ {c['best_freq_hz']/1e9:.3f} GHz")
+        f"({s21_db(target_mag):.2f} dB)  [goal {TARGET_DEPTH_DB:.0f} dB / {TARGET_S21_MAG:.3e}]",
+        f"deepest notch |S21|       = {c['best_s21_mag']:.6f} "
+        f"({s21_db(c['best_s21_mag']):.2f} dB) @ {c['best_freq_hz']/1e9:.3f} GHz",
+    ]
     if "stopband_max_s21" in c:
-        print(f"stopband max |S21| (aux)  = {c['stopband_max_s21']:.4f} "
-              f"@ {c['worst_freq_hz']/1e9:.3f} GHz")
-    print(f"mean |S21| in stopband             = {c['mean_cost']:.4f}")
-    print(f"low_edge  ({TARGET_BAND_HZ[0]/1e9:.1f} GHz)  |S21| = {c['low_edge_cost']:.4f}")
-    print(f"band mid  ({(sum(TARGET_BAND_HZ)/2)/1e9:.1f} GHz)  |S21| = {c['center_cost']:.4f}")
-    print(f"high_edge ({TARGET_BAND_HZ[1]/1e9:.1f} GHz)  |S21| = {c['high_edge_cost']:.4f}")
+        lines.append(f"stopband max |S21| (aux)  = {c['stopband_max_s21']:.4f} "
+                     f"@ {c['worst_freq_hz']/1e9:.3f} GHz")
+    lines += [
+        f"mean |S21| in stopband             = {c['mean_cost']:.4f}",
+        f"low_edge  ({TARGET_BAND_HZ[0]/1e9:.1f} GHz)  |S21| = {c['low_edge_cost']:.4f}",
+        f"band mid  ({(sum(TARGET_BAND_HZ)/2)/1e9:.1f} GHz)  |S21| = {c['center_cost']:.4f}",
+        f"high_edge ({TARGET_BAND_HZ[1]/1e9:.1f} GHz)  |S21| = {c['high_edge_cost']:.4f}",
+    ]
     if "passband_low_mean" in c:
-        print(f"passband |S21| mean (<{TARGET_BAND_HZ[0]/1e9:.1f} GHz) = {c['passband_low_mean']:.4f}")
-        print(f"passband |S21| mean (>{TARGET_BAND_HZ[1]/1e9:.1f} GHz) = {c['passband_high_mean']:.4f}")
+        lines.append(f"passband |S21| mean (<{TARGET_BAND_HZ[0]/1e9:.1f} GHz) = {c['passband_low_mean']:.4f}")
+        lines.append(f"passband |S21| mean (>{TARGET_BAND_HZ[1]/1e9:.1f} GHz) = {c['passband_high_mean']:.4f}")
     if "zin_norm_at_center" in c:
-        print(f"|Zin|/Z0 at stopband mid (aux) = {c['zin_norm_at_center']:.4f}")
+        lines.append(f"|Zin|/Z0 at stopband mid (aux) = {c['zin_norm_at_center']:.4f}")
     if entry.get("intent"):
-        print(f"intent used: {entry['intent']}")
+        lines.append(f"intent used: {entry['intent']}")
     if entry.get("note"):
-        print(f"note: {entry['note']}")
+        lines.append(f"note: {entry['note']}")
+    return "\n".join(lines)
+
+
+def format_observation(entry: dict) -> str:
+    """
+    Render the exact evidence block handed to the strategy layer before it
+    decides the next intent: the latest measurement plus the bounds it must
+    stay inside. Stored verbatim on the next history entry.
+    """
+    p = entry["params"]
+    bounds = "\n".join(
+        f"  {v:<6} = {p[v]:>8.3f}   bounds [{BOUNDS[v][0]}, {BOUNDS[v][1]}]"
+        for v in VARIABLES
+    )
+    return f"{format_report(entry)}\n\nfree variables and bounds:\n{bounds}"
+
+
+def _print_report(entry: dict) -> None:
+    print(format_report(entry))
+
+
+def _read_thinking(args) -> str:
+    """Resolve --thinking / --thinking-file into one reasoning string."""
+    if getattr(args, "thinking_file", None):
+        return Path(args.thinking_file).read_text().strip()
+    return (getattr(args, "thinking", "") or "").strip()
 
 
 def cmd_init(args):
@@ -75,7 +105,14 @@ def cmd_init(args):
     params = dict(INITIAL_GUESS)
     res = simulate(params, workdir=run_dir / "iter_000")
     cost = asdict(evaluate(res, TARGET_BAND_HZ, target_hz=TARGET_NOTCH_HZ))
-    it = state.record(params, cost, intent=None, note="baseline initial guess")
+    it = state.record(
+        params,
+        cost,
+        intent=None,
+        note=args.note or "baseline initial guess",
+        thinking=_read_thinking(args),
+        observation=None,
+    )
     _print_report(state.history[it])
 
 
@@ -90,11 +127,23 @@ def cmd_step(args):
     if unknown:
         print(f"unknown variable(s) in intent: {unknown}; valid: {VARIABLES}", file=sys.stderr)
         sys.exit(1)
+    prev_entry = state.history[-1]
+    observation = {
+        "from_iteration": prev_entry["iteration"],
+        "report_text": format_observation(prev_entry),
+    }
     new_iteration = state.iteration + 1
     new_params = apply_intent(state.params, intent, iteration=new_iteration)
     res = simulate(new_params, workdir=run_dir / f"iter_{new_iteration:03d}")
     cost = asdict(evaluate(res, TARGET_BAND_HZ, target_hz=TARGET_NOTCH_HZ))
-    it = state.record(new_params, cost, intent=intent, note=args.note or "")
+    it = state.record(
+        new_params,
+        cost,
+        intent=intent,
+        note=args.note or "",
+        thinking=_read_thinking(args),
+        observation=observation,
+    )
     _print_report(state.history[it])
 
 
@@ -122,18 +171,62 @@ def cmd_best(args):
     _print_report(best)
 
 
+def cmd_observe(args):
+    """Print the evidence block the strategy layer should reason over next."""
+    run_dir = RUNS_ROOT / args.run
+    state = RunState(run_dir)
+    if state.iteration < 0:
+        print(f"run '{args.run}' has no history yet", file=sys.stderr)
+        sys.exit(1)
+    print(format_observation(state.history[-1]))
+
+
+def cmd_conclude(args):
+    run_dir = RUNS_ROOT / args.run
+    state = RunState(run_dir)
+    if state.iteration < 0:
+        print(f"run '{args.run}' has no history yet", file=sys.stderr)
+        sys.exit(1)
+    text = _read_thinking(args)
+    if not text:
+        print("nothing to record; pass --thinking or --thinking-file", file=sys.stderr)
+        sys.exit(1)
+    state.conclude(text)
+    print(f"recorded conclusion for run '{args.run}' ({len(text)} chars)")
+
+
+def cmd_html(args):
+    run_dir = RUNS_ROOT / args.run
+    state = RunState(run_dir)
+    if state.iteration < 0:
+        print(f"run '{args.run}' has no history yet", file=sys.stderr)
+        sys.exit(1)
+    out = Path(args.out) if args.out else run_dir / "report.html"
+    write_report(args.run, run_dir, state.history, out, conclusion=state.conclusion)
+    print(f"wrote {out}")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="cmd", required=True)
 
+    def add_thinking_args(p):
+        p.add_argument("--thinking", default="",
+                       help="strategy-layer reasoning recorded verbatim with this step")
+        p.add_argument("--thinking-file", default="",
+                       help="read the reasoning from a file instead (better for long text)")
+
     p_init = sub.add_parser("init")
     p_init.add_argument("--run", default="default")
+    p_init.add_argument("--note", default="")
+    add_thinking_args(p_init)
     p_init.set_defaults(func=cmd_init)
 
     p_step = sub.add_parser("step")
     p_step.add_argument("--run", default="default")
     p_step.add_argument("--intent", required=True, help="JSON dict, e.g. '{\"ro\":\"decrease\"}'")
     p_step.add_argument("--note", default="")
+    add_thinking_args(p_step)
     p_step.set_defaults(func=cmd_step)
 
     p_report = sub.add_parser("report")
@@ -143,6 +236,20 @@ def main():
     p_best = sub.add_parser("best")
     p_best.add_argument("--run", default="default")
     p_best.set_defaults(func=cmd_best)
+
+    p_observe = sub.add_parser("observe")
+    p_observe.add_argument("--run", default="default")
+    p_observe.set_defaults(func=cmd_observe)
+
+    p_conclude = sub.add_parser("conclude")
+    p_conclude.add_argument("--run", default="default")
+    add_thinking_args(p_conclude)
+    p_conclude.set_defaults(func=cmd_conclude)
+
+    p_html = sub.add_parser("html")
+    p_html.add_argument("--run", default="default")
+    p_html.add_argument("--out", default="", help="output path (default runs/<run>/report.html)")
+    p_html.set_defaults(func=cmd_html)
 
     args = parser.parse_args()
     args.func(args)

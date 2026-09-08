@@ -31,7 +31,31 @@ class RunState:
     def history(self) -> list[dict]:
         return self._data["history"]
 
-    def record(self, params: dict, cost: dict, intent: dict | None, note: str) -> int:
+    @property
+    def conclusion(self) -> str:
+        return self._data.get("conclusion", "")
+
+    def conclude(self, text: str) -> None:
+        """Record why the run stopped. Closes the decision log without simulating."""
+        self._data["conclusion"] = text
+        self._save()
+
+    def record(
+        self,
+        params: dict,
+        cost: dict,
+        intent: dict | None,
+        note: str,
+        thinking: str = "",
+        observation: dict | None = None,
+    ) -> int:
+        """
+        thinking:    free-form reasoning the strategy layer produced *before*
+                     choosing `intent`. Recorded verbatim so the decision can
+                     be audited (and later used as training data).
+        observation: what the strategy layer was shown when it reasoned —
+                     {"from_iteration": int, "report_text": str}.
+        """
         if self._data["iteration"] + 1 > MAX_ITERATIONS - 1:
             raise RuntimeError(f"iteration cap reached ({MAX_ITERATIONS}); refusing further steps")
         self._data["iteration"] += 1
@@ -42,6 +66,8 @@ class RunState:
             "cost": cost,
             "intent": intent,
             "note": note,
+            "thinking": thinking,
+            "observation": observation,
         }
         self._data["history"].append(entry)
         self._save()

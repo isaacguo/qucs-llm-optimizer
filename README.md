@@ -29,6 +29,11 @@ cost.py                       -->  scalar total_cost = |S21| at 5.5 GHz
         |
         v
 state.py                      -->  JSON history log, iteration cap (20)
+                                    per step: observation + thinking + intent
+        |
+        v
+report_html.py                -->  runs/<run>/report.html
+                                    one collapsible panel per iteration
 ```
 
 The strategy layer **never touches raw numbers** — only directional intent
@@ -70,9 +75,18 @@ the connecting line from the junction to the stub root).
   writes `layout.svg` (official copper geometry, not a hand-drawn preview).
   macOS has no upstream binary — build from source with
   `-DQRFL_MINIMAL=ON` (this repo looks for
-  `../third_party/Qucs-RFlayout/build/qucsrflayout`). Override with
-  `QUCS_RFLAYOUT`. A local patch teaches the parser Qucs-S `MRSTUB`
-  property order (`ri,ro,Wf,alpha`).
+  `../third_party/Qucs-RFlayout/build/qucsrflayout`, then for a Windows
+  `~/Downloads/qucsrflayout/bin/qucsrflayout.exe`). Override with
+  `QUCS_RFLAYOUT`.
+- **A stock `qucsrflayout` draws the butterfly wrong, and the code works
+  around it.** Upstream parses `MRSTUB` properties positionally as
+  `ri, ro, alpha, Wf`, while Qucs-S writes `ri, ro, Wf, alpha`. A stock build
+  therefore reads the feed width (0.6) as the sector angle in degrees and
+  collapses each wing to a sliver — simulation is unaffected, only the
+  picture is wrong. `export_layout_svg` detects the collapsed fan via
+  `layout_fan_is_degenerate` and retries once against a throwaway schematic
+  with the two properties swapped, so stock and patched builds both produce
+  correct layouts.
 - Tool binaries are auto-detected (macOS app bundle or Windows/WSL paths).
   Override with `QUCS_S` / `QUCSATOR_RF` / `QUCS_RFLAYOUT` if needed.
 - `MRSTUB` schematic property order must remain
@@ -82,38 +96,156 @@ the connecting line from the junction to the stub root).
 ## Usage
 
 ```bash
-python3 run_step.py init --run demo
-python3 run_step.py step --run demo --intent '{"ro":"decrease_strong"}' \
-    --note "why this move"
-python3 run_step.py report --run demo   # full history
-python3 run_step.py best   --run demo   # best iteration so far
+python3 run_step.py init    --run demo
+python3 run_step.py observe --run demo   # evidence block to reason over next
+python3 run_step.py step    --run demo --intent '{"ro":"decrease_strong"}' \
+    --note "one-line summary" --thinking-file /tmp/reasoning.md
+python3 run_step.py report  --run demo   # full history
+python3 run_step.py best    --run demo   # best iteration so far
+python3 run_step.py conclude --run demo --thinking-file /tmp/why-i-stopped.md
+python3 run_step.py html    --run demo   # -> runs/demo/report.html
 ```
 
 Max 20 iterations per run (enforced in `state.py`).
 
-## Demo run (`runs/demo`)
+## Decision log (`report.html`)
 
-The checked-in `runs/demo/state.json` history was collected under older
-cost definitions (1-port `|Zin|`, then briefly 2-port `|Zin|`). After the
-band-stop retarget, start a fresh run:
+`observe` prints exactly the evidence the strategy layer is allowed to see;
+`step` stores that same block on the resulting history entry alongside the
+reasoning passed via `--thinking` / `--thinking-file`. Every step therefore
+carries its full decision record — input, reasoning, output, measurement —
+and not just the numbers.
 
-```bash
-python3 run_step.py init --run bandstop1
-python3 run_step.py step --run bandstop1 --intent '{"ro":"decrease_strong"}'
-python3 run_step.py best --run bandstop1
+`run_step.py html` renders that record as a single self-contained page
+(`runs/<run>/report.html`; no external assets, layout SVGs inlined). Each
+iteration is a `<details>` panel whose summary shows the cost and the intent
+chips, and whose body holds four sections:
+
+1. **Input** — the observation block handed to the strategy layer
+2. **Thinking** — the reasoning recorded for that move
+3. **Intent** — the qualitative tokens emitted, plus the before/after params
+4. **Result** — what the simulator returned
+
+A run-level `conclude` note renders at the bottom as "why the run stopped".
+Runs recorded before this existed (`runs/demo`) still render; the missing
+fields degrade to placeholders.
+
+## Unsloth training
+
+The optional `training/` package replaces the human strategy layer with a
+Qwen3-1.7B intent policy trained by Unsloth GRPO. Unsloth owns 4-bit model
+loading, LoRA, generation, group-relative advantages and weight updates.
+This repository supplies the executable environment and verifiable reward:
+
+```
+observation -> Qwen3 completion -> strict intent JSON -> apply_intent
+            -> qucsator_rf (no layout export) -> delta dB reward
 ```
 
-Lower `total_cost` means a deeper worst-case stopband notch (smaller max `|S21|`
-in 4–6 GHz).
+The default model is `unsloth/Qwen3-1.7B-bnb-4bit`, with rank-16 LoRA and
+vLLM disabled for the tested 8 GB GPU profile. Training never replaces the
+Qucs reward with a mock or learned judge. Layout export is skipped only
+during reward evaluation; the electrical simulation is the same one used by
+`run_step.py`.
 
-## Next steps (not yet implemented)
+Install and verify the real reward path:
 
-- Swap the human-in-the-loop strategy layer for an actual LLM API call
-  (flexible interface — see the `apply_intent` boundary in
-  `run_step.py`'s `cmd_step`), then later a fine-tuned small model.
+```bash
+uv sync --extra train
+uv run qucs-grpo --dry-run
+```
+
+The dry run does not load a model or update weights. It executes one
+baseline simulation and one candidate intent through real Qucs, then prints
+the measured dB improvement.
+
+Probe the untrained policy before deciding whether optional SFT is useful:
+
+```bash
+mkdir -p outputs/logs
+uv run qucs-probe 2>&1 | tee outputs/logs/probe.log
+```
+
+`qucs-probe` samples four intents for each of two randomized circuit states,
+executes all candidates in Qucs, and writes format rate, valid-intent rate,
+and within-group reward standard deviation to
+`outputs/probe-qwen3-1.7b/summary.json`.
+
+Start GRPO:
+
+```bash
+uv run qucs-grpo 2>&1 | tee outputs/logs/grpo.log
+```
+
+The default run builds 32 randomized real-Qucs states, samples eight
+completions per prompt group, and trains for 100 optimizer steps. The three
+reward components are weighted `0.2 / 0.2 / 1.0`:
+
+1. exact `<reasoning>...<intent>...</intent>` output shape;
+2. a valid non-empty intent changing no more than two variables;
+3. clipped real-Qucs improvement
+   `old_s21_db - new_s21_db` in `[-20, 20]`.
+
+Every simulated completion is written to `outputs/.../rewards.jsonl`.
+Checkpoints and final LoRA adapters stay under the ignored `outputs/`
+directory. Resume with:
+
+```bash
+uv run qucs-grpo \
+  --resume-from-checkpoint outputs/grpo-qwen3-1.7b/checkpoint-25
+```
+
+SFT is present but deliberately optional. The command below performs one
+shallow epoch over the 11 usable decision records in `runs/llm1/state.json`:
+
+```bash
+uv run qucs-sft --dry-run  # inspect the example count only
+uv run qucs-sft            # actually update a LoRA adapter
+```
+
+Run `qucs-probe` first. Use SFT only if the base policy cannot reliably
+produce valid intents or its completion groups have no reward variance.
+
+## Runs
+
+### `runs/llm1` — reasoned run, 12 iterations, **−84.62 dB**
+
+The reference run. Every step carries its observation and reasoning, so
+`runs/llm1/report.html` is a complete audit trail. What the strategy layer
+worked out along the way, and none of it was known at the start:
+
+- The notch frequency does not follow `1/ro`. Fitting `f = k/(ro + c)`
+  against two measurements exposes a fixed electrical offset from the feed,
+  inner radius and cross junction, and predicts the next move to inside one
+  50 MHz sweep grid step.
+- `ri` moves the notch **four times** further per millimetre than `ro`
+  (5.68 vs 1.42 GHz/mm), the opposite of the initial guess.
+- `alpha` is the fine knob (~4.6 MHz/deg) and also sets how perfectly the
+  transmission zero is realised.
+- The run stops at iteration 11 not because the goal is met but because the
+  optimum sits 0.088 deg away in `alpha`, while the smallest step the intent
+  ladder can ever emit is 0.72 deg. The search is quantization-limited, and
+  the fix belongs in `intent.py`, not in the strategy layer.
+
+Goal (−70 dB) was passed at iteration 9. Best geometry: `ri=0.203`,
+`ro=4.935`, `alpha=83.356`, `Wf=0.600`, `Lc=3.000` (mm/deg).
+
+### `runs/demo` — earlier hand-driven run, 18 iterations, −70.28 dB
+
+Kept for comparison. Predates observation/thinking capture, so its panels
+show placeholders where the reasoning would be.
+
+## Next steps
+
+- Wire a trained LoRA adapter into `run_step.py` as an optional policy
+  backend. The human/cursor-agent remains the current runtime strategy layer;
+  `training/` now covers policy training, not deployment.
+- Add a magnitude below `slight`, or lower `_MIN_SCALE`, so late iterations
+  can emit sub-0.1 deg steps — this is what currently caps `runs/llm1`.
+- Explicit passband constraint in `total_cost`. Nothing penalises passband
+  loss today, and `runs/llm1` degraded it steadily while deepening the notch
+  (mean `|S21|` 0.75 below 4 GHz at the best iteration).
 - Relax the wing symmetry constraint (independent `ro`/`alpha` per wing)
   for a harder, higher-dimensional optimization problem.
 - Multi-stage / asymmetric stubs to widen the 4–6 GHz stopband rejection.
-- Explicit passband constraint in `total_cost` (keep out-of-band `|S21|`
-  high while deepening the notch).
 - Optionally also export `.kicad_pcb` via `qucsrflayout -f .kicad_pcb`.

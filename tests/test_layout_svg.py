@@ -61,5 +61,80 @@ class QucsRflayoutExportTests(unittest.TestCase):
         self.assertIn('id="J1"', text)
 
 
+class MrstubPropertyOrderTests(unittest.TestCase):
+    """
+    Upstream qucsrflayout parses MRSTUB properties positionally as
+    (ri, ro, alpha, Wf); Qucs-S writes (ri, ro, Wf, alpha). Feeding the
+    Qucs-S order to a stock build makes it read the feed width as the sector
+    angle and collapse the fan to a sliver.
+    """
+
+    SCH_LINE = (
+        '  <MRSTUB MSW1 1 240 160 -30 20 0 0 "Subst1" 0 "0.3mm" 1 "8.0mm" 1 '
+        '"0.6mm" 1 "90.0" 1 "OldQucsNoCorrection" 0 "OldQucsModel" 0>'
+    )
+
+    def test_swap_moves_alpha_ahead_of_wf(self):
+        from qucs_sim import swap_mrstub_wf_alpha
+
+        out = swap_mrstub_wf_alpha(self.SCH_LINE)
+        self.assertIn('"8.0mm" 1 "90.0" 1 "0.6mm" 1', out)
+
+    def test_swap_is_its_own_inverse(self):
+        from qucs_sim import swap_mrstub_wf_alpha
+
+        self.assertEqual(
+            swap_mrstub_wf_alpha(swap_mrstub_wf_alpha(self.SCH_LINE)), self.SCH_LINE
+        )
+
+    def test_swap_leaves_other_components_alone(self):
+        from qucs_sim import swap_mrstub_wf_alpha
+
+        mlin = ('  <MLIN MLin 1 180 200 -26 15 0 0 "Subst1" 1 "0.6mm" 1 "3.0mm" 1 '
+                '"Hammerstad" 0 "Kirschning" 0 "26.85" 0 "DC" 0>')
+        self.assertEqual(swap_mrstub_wf_alpha(mlin), mlin)
+
+    def test_detects_collapsed_fan(self):
+        from qucs_sim import layout_fan_is_degenerate
+
+        sliver = '<path id="MSW1" d="M13.56 14.89 L13.56 10.16 L13.56 10.16 Z"/>'
+        self.assertTrue(layout_fan_is_degenerate(sliver))
+
+    def test_accepts_real_fan(self):
+        from qucs_sim import layout_fan_is_degenerate
+
+        fan = '<path id="MSW1" d="M13.69 14.94 L13.42 14.94 L10.27 11.41 L18.08 11.96 Z"/>'
+        self.assertFalse(layout_fan_is_degenerate(fan))
+
+    def test_missing_wing_counts_as_degenerate(self):
+        from qucs_sim import layout_fan_is_degenerate
+
+        self.assertTrue(layout_fan_is_degenerate("<svg></svg>"))
+
+
+@unittest.skipUnless(_has_layout_tools(), "qucs-s / qucsrflayout not available")
+class LayoutFanIntegrationTests(unittest.TestCase):
+    def test_exported_layout_has_a_real_fan(self):
+        from qucs_sim import (
+            export_netlist_from_sch,
+            layout_fan_is_degenerate,
+        )
+
+        sch = render_schematic(
+            dict(INITIAL_GUESS), f0_hz=5e9, sweep_start_hz=1e9,
+            sweep_stop_hz=10e9, sweep_points=21,
+        )
+        with tempfile.TemporaryDirectory() as td:
+            workdir = Path(td)
+            sch_path = workdir / "circuit.sch"
+            sch_path.write_text(sch)
+            net_path = export_netlist_from_sch(sch_path, workdir / "circuit.net")
+            svg_path = export_layout_svg(sch_path, net_path, workdir / "layout.svg")
+            text = svg_path.read_text()
+            leftovers = list(workdir.glob("*_layout_shim*"))
+        self.assertFalse(layout_fan_is_degenerate(text))
+        self.assertEqual(leftovers, [])
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -86,6 +86,7 @@ def resolve_qucsrflayout() -> str:
         _REPO_ROOT.parent / "third_party" / "Qucs-RFlayout" / "build" / "qucsrflayout",
         _REPO_ROOT / "third_party" / "Qucs-RFlayout" / "build" / "qucsrflayout",
         Path.home() / "opt" / "qucsrflayout" / "bin" / "qucsrflayout",
+        Path("/mnt/c/Users") / os.environ.get("USER", "") / "Downloads" / "qucsrflayout" / "bin" / "qucsrflayout.exe",
         "qucsrflayout",
     ]
     for c in candidates:
@@ -152,30 +153,49 @@ def export_netlist_from_sch(sch_path: Path, net_path: Path) -> Path:
     return net_path
 
 
-def export_layout_svg(sch_path: Path, net_path: Path, svg_path: Path) -> Path:
-    """
-    Export official RF layout SVG via qucsrflayout.
+_MRSTUB_PROPS_RE = re.compile(
+    r'(<MRSTUB \w+ [^"]*"Subst1" 0 )"([^"]+)" 1 "([^"]+)" 1 "([^"]+)" 1 "([^"]+)" 1 '
+)
 
-    Uses the already-exported netlist (`-n`) so Qucs is not re-invoked for
-    netlisting. Output is renamed to svg_path (tool writes <stem>.svg).
+
+def swap_mrstub_wf_alpha(sch_text: str) -> str:
     """
-    qrfl = resolve_qucsrflayout()
-    qucs_s = resolve_qucs_s()
-    out_dir = svg_path.parent
-    out_dir.mkdir(parents=True, exist_ok=True)
+    Rewrite MRSTUB property order from Qucs-S's (ri, ro, Wf, alpha) to the
+    (ri, ro, alpha, Wf) order upstream Qucs-RFlayout parses positionally.
+    """
+    def _swap(m: re.Match) -> str:
+        return (f'{m.group(1)}"{m.group(2)}" 1 "{m.group(3)}" 1 '
+                f'"{m.group(5)}" 1 "{m.group(4)}" 1 ')
+
+    return _MRSTUB_PROPS_RE.sub(_swap, sch_text)
+
+
+def layout_fan_is_degenerate(svg_text: str) -> bool:
+    """
+    True when the exported MSW1 wing collapsed to a zero-width line.
+
+    Upstream qucsrflayout reads MRSTUB properties positionally as
+    (ri, ro, alpha, Wf), so against a Qucs-S schematic it takes the feed
+    width (fractions of a mm) as the sector angle in degrees and draws a
+    sliver instead of a fan. Patched builds parse the Qucs-S order and are
+    unaffected, so this is a detection, not an unconditional rewrite.
+    """
+    m = re.search(r'id="MSW1" d="([^"]*)"', svg_text)
+    if not m:
+        return True
+    xs = [float(x) for x in re.findall(r"[ML]\s*(-?\d+(?:\.\d+)?)", m.group(1))]
+    return not xs or (max(xs) - min(xs)) < 1e-3
+
+
+def _run_qucsrflayout(sch_path: Path, net_path: Path, out_dir: Path) -> Path:
     result = subprocess.run(
         [
-            qrfl,
-            "-i",
-            str(sch_path),
-            "-n",
-            str(net_path),
-            "-q",
-            qucs_s,
-            "-o",
-            str(out_dir),
-            "-f",
-            ".svg",
+            resolve_qucsrflayout(),
+            "-i", str(sch_path),
+            "-n", str(net_path),
+            "-q", resolve_qucs_s(),
+            "-o", str(out_dir),
+            "-f", ".svg",
         ],
         capture_output=True,
         text=True,
@@ -187,6 +207,37 @@ def export_layout_svg(sch_path: Path, net_path: Path, svg_path: Path) -> Path:
             f"qucsrflayout failed (exit={result.returncode})\n"
             f"stdout:\n{result.stdout}\nstderr:\n{result.stderr}"
         )
+    return produced
+
+
+def export_layout_svg(sch_path: Path, net_path: Path, svg_path: Path) -> Path:
+    """
+    Export official RF layout SVG via qucsrflayout.
+
+    Uses the already-exported netlist (`-n`) so Qucs is not re-invoked for
+    netlisting. Output is renamed to svg_path (tool writes <stem>.svg).
+
+    If the tool draws a degenerate butterfly, the run is retried against a
+    layout-only copy of the schematic with MRSTUB properties reordered; see
+    layout_fan_is_degenerate for why.
+    """
+    out_dir = svg_path.parent
+    out_dir.mkdir(parents=True, exist_ok=True)
+    produced = _run_qucsrflayout(sch_path, net_path, out_dir)
+
+    if layout_fan_is_degenerate(produced.read_text()):
+        shim_path = out_dir / f"{sch_path.stem}_layout_shim.sch"
+        shim_path.write_text(swap_mrstub_wf_alpha(sch_path.read_text()))
+        try:
+            retried = _run_qucsrflayout(shim_path, net_path, out_dir)
+            if not layout_fan_is_degenerate(retried.read_text()):
+                produced.unlink(missing_ok=True)
+                produced = retried
+            else:
+                retried.unlink(missing_ok=True)
+        finally:
+            shim_path.unlink(missing_ok=True)
+
     if produced.resolve() != svg_path.resolve():
         produced.replace(svg_path)
     return svg_path
@@ -253,6 +304,7 @@ def simulate(
     sweep_stop_hz: float = 10e9,
     sweep_points: int = 181,
     workdir: Path | None = None,
+    export_layout: bool = True,
 ) -> SimResult:
     def _run(wd: Path) -> SimResult:
         wd.mkdir(parents=True, exist_ok=True)
@@ -265,7 +317,8 @@ def simulate(
             render_schematic(params, f0_hz, sweep_start_hz, sweep_stop_hz, sweep_points)
         )
         export_netlist_from_sch(sch_path, net_path)
-        export_layout_svg(sch_path, net_path, svg_path)
+        if export_layout:
+            export_layout_svg(sch_path, net_path, svg_path)
         run_qucsator(net_path, dat_path)
         return parse_dataset(dat_path)
 

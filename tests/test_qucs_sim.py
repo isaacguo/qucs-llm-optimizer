@@ -138,6 +138,18 @@ class SchematicPipelineTests(unittest.TestCase):
         self.assertGreater(cost, 0.05)
         self.assertLess(cost, 0.95)
 
+    def test_simulate_can_skip_layout_export_for_training(self):
+        with tempfile.TemporaryDirectory() as td:
+            workdir = Path(td)
+            res = simulate(
+                dict(INITIAL_GUESS),
+                workdir=workdir,
+                export_layout=False,
+            )
+            self.assertFalse((workdir / "layout.svg").exists())
+            self.assertEqual(len(res.freq_hz), 181)
+            self.assertEqual(len(res.s21), 181)
+
 
 if __name__ == "__main__":
     unittest.main()
