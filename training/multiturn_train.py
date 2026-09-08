@@ -49,6 +49,13 @@ DEFAULT_MODEL = "unsloth/Qwen3-1.7B-bnb-4bit"
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--model-name", default=DEFAULT_MODEL)
+    parser.add_argument(
+        "--max-seq-length",
+        type=int,
+        default=2048,
+        help="model context window; multi-turn history can exceed the 1024 "
+        "default used by Stage A, so this trainer defaults higher",
+    )
     parser.add_argument("--tasks-per-step", type=int, default=2)
     parser.add_argument("--generations", type=int, default=4, help="trajectories per goal (GRPO group size)")
     parser.add_argument("--max-turns", type=int, default=5)
@@ -136,6 +143,20 @@ def _turn_logprob_sum(model, tokenizer, prompt_messages, completion_text, device
     prompt_len = prompt_ids.shape[1]
     pred_logits = logits[:, prompt_len - 1 : -1, :]
     target_ids = full_ids[:, prompt_len:]
+    # Defensive guard: some backends (e.g. unsloth) silently truncate the
+    # forward pass when full_ids exceeds the model's configured
+    # max_seq_length, returning fewer logit positions than input tokens.
+    # Rather than let torch.gather crash the whole run, align to the
+    # shorter length (keep the *last* N completion tokens, since a left
+    # truncation drops the oldest context first) and skip the turn's
+    # gradient contribution if nothing usable is left.
+    n_pred, n_target = pred_logits.shape[1], target_ids.shape[1]
+    if n_pred != n_target:
+        n = min(n_pred, n_target)
+        if n == 0:
+            return torch.tensor(0.0, device=device)
+        pred_logits = pred_logits[:, -n:, :]
+        target_ids = target_ids[:, -n:]
     log_probs = torch.log_softmax(pred_logits.float(), dim=-1)
     token_logps = torch.gather(log_probs, 2, target_ids.unsqueeze(-1)).squeeze(-1)
     return token_logps.sum()
@@ -147,7 +168,9 @@ def train(args: argparse.Namespace) -> None:
     log_path = output_dir / "train.log"
     trajectories_path = output_dir / "trajectories.jsonl"
 
-    model, tokenizer = load_policy(ModelConfig(model_name=args.model_name))
+    model, tokenizer = load_policy(
+        ModelConfig(model_name=args.model_name, max_seq_length=args.max_seq_length)
+    )
     device = next(model.parameters()).device
     generate_fn = _make_generate_fn(model, tokenizer, args)
 
