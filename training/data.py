@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Callable
 
 from training.environment import SYSTEM_PROMPT, generate_task
+from training.goals import TRAIN_FREQ_RANGE_HZ
 
 
 def build_grpo_records(
@@ -14,12 +15,13 @@ def build_grpo_records(
     count: int,
     start_seed: int,
     max_iteration: int,
+    freq_range: tuple[float, float] = TRAIN_FREQ_RANGE_HZ,
     task_factory: Callable = generate_task,
 ) -> list[dict]:
     records = []
     for seed in range(start_seed, start_seed + count):
         iteration = random.Random(seed ^ 0x51A7).randint(0, max_iteration)
-        records.append(task_factory(seed, iteration))
+        records.append(task_factory(seed, iteration, freq_range=freq_range))
     return records
 
 
@@ -28,6 +30,7 @@ def build_grpo_dataset(
     count: int,
     start_seed: int = 1000,
     max_iteration: int = 12,
+    freq_range: tuple[float, float] = TRAIN_FREQ_RANGE_HZ,
 ):
     from datasets import Dataset
 
@@ -36,6 +39,7 @@ def build_grpo_dataset(
             count=count,
             start_seed=start_seed,
             max_iteration=max_iteration,
+            freq_range=freq_range,
         )
     )
 

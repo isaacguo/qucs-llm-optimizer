@@ -10,6 +10,7 @@ from typing import Callable
 
 from training.contracts import IntentParseError, parse_intent_completion
 from training.environment import run_transition
+from training.goals import goal_from_json
 
 
 def completion_text(completion: object) -> str:
@@ -80,11 +81,13 @@ def make_simulation_reward(
             baseline = json.loads(
                 _column_value(kwargs["baseline_cost_json"], index)
             )
+            goal = goal_from_json(_column_value(kwargs["goal_json"], index))
             result = transition(
                 params=params,
                 iteration=int(record["iteration"]) + 1,
                 baseline_total_cost=float(baseline["total_cost"]),
                 intent=parsed.intent,
+                goal=goal,
             )
             score = max(-20.0, min(20.0, float(result.delta_db)))
             record.update(
@@ -92,6 +95,7 @@ def make_simulation_reward(
                     "valid": True,
                     "intent": parsed.intent,
                     "reasoning": parsed.reasoning,
+                    "target_freq_hz": goal.target_freq_hz,
                     "old_db": result.old_db,
                     "new_db": result.new_db,
                     "delta_db": result.delta_db,

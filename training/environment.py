@@ -13,13 +13,15 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from cost import TARGET_NOTCH_HZ, evaluate, s21_db  # noqa: E402
+from cost import evaluate, s21_db  # noqa: E402
 from intent import BOUNDS, VARIABLES, apply_intent  # noqa: E402
 from qucs_sim import simulate  # noqa: E402
 
-TARGET_BAND_HZ = (4e9, 6e9)
+from training.goals import GoalSpec, TRAIN_FREQ_RANGE_HZ, sample_goal  # noqa: E402
 
 SYSTEM_PROMPT = """You control one step of a butterfly radial-stub optimizer.
+The notch target frequency changes every episode - read the Target line in
+the user message before choosing an intent; do not assume a fixed frequency.
 Use only qualitative intent; never output raw parameter values.
 Return exactly:
 <reasoning>At most three short evidence-based sentences.</reasoning>
@@ -64,6 +66,7 @@ def build_prompt(
     params: dict[str, float],
     cost: dict,
     iteration: int,
+    goal: GoalSpec,
 ) -> list[dict[str, str]]:
     param_lines = "\n".join(
         f"- {name}={params[name]:.4f}, bounds={BOUNDS[name]}"
@@ -71,7 +74,7 @@ def build_prompt(
     )
     user = f"""Choose the intent for iteration {iteration + 1} from the measured state after iteration {iteration}.
 
-Target: minimize |S21| at {cost.get('target_freq_hz', TARGET_NOTCH_HZ) / 1e9:.3f} GHz.
+Target: minimize |S21| at {goal.describe()}.
 Current |S21| at target: {cost['total_cost']:.8f} ({s21_db(cost['total_cost']):.3f} dB).
 Deepest notch: {cost['best_s21_mag']:.8f} ({s21_db(cost['best_s21_mag']):.3f} dB)
 at {cost['best_freq_hz'] / 1e9:.3f} GHz.
@@ -89,17 +92,21 @@ Select an intent that is likely to reduce |S21| at the target on the next simula
 def generate_task(
     seed: int,
     iteration: int = 0,
+    goal: GoalSpec | None = None,
+    freq_range: tuple[float, float] = TRAIN_FREQ_RANGE_HZ,
     simulator: Callable = simulate,
     evaluator: Callable = evaluate,
 ) -> dict:
+    goal = goal or sample_goal(seed, freq_range=freq_range)
     params = sample_params(seed)
     result = simulator(params, export_layout=False)
-    cost = evaluator(result, TARGET_BAND_HZ, target_hz=TARGET_NOTCH_HZ)
+    cost = evaluator(result, goal.band_hz, target_hz=goal.target_freq_hz)
     cost_data = _cost_dict(cost)
     return {
-        "prompt": build_prompt(params, cost_data, iteration),
+        "prompt": build_prompt(params, cost_data, iteration, goal),
         "params_json": json.dumps(params, sort_keys=True),
         "baseline_cost_json": json.dumps(cost_data, sort_keys=True),
+        "goal_json": goal.to_json(),
         "iteration": iteration,
         "seed": seed,
     }
@@ -110,12 +117,13 @@ def run_transition(
     iteration: int,
     baseline_total_cost: float,
     intent: dict[str, str],
+    goal: GoalSpec,
     simulator: Callable = simulate,
     evaluator: Callable = evaluate,
 ) -> TransitionResult:
     new_params = apply_intent(params, intent, iteration=iteration)
     result = simulator(new_params, export_layout=False)
-    cost = evaluator(result, TARGET_BAND_HZ, target_hz=TARGET_NOTCH_HZ)
+    cost = evaluator(result, goal.band_hz, target_hz=goal.target_freq_hz)
     old_db = s21_db(baseline_total_cost)
     new_db = s21_db(cost.total_cost)
     return TransitionResult(
@@ -125,4 +133,3 @@ def run_transition(
         delta_db=old_db - new_db,
         total_cost=cost.total_cost,
     )
-

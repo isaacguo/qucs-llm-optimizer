@@ -7,6 +7,7 @@ from pathlib import Path
 
 from training.data import build_grpo_dataset
 from training.environment import generate_task
+from training.goals import sample_goal
 from training.modeling import ModelConfig, load_policy
 from training.preflight import verify_runtime
 from training.rewards import (
@@ -24,6 +25,18 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--tasks", type=int, default=32)
     parser.add_argument("--start-seed", type=int, default=1000)
     parser.add_argument("--max-iteration", type=int, default=12)
+    parser.add_argument(
+        "--goal-freq-min-ghz",
+        type=float,
+        default=4.0,
+        help="lower bound of the randomized notch-target training distribution",
+    )
+    parser.add_argument(
+        "--goal-freq-max-ghz",
+        type=float,
+        default=6.0,
+        help="upper bound of the randomized notch-target training distribution",
+    )
     parser.add_argument("--steps", type=int, default=100)
     parser.add_argument("--generations", type=int, default=8)
     parser.add_argument("--sim-workers", type=int, default=2)
@@ -69,7 +82,9 @@ def grpo_config_kwargs(args: argparse.Namespace) -> dict:
 
 
 def _dry_run(args: argparse.Namespace) -> None:
-    task = generate_task(seed=args.start_seed, iteration=0)
+    freq_range = (args.goal_freq_min_ghz * 1e9, args.goal_freq_max_ghz * 1e9)
+    goal = sample_goal(args.start_seed, freq_range=freq_range)
+    task = generate_task(seed=args.start_seed, iteration=0, goal=goal)
     reward = make_simulation_reward(
         max_workers=1,
         log_path=Path(args.output_dir) / "rewards.jsonl",
@@ -82,10 +97,11 @@ def _dry_run(args: argparse.Namespace) -> None:
         completions=[completion],
         params_json=[task["params_json"]],
         baseline_cost_json=[task["baseline_cost_json"]],
+        goal_json=[task["goal_json"]],
         iteration=[task["iteration"]],
         seed=[task["seed"]],
     )[0]
-    print(json.dumps({"real_qucs_reward": score, "seed": task["seed"]}))
+    print(json.dumps({"real_qucs_reward": score, "seed": task["seed"], "goal": goal.describe()}))
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -102,6 +118,7 @@ def main(argv: list[str] | None = None) -> None:
         count=args.tasks,
         start_seed=args.start_seed,
         max_iteration=args.max_iteration,
+        freq_range=(args.goal_freq_min_ghz * 1e9, args.goal_freq_max_ghz * 1e9),
     )
     print(f"prepared {len(dataset)} real-Qucs task states")
 
