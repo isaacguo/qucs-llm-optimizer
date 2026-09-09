@@ -14,7 +14,7 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 from cost import evaluate, s21_db  # noqa: E402
-from intent import BOUNDS, VARIABLES, apply_intent  # noqa: E402
+from intent import BOUNDS, INITIAL_GUESS, VARIABLES, apply_intent  # noqa: E402
 from qucs_sim import simulate  # noqa: E402
 
 from training.goals import GoalSpec, TRAIN_FREQ_RANGE_HZ, sample_goal  # noqa: E402
@@ -54,12 +54,26 @@ def _cost_dict(cost: object) -> dict:
     return dict(vars(cost))
 
 
-def sample_params(seed: int) -> dict[str, float]:
+def sample_params(seed: int, spread: float = 1.0) -> dict[str, float]:
+    """Draw a random circuit.
+
+    ``spread=1`` is uniform over the full legal box (one-step GRPO). Values in
+    ``(0, 1)`` shrink the box around ``INITIAL_GUESS`` so multi-turn rollouts
+    do not start on already-excellent or pathological notches.
+    """
     rng = random.Random(seed)
-    return {
-        name: round(rng.uniform(*BOUNDS[name]), 4)
-        for name in VARIABLES
-    }
+    params: dict[str, float] = {}
+    for name in VARIABLES:
+        lo, hi = BOUNDS[name]
+        if spread >= 1.0:
+            value = rng.uniform(lo, hi)
+        else:
+            span = max(0.0, min(spread, 1.0))
+            half = 0.5 * span * (hi - lo)
+            center = INITIAL_GUESS[name]
+            value = rng.uniform(max(lo, center - half), min(hi, center + half))
+        params[name] = round(value, 4)
+    return params
 
 
 def build_prompt(

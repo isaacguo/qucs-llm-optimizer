@@ -45,9 +45,29 @@ class ParseIntentCompletionTests(unittest.TestCase):
         with self.assertRaisesRegex(IntentParseError, "at least one"):
             parse_intent_completion("{}")
 
-    def test_rejects_all_hold_action(self):
+    def test_rejects_all_hold_action_by_default(self):
         with self.assertRaisesRegex(IntentParseError, "all-hold"):
             parse_intent_completion('{"ro":"hold","alpha":"hold"}')
+
+    def test_all_hold_is_stop_when_allowed(self):
+        result = parse_intent_completion(
+            '{"ro":"hold","alpha":"hold"}', allow_stop=True
+        )
+        self.assertTrue(result.stop)
+        self.assertEqual(result.intent, {})
+
+    def test_action_stop_when_allowed(self):
+        result = parse_intent_completion(
+            "<reasoning>Notch is deep enough; further steps would undo it.</reasoning>"
+            '<intent>{"action":"stop"}</intent>',
+            allow_stop=True,
+        )
+        self.assertTrue(result.stop)
+        self.assertEqual(result.intent, {})
+
+    def test_action_stop_rejected_by_default(self):
+        with self.assertRaisesRegex(IntentParseError, "unknown variable|stop"):
+            parse_intent_completion('{"action":"stop"}')
 
     def test_rejects_more_than_two_active_variables(self):
         with self.assertRaisesRegex(IntentParseError, "at most two"):

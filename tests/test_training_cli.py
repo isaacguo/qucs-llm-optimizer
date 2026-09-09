@@ -5,6 +5,7 @@ import unittest
 
 from training.grpo import build_parser as build_grpo_parser
 from training.grpo import grpo_config_kwargs
+from training.multiturn_train import build_parser as build_multiturn_parser
 from training.probe import build_parser as build_probe_parser
 from training.sft import build_parser as build_sft_parser
 
@@ -48,6 +49,16 @@ class OtherCliTests(unittest.TestCase):
         args = build_sft_parser().parse_args([])
         self.assertEqual(args.epochs, 1)
         self.assertIn("runs/llm1/state.json", args.state)
+
+
+class MultiturnCliTests(unittest.TestCase):
+    def test_defaults_match_enhanced_training_setup(self):
+        args = build_multiturn_parser().parse_args([])
+        self.assertEqual(args.max_turns, 8)
+        self.assertEqual(args.patience, 3)
+        self.assertEqual(args.target_depth_db, -30.0)
+        self.assertEqual(args.generations, 4)
+        self.assertAlmostEqual(args.param_spread, 0.35)
 
 
 if __name__ == "__main__":

@@ -45,6 +45,7 @@ def band_for(target_freq_hz: float) -> tuple[float, float]:
 def sample_goal(
     seed: int,
     freq_range: tuple[float, float] = TRAIN_FREQ_RANGE_HZ,
+    target_depth_db: float = DEFAULT_TARGET_DEPTH_DB,
 ) -> GoalSpec:
     """Sample a training-distribution goal, staying clear of the held-out grid."""
     rng = random.Random(seed ^ 0x60A1)
@@ -52,12 +53,20 @@ def sample_goal(
     for _ in range(50):
         freq = rng.uniform(lo, hi)
         if all(abs(freq - h) >= _HELDOUT_EXCLUSION_HZ for h in HELDOUT_FREQS_HZ):
-            return GoalSpec(target_freq_hz=freq, band_hz=band_for(freq))
+            return GoalSpec(
+                target_freq_hz=freq,
+                band_hz=band_for(freq),
+                target_depth_db=target_depth_db,
+            )
     # Astronomically unlikely fallback: nudge away from the nearest held-out point
     # rather than raising, so a pathological freq_range can't crash a training run.
     nearest = min(HELDOUT_FREQS_HZ, key=lambda h: abs(h - rng.uniform(lo, hi)))
     freq = min(max(nearest - _HELDOUT_EXCLUSION_HZ, lo), hi)
-    return GoalSpec(target_freq_hz=freq, band_hz=band_for(freq))
+    return GoalSpec(
+        target_freq_hz=freq,
+        band_hz=band_for(freq),
+        target_depth_db=target_depth_db,
+    )
 
 
 def heldout_goals() -> list[GoalSpec]:

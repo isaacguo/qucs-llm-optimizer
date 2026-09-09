@@ -12,21 +12,14 @@ So this module implements the same on-policy update rule GRPO uses -
 generate a fresh batch with the *current* weights, score it, take one
 gradient step, throw the batch away - by hand:
 
-1. For each of ``tasks_per_step`` goals, roll out ``generations`` independent
-   trajectories with the current policy (``training.rollout.run_trajectory``).
-2. Compute a GRPO-style group-relative advantage per goal: reward normalized
-   against the mean/std of that goal's own ``generations`` trajectories.
-3. Flatten every turn of every trajectory into one training example, sharing
-   its trajectory's single advantage value (terminal-only reward, broadcast
-   across turns - whole-episode policy gradient credit assignment).
-4. Teacher-force a forward pass over (prompt + completion) to get the
-   completion's token log-probs under the *same* weights that generated it,
-   and take ``loss = -mean(advantage * sum(log_probs))``.
-
-Because the batch is generated and consumed in the same step (used for
-exactly one gradient update, then discarded), this is on-policy with no
-importance-sampling ratio needed - policy-gradient/REINFORCE with a
-group-normalized baseline, same spirit as GRPO's advantage estimator.
+1. For each of ``tasks_per_step`` goals, draw one shared initial circuit and
+   roll out ``generations`` independent trajectories from that same start
+   (``training.rollout.run_trajectory``).
+2. Score each trajectory with a mixed best-so-far / final dB reward, then
+   form GRPO group-relative advantages and add a per-turn reward-to-go term
+   so destroying steps are not reinforced as strongly as improving ones.
+3. Flatten every turn into one training example and take
+   ``loss = -mean(advantage * sum(log_probs))``.
 """
 from __future__ import annotations
 
@@ -36,12 +29,16 @@ import statistics
 import time
 from pathlib import Path
 
-import torch
-
-from training.goals import TRAIN_FREQ_RANGE_HZ, sample_goal
+from training.environment import sample_params
+from training.goals import sample_goal
 from training.modeling import ModelConfig, load_policy
 from training.preflight import verify_runtime
-from training.rollout import Trajectory, run_trajectory, trajectory_to_json
+from training.rollout import (
+    Trajectory,
+    run_trajectory,
+    shaped_turn_advantages,
+    trajectory_to_json,
+)
 
 DEFAULT_MODEL = "unsloth/Qwen3-1.7B-bnb-4bit"
 
@@ -58,7 +55,26 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--tasks-per-step", type=int, default=2)
     parser.add_argument("--generations", type=int, default=4, help="trajectories per goal (GRPO group size)")
-    parser.add_argument("--max-turns", type=int, default=5)
+    parser.add_argument("--max-turns", type=int, default=8)
+    parser.add_argument(
+        "--patience",
+        type=int,
+        default=3,
+        help="stop a trajectory after this many turns without a new best dB; 0 disables",
+    )
+    parser.add_argument("--patience-eps", type=float, default=0.2, help="dB improvement required to reset patience")
+    parser.add_argument(
+        "--target-depth-db",
+        type=float,
+        default=-30.0,
+        help="training goal_met threshold; keep -70 for evaluation only",
+    )
+    parser.add_argument(
+        "--param-spread",
+        type=float,
+        default=0.35,
+        help="fraction of each bound range sampled around INITIAL_GUESS",
+    )
     parser.add_argument("--history-window", type=int, default=8)
     parser.add_argument("--steps", type=int, default=5)
     parser.add_argument("--start-seed", type=int, default=5000)
@@ -87,18 +103,27 @@ def _canned_generate(_messages: list[dict[str, str]]) -> str:
 
 def _dry_run(args: argparse.Namespace) -> None:
     freq_range = (args.goal_freq_min_ghz * 1e9, args.goal_freq_max_ghz * 1e9)
-    goal = sample_goal(args.start_seed, freq_range=freq_range)
+    goal = sample_goal(
+        args.start_seed,
+        freq_range=freq_range,
+        target_depth_db=args.target_depth_db,
+    )
     traj = run_trajectory(
         _canned_generate,
         goal=goal,
         seed=args.start_seed,
         max_turns=args.max_turns,
         history_window=args.history_window,
+        patience=args.patience,
+        patience_eps=args.patience_eps,
+        param_spread=args.param_spread,
     )
     print(json.dumps(trajectory_to_json(traj), sort_keys=True))
 
 
 def _make_generate_fn(model, tokenizer, args: argparse.Namespace):
+    import torch
+
     device = next(model.parameters()).device
 
     def generate(messages: list[dict[str, str]]) -> str:
@@ -123,9 +148,11 @@ def _make_generate_fn(model, tokenizer, args: argparse.Namespace):
     return generate
 
 
-def _turn_logprob_sum(model, tokenizer, prompt_messages, completion_text, device) -> torch.Tensor:
+def _turn_logprob_sum(model, tokenizer, prompt_messages, completion_text, device):
     """Teacher-forced sum of log-probs the *current* weights assign to
     ``completion_text`` given ``prompt_messages``. Differentiable."""
+    import torch
+
     prompt_ids = tokenizer.apply_chat_template(
         prompt_messages, tokenize=True, add_generation_prompt=True, return_tensors="pt"
     ).to(device)
@@ -163,6 +190,8 @@ def _turn_logprob_sum(model, tokenizer, prompt_messages, completion_text, device
 
 
 def train(args: argparse.Namespace) -> None:
+    import torch
+
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     log_path = output_dir / "train.log"
@@ -186,11 +215,6 @@ def train(args: argparse.Namespace) -> None:
             fh.write(line + "\n")
 
     seed_cursor = args.start_seed
-    for step in range(1, args.steps + 1):
-        step_trajectories: list[Trajectory] = []
-        step_goal_groups: list[list[Trajectory]] = []
-
-    seed_cursor = args.start_seed
     total_trajectories = args.steps * args.tasks_per_step * args.generations
     trajectories_done = 0
     for step in range(1, args.steps + 1):
@@ -198,7 +222,12 @@ def train(args: argparse.Namespace) -> None:
         step_goal_groups: list[list[Trajectory]] = []
 
         for task_idx in range(args.tasks_per_step):
-            goal = sample_goal(seed_cursor, freq_range=freq_range)
+            goal = sample_goal(
+                seed_cursor,
+                freq_range=freq_range,
+                target_depth_db=args.target_depth_db,
+            )
+            shared_params = sample_params(seed_cursor, spread=args.param_spread)
             group: list[Trajectory] = []
             for gen_idx in range(args.generations):
                 turn_counter = {"n": 0}
@@ -229,9 +258,12 @@ def train(args: argparse.Namespace) -> None:
                     max_turns=args.max_turns,
                     history_window=args.history_window,
                     on_turn=_on_turn,
+                    initial_params=shared_params,
+                    patience=args.patience,
+                    patience_eps=args.patience_eps,
+                    param_spread=args.param_spread,
                 )
                 group.append(traj)
-                seed_cursor += 1
                 trajectories_done += 1
                 log(
                     "trajectory done: step %d task %d/%d gen %d/%d turns=%d "
@@ -249,6 +281,7 @@ def train(args: argparse.Namespace) -> None:
                         total_trajectories,
                     )
                 )
+            seed_cursor += 1
             step_goal_groups.append(group)
             step_trajectories.extend(group)
 
@@ -256,43 +289,29 @@ def train(args: argparse.Namespace) -> None:
             for traj in step_trajectories:
                 fh.write(json.dumps(trajectory_to_json(traj), sort_keys=True) + "\n")
 
-        # Group-relative advantage: normalize each trajectory's reward against
-        # the mean/std of the other trajectories sampled for the *same* goal.
-        advantages: dict[int, float] = {}
+        turn_advantages: dict[int, list[float]] = {}
         for group in step_goal_groups:
-            rewards = [t.reward for t in group]
-            mean_r = statistics.fmean(rewards)
-            std_r = statistics.pstdev(rewards) if len(rewards) > 1 else 0.0
-            for traj in group:
-                advantages[id(traj)] = (traj.reward - mean_r) / (std_r + 1e-4)
+            turn_advantages.update(shaped_turn_advantages(group))
 
-        # Count turns first so each turn's loss can be pre-scaled by 1/total_turns,
-        # then backward() one turn at a time. Accumulating one computation graph
-        # across all ~hundreds of turns (single backward() at the end) blew past
-        # 8GB VRAM; backward-per-turn keeps only one turn's activations alive at
-        # a time and gradients simply accumulate in .grad across calls - the sum
-        # of many small backwards is mathematically identical to one big one.
-        total_turns = sum(
-            len(traj.turns) for traj in step_trajectories if advantages[id(traj)] != 0.0
-        )
+        scored = [
+            (traj, turn, adv)
+            for traj in step_trajectories
+            for turn, adv in zip(traj.turns, turn_advantages[id(traj)])
+            if adv != 0.0
+        ]
+        total_turns = len(scored)
 
         optimizer.zero_grad()
         loss_sum = 0.0
         if total_turns > 0:
-            grad_turn_idx = 0
-            for traj in step_trajectories:
-                adv = advantages[id(traj)]
-                if adv == 0.0:
-                    continue
-                for turn in traj.turns:
-                    logp = _turn_logprob_sum(model, tokenizer, turn.prompt, turn.completion_text, device)
-                    turn_loss = (-adv * logp) / total_turns
-                    turn_loss.backward()
-                    loss_sum += turn_loss.detach().item()
-                    del logp, turn_loss
-                    grad_turn_idx += 1
-                    if grad_turn_idx % 20 == 0 or grad_turn_idx == total_turns:
-                        log(f"  gradient pass {grad_turn_idx}/{total_turns} turns backpropagated")
+            for grad_turn_idx, (traj, turn, adv) in enumerate(scored, start=1):
+                logp = _turn_logprob_sum(model, tokenizer, turn.prompt, turn.completion_text, device)
+                turn_loss = (-adv * logp) / total_turns
+                turn_loss.backward()
+                loss_sum += turn_loss.detach().item()
+                del logp, turn_loss
+                if grad_turn_idx % 20 == 0 or grad_turn_idx == total_turns:
+                    log(f"  gradient pass {grad_turn_idx}/{total_turns} turns backpropagated")
             torch.nn.utils.clip_grad_norm_(trainable_params, args.max_grad_norm)
             optimizer.step()
         loss_value = loss_sum
@@ -300,8 +319,11 @@ def train(args: argparse.Namespace) -> None:
         rewards_all = [t.reward for t in step_trajectories]
         turns_all = [t.num_turns for t in step_trajectories]
         met = sum(1 for t in step_trajectories if t.terminated_reason == "goal_met")
+        stopped = sum(1 for t in step_trajectories if t.terminated_reason == "stop")
+        patience_n = sum(1 for t in step_trajectories if t.terminated_reason == "patience")
         log(
-            "step %d/%d loss=%.5f reward_mean=%.3f reward_std=%.3f turns_mean=%.1f goal_met=%d/%d"
+            "step %d/%d loss=%.5f reward_mean=%.3f reward_std=%.3f "
+            "turns_mean=%.1f goal_met=%d/%d stop=%d patience=%d"
             % (
                 step,
                 args.steps,
@@ -311,6 +333,8 @@ def train(args: argparse.Namespace) -> None:
                 statistics.fmean(turns_all),
                 met,
                 len(step_trajectories),
+                stopped,
+                patience_n,
             )
         )
 

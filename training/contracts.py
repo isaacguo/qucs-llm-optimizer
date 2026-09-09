@@ -25,6 +25,7 @@ class IntentParseError(ValueError):
 class ParsedCompletion:
     reasoning: str
     intent: dict[str, str]
+    stop: bool = False
 
 
 def _extract_json(text: str) -> tuple[str, int, int]:
@@ -51,7 +52,14 @@ def _extract_json(text: str) -> tuple[str, int, int]:
     return candidates[-1]
 
 
-def parse_intent_completion(text: str) -> ParsedCompletion:
+def _reasoning_from(text: str, start: int) -> str:
+    reasoning_match = re.search(r"<reasoning>\s*(.*?)\s*</reasoning>", text, re.S)
+    if reasoning_match:
+        return reasoning_match.group(1).strip()
+    return text[:start].replace("```json", "").replace("```", "").strip()
+
+
+def parse_intent_completion(text: str, *, allow_stop: bool = False) -> ParsedCompletion:
     """Extract and validate one intent from tagged, fenced, or bare JSON."""
     raw_json, start, _ = _extract_json(text)
     try:
@@ -63,6 +71,9 @@ def parse_intent_completion(text: str) -> ParsedCompletion:
     if not value:
         raise IntentParseError("intent must contain at least one variable")
 
+    if allow_stop and str(value.get("action", "")).lower() == "stop":
+        return ParsedCompletion(reasoning=_reasoning_from(text, start), intent={}, stop=True)
+
     unknown = set(value) - VARIABLES
     if unknown:
         raise IntentParseError(f"unknown variable(s): {sorted(unknown)}")
@@ -72,17 +83,13 @@ def parse_intent_completion(text: str) -> ParsedCompletion:
 
     active = sum(token != "hold" for token in value.values())
     if active == 0:
+        if allow_stop:
+            return ParsedCompletion(
+                reasoning=_reasoning_from(text, start), intent={}, stop=True
+            )
         raise IntentParseError("all-hold intent cannot change the circuit")
     if active > 2:
         raise IntentParseError("intent may change at most two variables")
 
-    reasoning_match = re.search(
-        r"<reasoning>\s*(.*?)\s*</reasoning>", text, re.S
-    )
-    reasoning = (
-        reasoning_match.group(1).strip()
-        if reasoning_match
-        else text[:start].replace("```json", "").replace("```", "").strip()
-    )
-    return ParsedCompletion(reasoning=reasoning, intent=dict(value))
+    return ParsedCompletion(reasoning=_reasoning_from(text, start), intent=dict(value))
 
