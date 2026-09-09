@@ -12,6 +12,7 @@ from training.environment import (
     run_transition,
     sample_params,
 )
+from training.goals import GoalSpec
 
 
 class RandomTaskTests(unittest.TestCase):
@@ -41,6 +42,7 @@ class RandomTaskTests(unittest.TestCase):
             {"ri": 0.3, "ro": 8.0, "alpha": 90.0, "Wf": 0.6, "Lc": 3.0},
             cost,
             iteration=2,
+            goal=GoalSpec(5.5e9, (4.0e9, 6.0e9)),
         )
         joined = "\n".join(message["content"] for message in prompt)
         self.assertIn("5.500 GHz", joined)
@@ -87,6 +89,7 @@ class TransitionTests(unittest.TestCase):
             iteration=1,
             baseline_total_cost=0.1,
             intent={"ro": "decrease"},
+            goal=GoalSpec(5.5e9, (4.0e9, 6.0e9)),
             simulator=fake_simulator,
             evaluator=lambda *_args, **_kwargs: new_cost,
         )

@@ -53,6 +53,16 @@ class StaticRewardTests(unittest.TestCase):
 
 
 class SimulationRewardTests(unittest.TestCase):
+    def _goal_json(self) -> str:
+        return json.dumps(
+            {
+                "target_freq_hz": 5.5e9,
+                "band_hz": [4.0e9, 6.0e9],
+                "target_depth_db": -70.0,
+            },
+            sort_keys=True,
+        )
+
     def test_returns_real_delta_and_skips_invalid_completion(self):
         calls = []
 
@@ -71,10 +81,12 @@ class SimulationRewardTests(unittest.TestCase):
             {"ri": 0.3, "ro": 8.0, "alpha": 90.0, "Wf": 0.6, "Lc": 3.0}
         )
         baseline = json.dumps({"total_cost": 0.1})
+        goal = self._goal_json()
         scores = reward(
             completions=[VALID, "broken"],
             params_json=[params, params],
             baseline_cost_json=[baseline, baseline],
+            goal_json=[goal, goal],
             iteration=[1, 1],
             seed=[10, 10],
         )
@@ -99,6 +111,7 @@ class SimulationRewardTests(unittest.TestCase):
                 completions=[VALID],
                 params_json=[params],
                 baseline_cost_json=[baseline],
+                goal_json=[self._goal_json()],
                 iteration=[1],
                 seed=[1],
             ),
@@ -124,6 +137,7 @@ class SimulationRewardTests(unittest.TestCase):
                 completions=[VALID],
                 params_json=['{"ri":0.3,"ro":8,"alpha":90,"Wf":0.6,"Lc":3}'],
                 baseline_cost_json=['{"total_cost":0.1}'],
+                goal_json=[self._goal_json()],
                 iteration=[1],
                 seed=[7],
             )

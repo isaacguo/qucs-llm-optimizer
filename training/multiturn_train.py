@@ -26,19 +26,27 @@ from __future__ import annotations
 import argparse
 import json
 import statistics
+import sys
 import time
 from pathlib import Path
 
-from training.environment import sample_params
-from training.goals import sample_goal
-from training.modeling import ModelConfig, load_policy
-from training.preflight import verify_runtime
-from training.rollout import (
+ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / "src"
+if str(SRC) not in sys.path:
+    sys.path.insert(0, str(SRC))
+
+from decision_log import append_record  # noqa: E402
+from training.diagnostics import build_step_stats  # noqa: E402
+from training.goals import sample_goal  # noqa: E402
+from training.modeling import ModelConfig, load_policy  # noqa: E402
+from training.preflight import verify_runtime  # noqa: E402
+from training.rollout import (  # noqa: E402
     Trajectory,
     run_trajectory,
     shaped_turn_advantages,
     trajectory_to_json,
 )
+from training.starts import sample_params_with_headroom  # noqa: E402
 
 DEFAULT_MODEL = "unsloth/Qwen3-1.7B-bnb-4bit"
 
@@ -55,11 +63,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--tasks-per-step", type=int, default=2)
     parser.add_argument("--generations", type=int, default=4, help="trajectories per goal (GRPO group size)")
-    parser.add_argument("--max-turns", type=int, default=8)
+    parser.add_argument("--max-turns", type=int, default=15)
     parser.add_argument(
         "--patience",
         type=int,
-        default=3,
+        default=5,
         help="stop a trajectory after this many turns without a new best dB; 0 disables",
     )
     parser.add_argument("--patience-eps", type=float, default=0.2, help="dB improvement required to reset patience")
@@ -74,6 +82,12 @@ def build_parser() -> argparse.ArgumentParser:
         type=float,
         default=0.35,
         help="fraction of each bound range sampled around INITIAL_GUESS",
+    )
+    parser.add_argument(
+        "--min-start-headroom-db",
+        type=float,
+        default=5.0,
+        help="reject starts with initial_db <= target_depth_db + this margin",
     )
     parser.add_argument("--history-window", type=int, default=8)
     parser.add_argument("--steps", type=int, default=5)
@@ -196,6 +210,7 @@ def train(args: argparse.Namespace) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     log_path = output_dir / "train.log"
     trajectories_path = output_dir / "trajectories.jsonl"
+    completions_path = output_dir / "completions.jsonl"
 
     model, tokenizer = load_policy(
         ModelConfig(model_name=args.model_name, max_seq_length=args.max_seq_length)
@@ -220,6 +235,7 @@ def train(args: argparse.Namespace) -> None:
     for step in range(1, args.steps + 1):
         step_trajectories: list[Trajectory] = []
         step_goal_groups: list[list[Trajectory]] = []
+        step_resamples = 0
 
         for task_idx in range(args.tasks_per_step):
             goal = sample_goal(
@@ -227,12 +243,37 @@ def train(args: argparse.Namespace) -> None:
                 freq_range=freq_range,
                 target_depth_db=args.target_depth_db,
             )
-            shared_params = sample_params(seed_cursor, spread=args.param_spread)
+            shared_params, initial_db, seed_used, n_resamples = sample_params_with_headroom(
+                start_seed=seed_cursor,
+                goal=goal,
+                spread=args.param_spread,
+                headroom_db=args.min_start_headroom_db,
+            )
+            step_resamples += n_resamples
+            if n_resamples:
+                log(
+                    "  resampled start task %d/%d times=%d seed %d->%d initial_db=%.2f"
+                    % (
+                        task_idx + 1,
+                        args.tasks_per_step,
+                        n_resamples,
+                        seed_cursor,
+                        seed_used,
+                        initial_db,
+                    )
+                )
             group: list[Trajectory] = []
             for gen_idx in range(args.generations):
                 turn_counter = {"n": 0}
 
-                def _on_turn(turn, _task_idx=task_idx, _gen_idx=gen_idx, _counter=turn_counter):
+                def _on_turn(
+                    turn,
+                    _task_idx=task_idx,
+                    _gen_idx=gen_idx,
+                    _counter=turn_counter,
+                    _goal=goal,
+                    _seed=seed_used,
+                ):
                     _counter["n"] += 1
                     log(
                         "  rollout step %d task %d/%d gen %d/%d turn %d/%d "
@@ -250,11 +291,30 @@ def train(args: argparse.Namespace) -> None:
                             turn.db_after,
                         )
                     )
+                    append_record(
+                        completions_path,
+                        {
+                            "source": "multiturn",
+                            "step": step,
+                            "task": _task_idx + 1,
+                            "gen": _gen_idx + 1,
+                            "turn": turn.turn_index,
+                            "seed": _seed,
+                            "target_freq_hz": _goal.target_freq_hz,
+                            "prompt": turn.prompt,
+                            "completion": turn.completion_text,
+                            "valid": turn.valid,
+                            "intent": turn.intent,
+                            "stopped": turn.stopped,
+                            "db_before": turn.db_before,
+                            "db_after": turn.db_after,
+                        },
+                    )
 
                 traj = run_trajectory(
                     generate_fn,
                     goal=goal,
-                    seed=seed_cursor,
+                    seed=seed_used,
                     max_turns=args.max_turns,
                     history_window=args.history_window,
                     on_turn=_on_turn,
@@ -263,6 +323,24 @@ def train(args: argparse.Namespace) -> None:
                     patience_eps=args.patience_eps,
                     param_spread=args.param_spread,
                 )
+                if traj.turns:
+                    append_record(
+                        completions_path,
+                        {
+                            "source": "multiturn",
+                            "event": "trajectory_end",
+                            "step": step,
+                            "task": task_idx + 1,
+                            "gen": gen_idx + 1,
+                            "seed": seed_used,
+                            "target_freq_hz": goal.target_freq_hz,
+                            "terminated_reason": traj.terminated_reason,
+                            "trajectory_reward": traj.reward,
+                            "initial_db": traj.initial_db,
+                            "best_db": traj.best_db,
+                            "num_turns": traj.num_turns,
+                        },
+                    )
                 group.append(traj)
                 trajectories_done += 1
                 log(
@@ -281,7 +359,7 @@ def train(args: argparse.Namespace) -> None:
                         total_trajectories,
                     )
                 )
-            seed_cursor += 1
+            seed_cursor = max(seed_cursor + 1, seed_used + 1)
             step_goal_groups.append(group)
             step_trajectories.extend(group)
 
@@ -292,6 +370,11 @@ def train(args: argparse.Namespace) -> None:
         turn_advantages: dict[int, list[float]] = {}
         for group in step_goal_groups:
             turn_advantages.update(shaped_turn_advantages(group))
+
+        stats = build_step_stats(
+            step_goal_groups, turn_advantages, n_resampled_starts=step_resamples
+        )
+        log("step_stats=" + json.dumps(stats, sort_keys=True))
 
         scored = [
             (traj, turn, adv)

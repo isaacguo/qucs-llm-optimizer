@@ -27,6 +27,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 
 from cost import TARGET_DEPTH_DB, TARGET_NOTCH_HZ, TARGET_S21_MAG, evaluate, s21_db
+from decision_log import append_record, format_agent_completion
 from intent import BOUNDS, INITIAL_GUESS, VARIABLES, apply_intent
 from qucs_sim import simulate
 from report_html import write_report
@@ -113,6 +114,23 @@ def cmd_init(args):
         thinking=_read_thinking(args),
         observation=None,
     )
+    thinking = _read_thinking(args)
+    if thinking:
+        append_record(
+            run_dir / "completions.jsonl",
+            {
+                "source": "agent",
+                "run": args.run,
+                "iteration": it,
+                "prompt": "init baseline (no prior observation)",
+                "completion": format_agent_completion(thinking, None),
+                "valid": True,
+                "intent": None,
+                "stopped": False,
+                "db_before": None,
+                "db_after": s21_db(cost["total_cost"]),
+            },
+        )
     _print_report(state.history[it])
 
 
@@ -136,13 +154,29 @@ def cmd_step(args):
     new_params = apply_intent(state.params, intent, iteration=new_iteration)
     res = simulate(new_params, workdir=run_dir / f"iter_{new_iteration:03d}")
     cost = asdict(evaluate(res, TARGET_BAND_HZ, target_hz=TARGET_NOTCH_HZ))
+    thinking = _read_thinking(args)
     it = state.record(
         new_params,
         cost,
         intent=intent,
         note=args.note or "",
-        thinking=_read_thinking(args),
+        thinking=thinking,
         observation=observation,
+    )
+    append_record(
+        run_dir / "completions.jsonl",
+        {
+            "source": "agent",
+            "run": args.run,
+            "iteration": it,
+            "prompt": observation["report_text"],
+            "completion": format_agent_completion(thinking, intent),
+            "valid": True,
+            "intent": intent,
+            "stopped": False,
+            "db_before": s21_db(prev_entry["cost"]["total_cost"]),
+            "db_after": s21_db(cost["total_cost"]),
+        },
     )
     _print_report(state.history[it])
 

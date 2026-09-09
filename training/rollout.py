@@ -34,9 +34,11 @@ from training.contracts import IntentParseError, parse_intent_completion  # noqa
 from training.environment import sample_params  # noqa: E402
 from training.goals import GoalSpec  # noqa: E402
 
-REWARD_CLIP = 40.0
+REWARD_CLIP = 20.0
 BEST_WEIGHT = 0.7
 FINAL_WEIGHT = 0.3
+STOP_BONUS = 1.0
+STOP_BONUS_IMPROVE_EPS = 0.2
 
 SYSTEM_PROMPT = """You control a butterfly radial-stub optimizer across several turns.
 This is one continuous optimization run: your own past decisions and their
@@ -391,9 +393,15 @@ def run_trajectory(
     traj.best_db = min(initial_db, best_db, current_db)
     if traj.turns:
         traj.best_db = min(initial_db, min(t.db_after for t in traj.turns))
-    traj.reward = mixed_terminal_reward(
+    reward = mixed_terminal_reward(
         initial_db, traj.best_db, current_db, clip=reward_clip
     )
+    if (
+        traj.terminated_reason == "stop"
+        and traj.best_db < initial_db - STOP_BONUS_IMPROVE_EPS
+    ):
+        reward = clip_db_reward(reward + STOP_BONUS, reward_clip)
+    traj.reward = reward
     return traj
 
 

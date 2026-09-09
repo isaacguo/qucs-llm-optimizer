@@ -6,6 +6,7 @@ import unittest
 from training.environment import sample_params
 from training.goals import DEFAULT_TARGET_DEPTH_DB, GoalSpec, sample_goal
 from training.rollout import (
+    REWARD_CLIP,
     mixed_terminal_reward,
     run_trajectory,
     shaped_turn_advantages,
@@ -49,6 +50,9 @@ class GoalAndParamSamplingTests(unittest.TestCase):
 
 
 class RewardMathTests(unittest.TestCase):
+    def test_default_reward_clip_is_twenty(self):
+        self.assertEqual(REWARD_CLIP, 20.0)
+
     def test_mixed_reward_prefers_best_over_collapsed_final(self):
         # init -10, best -60, final -2: old terminal reward is negative; mixed stays positive
         mixed = mixed_terminal_reward(-10.0, -60.0, -2.0, clip=40.0)
@@ -56,6 +60,10 @@ class RewardMathTests(unittest.TestCase):
         self.assertGreater(mixed, 0.0)
         self.assertLess(terminal_only, 0.0)
         self.assertAlmostEqual(mixed, 0.7 * 40.0 + 0.3 * (-8.0))
+
+    def test_default_clip_caps_at_twenty(self):
+        mixed = mixed_terminal_reward(-10.0, -60.0, -60.0)
+        self.assertAlmostEqual(mixed, 20.0)
 
 
 class RolloutBehaviourTests(unittest.TestCase):
@@ -132,6 +140,35 @@ class RolloutBehaviourTests(unittest.TestCase):
         self.assertEqual(traj.terminated_reason, "stop")
         self.assertTrue(traj.turns[-1].stopped)
         self.assertGreater(traj.num_turns, 1)
+
+    def test_legal_stop_with_improvement_gets_bonus(self):
+        completions = [
+            '<intent>{"ro":"decrease_strong"}</intent>',
+            '<intent>{"ro":"increase_strong"}</intent>',
+            '<intent>{"action":"stop"}</intent>',
+        ]
+
+        def generate(_messages):
+            return completions.pop(0)
+
+        traj = self._run(
+            generate,
+            max_turns=8,
+            patience=10,
+            db_by_ro={8.0: -10.0, 6.0: -20.0, 5.0: -22.0, 9.0: -8.0},
+        )
+        self.assertEqual(traj.terminated_reason, "stop")
+        base = mixed_terminal_reward(traj.initial_db, traj.best_db, traj.turns[-1].db_after)
+        self.assertAlmostEqual(traj.reward, min(REWARD_CLIP, base + 1.0), places=3)
+
+    def test_stop_without_real_gain_gets_no_bonus(self):
+        def generate(_messages):
+            return '<intent>{"action":"stop"}</intent>'
+
+        traj = self._run(generate, max_turns=4, patience=10, db_by_ro={8.0: -32.0})
+        self.assertEqual(traj.terminated_reason, "stop")
+        base = mixed_terminal_reward(traj.initial_db, traj.best_db, traj.turns[-1].db_after)
+        self.assertAlmostEqual(traj.reward, base, places=3)
 
     def test_first_turn_stop_ok_if_already_at_goal(self):
         def generate(_messages):

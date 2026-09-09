@@ -11,11 +11,12 @@ from training.data import build_grpo_records, load_sft_records
 
 class GrpoDataTests(unittest.TestCase):
     def test_builds_seeded_records_with_reward_columns(self):
-        def fake_task(seed, iteration):
+        def fake_task(seed, iteration, freq_range=None, **_kwargs):
             return {
                 "prompt": [{"role": "user", "content": f"seed {seed}"}],
                 "params_json": "{}",
                 "baseline_cost_json": '{"total_cost": 0.1}',
+                "goal_json": '{"target_freq_hz": 5.5e9, "band_hz": [4e9, 6e9], "target_depth_db": -70.0}',
                 "iteration": iteration,
                 "seed": seed,
             }
@@ -34,6 +35,7 @@ class GrpoDataTests(unittest.TestCase):
                 "prompt",
                 "params_json",
                 "baseline_cost_json",
+                "goal_json",
                 "iteration",
                 "seed",
             },

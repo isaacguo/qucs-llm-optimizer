@@ -54,11 +54,12 @@ class OtherCliTests(unittest.TestCase):
 class MultiturnCliTests(unittest.TestCase):
     def test_defaults_match_enhanced_training_setup(self):
         args = build_multiturn_parser().parse_args([])
-        self.assertEqual(args.max_turns, 8)
-        self.assertEqual(args.patience, 3)
+        self.assertEqual(args.max_turns, 15)
+        self.assertEqual(args.patience, 5)
         self.assertEqual(args.target_depth_db, -30.0)
         self.assertEqual(args.generations, 4)
         self.assertAlmostEqual(args.param_spread, 0.35)
+        self.assertAlmostEqual(args.min_start_headroom_db, 5.0)
 
 
 if __name__ == "__main__":
