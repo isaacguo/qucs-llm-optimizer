@@ -64,6 +64,11 @@ def main(argv: list[str] | None = None) -> None:
         action="store_true",
         help="only locate binaries under --dir/squashfs-root",
     )
+    parser.add_argument(
+        "--no-xvfb",
+        action="store_true",
+        help="do not start Xvfb / set DISPLAY (local GUI machines)",
+    )
     args = parser.parse_args(argv)
     work = Path(args.dir).resolve()
     if args.skip_download:
@@ -72,10 +77,12 @@ def main(argv: list[str] | None = None) -> None:
         appimage = download(args.url, work / Path(args.url).name)
         squash = extract_appimage(appimage, work)
     binaries = find_qucs_binaries(squash)
-    mapping = apply_qucs_env(binaries)
+    if args.no_xvfb:
+        mapping = apply_qucs_env(binaries)
+    else:
+        mapping = apply_qucs_env(binaries, extract_root=squash)
     for key, value in mapping.items():
         print(f"export {key}={value}")
-    # Smoke: binaries respond to -h / --help or at least exist and execute.
     for key, path in binaries.items():
         print(f"ok {key}: {path} exists={path.exists()} exec={os.access(path, os.X_OK)}")
 

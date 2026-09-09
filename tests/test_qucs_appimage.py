@@ -6,8 +6,15 @@ import stat
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
-from scripts.qucs_appimage import apply_qucs_env, find_named_binary, find_qucs_binaries
+from scripts.qucs_appimage import (
+    apply_qucs_env,
+    find_named_binary,
+    find_qt_plugins_dir,
+    find_qucs_binaries,
+    prepare_appimage_runtime,
+)
 
 
 def _touch_exec(path: Path) -> None:
@@ -36,6 +43,29 @@ class QucsAppImageFindTests(unittest.TestCase):
             found = find_qucs_binaries(root)
             self.assertEqual(found["QUCS_S"].name, "qucs-s")
             self.assertEqual(found["QUCSATOR_RF"].name, "qucsator_rf")
+
+    def test_find_qt_plugins_dir(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            plugin = root / "usr" / "plugins" / "platforms" / "libqxcb.so"
+            plugin.parent.mkdir(parents=True)
+            plugin.write_text("")
+            self.assertEqual(find_qt_plugins_dir(root), root / "usr" / "plugins")
+
+    def test_prepare_appimage_runtime_uses_xcb_not_offscreen(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "usr" / "lib").mkdir(parents=True)
+            plugin = root / "usr" / "plugins" / "platforms" / "libqxcb.so"
+            plugin.parent.mkdir(parents=True)
+            plugin.write_text("")
+            with mock.patch(
+                "scripts.qucs_appimage.ensure_virtual_display", return_value=":99"
+            ):
+                updates = prepare_appimage_runtime(root)
+            self.assertEqual(updates["QT_QPA_PLATFORM"], "xcb")
+            self.assertEqual(updates["DISPLAY"], ":99")
+            self.assertIn(str(root / "usr" / "lib"), updates["LD_LIBRARY_PATH"])
 
     def test_apply_qucs_env_sets_process_environment(self):
         with tempfile.TemporaryDirectory() as tmp:
