@@ -6,3 +6,4 @@ outputs/
 .cache/
 *.egg-info/
 unsloth_compiled_cache/
+corpus/index.jsonl
