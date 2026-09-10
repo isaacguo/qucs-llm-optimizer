@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 
 from training.data import load_sft_records
-from training.modeling import ModelConfig, load_policy
+from training.modeling import ModelConfig, load_policy, mixed_precision_config
 from training.preflight import verify_runtime
 
 DEFAULT_MODEL = "unsloth/Qwen3-1.7B-bnb-4bit"
@@ -67,8 +67,7 @@ def main(argv: list[str] | None = None) -> None:
         max_length=1024,
         dataset_text_field="text",
         report_to="none",
-        bf16=True,
-        fp16=False,
+        **mixed_precision_config(),
     )
     trainer = SFTTrainer(
         model=model,

@@ -83,5 +83,25 @@ class StepStatsTests(unittest.TestCase):
         self.assertGreater(stats["wg_range_mean"], 0.0)
 
 
+class LoraSnapshotTests(unittest.TestCase):
+    def test_snapshot_restores_current_lora_after_context(self):
+        import torch
+        from torch import nn
+
+        from training.multiturn_train import _snapshot_lora, _use_lora_snapshot
+
+        class Toy(nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.lora_A = nn.Parameter(torch.tensor([1.0, 2.0]))
+
+        model = Toy()
+        snap = _snapshot_lora(model)
+        model.lora_A.data.add_(10.0)
+        with _use_lora_snapshot(model, snap):
+            self.assertEqual(model.lora_A.tolist(), [1.0, 2.0])
+        self.assertEqual(model.lora_A.tolist(), [11.0, 12.0])
+
+
 if __name__ == "__main__":
     unittest.main()

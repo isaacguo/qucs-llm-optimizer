@@ -195,6 +195,48 @@ uv run qucs-grpo \
   --resume-from-checkpoint outputs/grpo-qwen3-1.7b/checkpoint-25
 ```
 
+### Google Colab from VS Code
+
+VS Code's remote Jupyter connection sends notebook cells to the Colab kernel;
+it does not mount the local checkout or copy Linux executables into the Colab
+VM. Clone or upload this repository into `/content`, select a GPU runtime, and
+run the repository bootstrap from a notebook cell:
+
+```python
+!git clone <repo-url> /content/qucs-llm-optimizer
+%cd /content/qucs-llm-optimizer
+!bash scripts/setup_colab.sh
+```
+
+The bootstrap installs the pinned Python 3.12 environment with `uv`, extracts
+the pinned Qucs-S AppImage without FUSE, exposes `qucs-s` and `qucsator_rf` in
+headless mode, and executes `qucs-grpo --dry-run` against the real simulator.
+The training reward path needs both binaries because every baseline and
+candidate circuit is netlisted by `qucs-s` and simulated by `qucsator_rf`.
+The training path does not need `qucsrflayout`, because reward simulations set
+`export_layout=False`.
+
+Start a small smoke run before committing a full Colab session:
+
+```python
+!source .env.colab && uv run qucs-grpo --tasks 2 --steps 1 --generations 2 \
+    --sim-workers 2 --output-dir outputs/colab-smoke
+```
+
+Then start the normal run and stream its log:
+
+```python
+!mkdir -p outputs/logs
+!source .env.colab && uv run qucs-grpo --output-dir outputs/colab-grpo \
+    2>&1 | tee outputs/logs/colab-grpo.log
+```
+
+Colab VMs are ephemeral. Store completed adapters elsewhere or use an output
+directory under a mounted Google Drive when checkpoint durability matters.
+Writing every checkpoint directly to Drive is more durable but usually slower
+than local `/content` storage. The training configuration selects BF16 on GPUs
+that support it and falls back to FP16 on GPUs such as T4.
+
 SFT is present but deliberately optional. The command below performs one
 shallow epoch over the 11 usable decision records in `runs/llm1/state.json`:
 

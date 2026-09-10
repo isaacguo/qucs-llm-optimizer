@@ -28,6 +28,7 @@ import json
 import statistics
 import sys
 import time
+from contextlib import contextmanager
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -101,6 +102,34 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--save-every", type=int, default=5)
     parser.add_argument("--output-dir", default="outputs/multiturn-grpo-demo")
     parser.add_argument(
+        "--resume-adapter",
+        default="",
+        help=(
+            "load a previously saved LoRA (checkpoint-* or final_lora) before "
+            "the first rollout, then keep training; omit to start from a fresh "
+            "random LoRA on the base model"
+        ),
+    )
+    parser.add_argument(
+        "--beta",
+        type=float,
+        default=0.0,
+        help=(
+            "KL coefficient in turn_loss = (-A * logp + beta * (logp - logp_ref)) "
+            "/ N; 0 disables the extra ref forward. Stage-A GRPO uses 0.01"
+        ),
+    )
+    parser.add_argument(
+        "--kl-ref",
+        choices=("start", "base"),
+        default="start",
+        help=(
+            "KL reference policy: 'start' freezes LoRA weights from the beginning "
+            "of this run (the resume adapter, or the fresh LoRA if not resuming); "
+            "'base' uses the 4-bit backbone with adapters disabled"
+        ),
+    )
+    parser.add_argument(
         "--dry-run",
         action="store_true",
         help="run one trajectory with a canned completion, no model load",
@@ -162,6 +191,65 @@ def _make_generate_fn(model, tokenizer, args: argparse.Namespace):
     return generate
 
 
+def _load_trainable_adapter(model, adapter_path: str) -> None:
+    """Replace the freshly initialized LoRA with a saved adapter and keep it trainable.
+
+    ``load_policy`` always calls ``get_peft_model``, which starts from random B=0
+    LoRA. Eval already uses ``load_adapter`` for inference; continued GRPO needs
+    the same weights with ``requires_grad`` left on. Saved ``adapter_config.json``
+    often has ``inference_mode: true``, so we pass ``is_trainable=True`` when the
+    PEFT API accepts it.
+    """
+    path = Path(adapter_path)
+    weights = path / "adapter_model.safetensors"
+    if not weights.is_file():
+        raise FileNotFoundError(f"no adapter_model.safetensors under {path}")
+    try:
+        model.load_adapter(str(path), adapter_name="default", is_trainable=True)
+    except (TypeError, ValueError):
+        from safetensors.torch import load_file
+
+        state = load_file(str(weights))
+        model.load_state_dict(state, strict=False)
+    if hasattr(model, "set_adapter"):
+        model.set_adapter("default")
+    model.train()
+    for name, param in model.named_parameters():
+        if "lora_" in name:
+            param.requires_grad = True
+
+
+def _snapshot_lora(model) -> dict:
+    return {n: p.detach().clone() for n, p in model.named_parameters() if "lora_" in n}
+
+
+@contextmanager
+def _use_lora_snapshot(model, snapshot: dict):
+    if not snapshot:
+        yield
+        return
+    backup = {n: p.detach().clone() for n, p in model.named_parameters() if n in snapshot}
+    try:
+        for n, p in model.named_parameters():
+            if n in snapshot:
+                p.data.copy_(snapshot[n])
+        yield
+    finally:
+        for n, p in model.named_parameters():
+            if n in backup:
+                p.data.copy_(backup[n])
+
+
+@contextmanager
+def _kl_ref_context(model, kl_ref: str, start_lora: dict):
+    if kl_ref == "base" and hasattr(model, "disable_adapter"):
+        with model.disable_adapter():
+            yield
+        return
+    with _use_lora_snapshot(model, start_lora):
+        yield
+
+
 def _turn_logprob_sum(model, tokenizer, prompt_messages, completion_text, device):
     """Teacher-forced sum of log-probs the *current* weights assign to
     ``completion_text`` given ``prompt_messages``. Differentiable."""
@@ -215,6 +303,8 @@ def train(args: argparse.Namespace) -> None:
     model, tokenizer = load_policy(
         ModelConfig(model_name=args.model_name, max_seq_length=args.max_seq_length)
     )
+    if args.resume_adapter:
+        _load_trainable_adapter(model, args.resume_adapter)
     device = next(model.parameters()).device
     generate_fn = _make_generate_fn(model, tokenizer, args)
 
@@ -232,6 +322,14 @@ def train(args: argparse.Namespace) -> None:
     seed_cursor = args.start_seed
     total_trajectories = args.steps * args.tasks_per_step * args.generations
     trajectories_done = 0
+    start_lora = _snapshot_lora(model) if args.beta > 0 and args.kl_ref == "start" else {}
+    if args.resume_adapter:
+        log(
+            f"resuming LoRA from {args.resume_adapter} start_seed={args.start_seed} "
+            f"beta={args.beta} kl_ref={args.kl_ref}"
+        )
+    elif args.beta > 0:
+        log(f"KL enabled beta={args.beta} kl_ref={args.kl_ref}")
     for step in range(1, args.steps + 1):
         step_trajectories: list[Trajectory] = []
         step_goal_groups: list[list[Trajectory]] = []
@@ -386,10 +484,22 @@ def train(args: argparse.Namespace) -> None:
 
         optimizer.zero_grad()
         loss_sum = 0.0
+        kl_sum = 0.0
         if total_turns > 0:
             for grad_turn_idx, (traj, turn, adv) in enumerate(scored, start=1):
                 logp = _turn_logprob_sum(model, tokenizer, turn.prompt, turn.completion_text, device)
-                turn_loss = (-adv * logp) / total_turns
+                if args.beta > 0:
+                    with torch.no_grad():
+                        with _kl_ref_context(model, args.kl_ref, start_lora):
+                            logp_ref = _turn_logprob_sum(
+                                model, tokenizer, turn.prompt, turn.completion_text, device
+                            )
+                    kl = logp - logp_ref.detach()
+                    turn_loss = (-adv * logp + args.beta * kl) / total_turns
+                    kl_sum += kl.detach().item()
+                    del logp_ref, kl
+                else:
+                    turn_loss = (-adv * logp) / total_turns
                 turn_loss.backward()
                 loss_sum += turn_loss.detach().item()
                 del logp, turn_loss
@@ -404,9 +514,10 @@ def train(args: argparse.Namespace) -> None:
         met = sum(1 for t in step_trajectories if t.terminated_reason == "goal_met")
         stopped = sum(1 for t in step_trajectories if t.terminated_reason == "stop")
         patience_n = sum(1 for t in step_trajectories if t.terminated_reason == "patience")
+        kl_mean = (kl_sum / total_turns) if total_turns and args.beta > 0 else 0.0
         log(
             "step %d/%d loss=%.5f reward_mean=%.3f reward_std=%.3f "
-            "turns_mean=%.1f goal_met=%d/%d stop=%d patience=%d"
+            "turns_mean=%.1f goal_met=%d/%d stop=%d patience=%d kl_mean=%.5f"
             % (
                 step,
                 args.steps,
@@ -418,6 +529,7 @@ def train(args: argparse.Namespace) -> None:
                 len(step_trajectories),
                 stopped,
                 patience_n,
+                kl_mean,
             )
         )
 

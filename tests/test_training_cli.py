@@ -60,6 +60,21 @@ class MultiturnCliTests(unittest.TestCase):
         self.assertEqual(args.generations, 4)
         self.assertAlmostEqual(args.param_spread, 0.35)
         self.assertAlmostEqual(args.min_start_headroom_db, 5.0)
+        self.assertEqual(args.resume_adapter, "")
+        self.assertEqual(args.beta, 0.0)
+        self.assertEqual(args.kl_ref, "start")
+
+    def test_accepts_resume_adapter_path(self):
+        args = build_multiturn_parser().parse_args(
+            ["--resume-adapter", "outputs/run/checkpoint-60", "--start-seed", "5240"]
+        )
+        self.assertEqual(args.resume_adapter, "outputs/run/checkpoint-60")
+        self.assertEqual(args.start_seed, 5240)
+
+    def test_accepts_kl_beta_and_ref(self):
+        args = build_multiturn_parser().parse_args(["--beta", "0.01", "--kl-ref", "base"])
+        self.assertAlmostEqual(args.beta, 0.01)
+        self.assertEqual(args.kl_ref, "base")
 
 
 if __name__ == "__main__":

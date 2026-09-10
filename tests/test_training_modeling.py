@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import unittest
 
-from training.modeling import ModelConfig, load_policy
+from training.modeling import ModelConfig, load_policy, mixed_precision_config
 
 
 class FakeBackend:
@@ -21,7 +21,33 @@ class FakeBackend:
         return f"peft:{model}"
 
 
+class FakeCuda:
+    def __init__(self, supports_bf16: bool):
+        self.supports_bf16 = supports_bf16
+
+    def is_available(self):
+        return True
+
+    def is_bf16_supported(self):
+        return self.supports_bf16
+
+
+class FakeTorch:
+    def __init__(self, supports_bf16: bool):
+        self.cuda = FakeCuda(supports_bf16)
+
+
 class ModelSetupTests(unittest.TestCase):
+    def test_mixed_precision_tracks_gpu_bf16_support(self):
+        self.assertEqual(
+            mixed_precision_config(FakeTorch(supports_bf16=True)),
+            {"bf16": True, "fp16": False},
+        )
+        self.assertEqual(
+            mixed_precision_config(FakeTorch(supports_bf16=False)),
+            {"bf16": False, "fp16": True},
+        )
+
     def test_defaults_target_qwen3_1_7b_on_eight_gb_profile(self):
         config = ModelConfig()
         self.assertEqual(config.model_name, "unsloth/Qwen3-1.7B-bnb-4bit")

@@ -44,7 +44,14 @@ def _generate(model, tokenizer, prompt: list[dict], max_new_tokens: int = 256) -
 
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--adapter", required=True, help="path to a saved LoRA adapter")
+    parser.add_argument(
+        "--adapter",
+        default=None,
+        help=(
+            "path to a saved LoRA adapter; omit to evaluate the raw, untrained "
+            "base model as a baseline"
+        ),
+    )
     parser.add_argument("--model-name", default="unsloth/Qwen3-1.7B-bnb-4bit")
     parser.add_argument("--samples-per-goal", type=int, default=3)
     parser.add_argument("--start-seed", type=int, default=9000)
@@ -52,7 +59,8 @@ def main(argv: list[str] | None = None) -> None:
     args = parser.parse_args(argv)
 
     model, tokenizer = load_policy(ModelConfig(model_name=args.model_name))
-    model.load_adapter(args.adapter, adapter_name="default")
+    if args.adapter:
+        model.load_adapter(args.adapter, adapter_name="default")
 
     results = []
     seed = args.start_seed
@@ -90,6 +98,7 @@ def main(argv: list[str] | None = None) -> None:
 
     valid = [r for r in results if r["valid"]]
     summary = {
+        "adapter": args.adapter or "(none - raw base model baseline)",
         "goals_tested": len(heldout_goals()),
         "samples_per_goal": args.samples_per_goal,
         "total_samples": len(results),

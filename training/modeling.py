@@ -14,6 +14,17 @@ class ModelConfig:
     random_state: int = 3407
 
 
+def mixed_precision_config(torch_module=None) -> dict[str, bool]:
+    if torch_module is None:
+        import torch as torch_module
+
+    use_bf16 = bool(
+        torch_module.cuda.is_available()
+        and torch_module.cuda.is_bf16_supported()
+    )
+    return {"bf16": use_bf16, "fp16": not use_bf16}
+
+
 def load_policy(config: ModelConfig, backend=None):
     if backend is None:
         from unsloth import FastLanguageModel

@@ -8,7 +8,7 @@ from pathlib import Path
 from training.data import build_grpo_dataset
 from training.environment import generate_task
 from training.goals import sample_goal
-from training.modeling import ModelConfig, load_policy
+from training.modeling import ModelConfig, load_policy, mixed_precision_config
 from training.preflight import verify_runtime
 from training.rewards import (
     format_reward,
@@ -70,8 +70,7 @@ def grpo_config_kwargs(args: argparse.Namespace) -> dict:
         "save_steps": max(1, min(25, args.steps)),
         "max_grad_norm": 0.1,
         "report_to": "none",
-        "bf16": True,
-        "fp16": False,
+        **mixed_precision_config(),
         "temperature": 1.0,
         "beta": 0.01,
         "loss_type": "dr_grpo",

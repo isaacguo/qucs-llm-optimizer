@@ -1,6 +1,7 @@
 __pycache__/
 *.pyc
 .venv/
+.env.colab
 outputs/
 .cache/
 *.egg-info/
