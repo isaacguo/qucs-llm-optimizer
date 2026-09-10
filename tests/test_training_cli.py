@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import unittest
 
-from training.config import resolve_grpo_config
+from training.config import resolve_grpo_config, resolve_multiturn_config
 from training.grpo import build_parser as build_grpo_parser
 from training.grpo import grpo_config_kwargs
 from training.multiturn_train import build_parser as build_multiturn_parser
@@ -57,27 +57,30 @@ class OtherCliTests(unittest.TestCase):
 class MultiturnCliTests(unittest.TestCase):
     def test_defaults_match_enhanced_training_setup(self):
         args = build_multiturn_parser().parse_args([])
-        self.assertEqual(args.max_turns, 15)
-        self.assertEqual(args.patience, 5)
-        self.assertEqual(args.target_depth_db, -30.0)
-        self.assertEqual(args.generations, 4)
-        self.assertAlmostEqual(args.param_spread, 0.35)
-        self.assertAlmostEqual(args.min_start_headroom_db, 5.0)
-        self.assertEqual(args.resume_adapter, "")
-        self.assertEqual(args.beta, 0.0)
-        self.assertEqual(args.kl_ref, "start")
+        cfg = resolve_multiturn_config(args)
+        self.assertEqual(cfg.train.max_turns, 15)
+        self.assertEqual(cfg.train.patience, 5)
+        self.assertEqual(cfg.data.target_depth_db, -30.0)
+        self.assertEqual(cfg.train.generations, 4)
+        self.assertAlmostEqual(cfg.data.param_spread, 0.35)
+        self.assertAlmostEqual(cfg.data.min_start_headroom_db, 5.0)
+        self.assertEqual(cfg.runtime.resume_adapter, "")
+        self.assertEqual(cfg.train.beta, 0.0)
+        self.assertEqual(cfg.train.kl_ref, "start")
 
     def test_accepts_resume_adapter_path(self):
         args = build_multiturn_parser().parse_args(
             ["--resume-adapter", "outputs/run/checkpoint-60", "--start-seed", "5240"]
         )
-        self.assertEqual(args.resume_adapter, "outputs/run/checkpoint-60")
-        self.assertEqual(args.start_seed, 5240)
+        cfg = resolve_multiturn_config(args)
+        self.assertEqual(cfg.runtime.resume_adapter, "outputs/run/checkpoint-60")
+        self.assertEqual(cfg.data.start_seed, 5240)
 
     def test_accepts_kl_beta_and_ref(self):
         args = build_multiturn_parser().parse_args(["--beta", "0.01", "--kl-ref", "base"])
-        self.assertAlmostEqual(args.beta, 0.01)
-        self.assertEqual(args.kl_ref, "base")
+        cfg = resolve_multiturn_config(args)
+        self.assertAlmostEqual(cfg.train.beta, 0.01)
+        self.assertEqual(cfg.train.kl_ref, "base")
 
 
 if __name__ == "__main__":

@@ -5,8 +5,16 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from training.config import GrpoConfig, from_mapping, load_yaml, resolve_grpo_config
+from training.config import (
+    GrpoConfig,
+    MultiturnConfig,
+    from_mapping,
+    load_yaml,
+    resolve_grpo_config,
+    resolve_multiturn_config,
+)
 from training.grpo import build_parser, grpo_config_kwargs
+from training.multiturn_train import build_parser as build_multiturn_parser
 
 
 class LoadYamlTests(unittest.TestCase):
@@ -72,6 +80,30 @@ class GrpoMergeTests(unittest.TestCase):
         self.assertEqual(kwargs["beta"], 0.01)
         self.assertEqual(kwargs["reward_weights"], [0.2, 0.2, 1.0])
         self.assertEqual(kwargs["num_generations"], 8)
+
+
+class MultiturnConfigTests(unittest.TestCase):
+    def test_defaults_match_enhanced_training_setup(self):
+        cfg = from_mapping(MultiturnConfig, {})
+        self.assertEqual(cfg.train.max_turns, 15)
+        self.assertEqual(cfg.train.patience, 5)
+        self.assertEqual(cfg.data.target_depth_db, -30.0)
+        self.assertEqual(cfg.train.generations, 4)
+        self.assertEqual(cfg.model.max_seq_length, 2048)
+        self.assertEqual(cfg.train.beta, 0.0)
+        self.assertEqual(cfg.train.kl_ref, "start")
+
+    def test_resolve_cli_overrides_yaml(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "m.yaml"
+            path.write_text("train:\n  steps: 9\n  beta: 0.01\n", encoding="utf-8")
+            args = build_multiturn_parser().parse_args(
+                ["--config", str(path), "--steps", "2", "--kl-ref", "base"]
+            )
+            cfg = resolve_multiturn_config(args)
+        self.assertEqual(cfg.train.steps, 2)
+        self.assertEqual(cfg.train.beta, 0.01)
+        self.assertEqual(cfg.train.kl_ref, "base")
 
 
 if __name__ == "__main__":

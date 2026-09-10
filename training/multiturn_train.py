@@ -49,61 +49,65 @@ from training.rollout import (  # noqa: E402
 )
 from training.starts import sample_params_with_headroom  # noqa: E402
 
-DEFAULT_MODEL = "unsloth/Qwen3-1.7B-bnb-4bit"
-
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--model-name", default=DEFAULT_MODEL)
+    parser.add_argument("--config", default=None, help="YAML hyperparameter config path")
+    parser.add_argument("--model-name", default=None)
     parser.add_argument(
         "--max-seq-length",
         type=int,
-        default=2048,
+        default=None,
         help="model context window; multi-turn history can exceed the 1024 "
         "default used by Stage A, so this trainer defaults higher",
     )
-    parser.add_argument("--tasks-per-step", type=int, default=2)
-    parser.add_argument("--generations", type=int, default=4, help="trajectories per goal (GRPO group size)")
-    parser.add_argument("--max-turns", type=int, default=15)
+    parser.add_argument("--tasks-per-step", type=int, default=None)
+    parser.add_argument("--generations", type=int, default=None, help="trajectories per goal (GRPO group size)")
+    parser.add_argument("--max-turns", type=int, default=None)
     parser.add_argument(
         "--patience",
         type=int,
-        default=5,
+        default=None,
         help="stop a trajectory after this many turns without a new best dB; 0 disables",
     )
-    parser.add_argument("--patience-eps", type=float, default=0.2, help="dB improvement required to reset patience")
+    parser.add_argument(
+        "--patience-eps",
+        type=float,
+        default=None,
+        help="dB improvement required to reset patience",
+    )
     parser.add_argument(
         "--target-depth-db",
         type=float,
-        default=-30.0,
+        default=None,
         help="training goal_met threshold; keep -70 for evaluation only",
     )
     parser.add_argument(
         "--param-spread",
         type=float,
-        default=0.35,
+        default=None,
         help="fraction of each bound range sampled around INITIAL_GUESS",
     )
     parser.add_argument(
         "--min-start-headroom-db",
         type=float,
-        default=5.0,
+        default=None,
         help="reject starts with initial_db <= target_depth_db + this margin",
     )
-    parser.add_argument("--history-window", type=int, default=8)
-    parser.add_argument("--steps", type=int, default=5)
-    parser.add_argument("--start-seed", type=int, default=5000)
-    parser.add_argument("--goal-freq-min-ghz", type=float, default=4.0)
-    parser.add_argument("--goal-freq-max-ghz", type=float, default=6.0)
-    parser.add_argument("--max-new-tokens", type=int, default=256)
-    parser.add_argument("--temperature", type=float, default=1.0)
-    parser.add_argument("--lr", type=float, default=5e-6)
-    parser.add_argument("--max-grad-norm", type=float, default=0.1)
-    parser.add_argument("--save-every", type=int, default=5)
-    parser.add_argument("--output-dir", default="outputs/multiturn-grpo-demo")
+    parser.add_argument("--history-window", type=int, default=None)
+    parser.add_argument("--steps", type=int, default=None)
+    parser.add_argument("--start-seed", type=int, default=None)
+    parser.add_argument("--goal-freq-min-ghz", type=float, default=None)
+    parser.add_argument("--goal-freq-max-ghz", type=float, default=None)
+    parser.add_argument("--max-new-tokens", type=int, default=None)
+    parser.add_argument("--temperature", type=float, default=None)
+    parser.add_argument("--lr", type=float, default=None)
+    parser.add_argument("--max-grad-norm", type=float, default=None)
+    parser.add_argument("--save-every", type=int, default=None)
+    parser.add_argument("--output-dir", default=None)
     parser.add_argument(
         "--resume-adapter",
-        default="",
+        default=None,
         help=(
             "load a previously saved LoRA (checkpoint-* or final_lora) before "
             "the first rollout, then keep training; omit to start from a fresh "
@@ -113,7 +117,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--beta",
         type=float,
-        default=0.0,
+        default=None,
         help=(
             "KL coefficient in turn_loss = (-A * logp + beta * (logp - logp_ref)) "
             "/ N; 0 disables the extra ref forward. Stage-A GRPO uses 0.01"
@@ -122,7 +126,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--kl-ref",
         choices=("start", "base"),
-        default="start",
+        default=None,
         help=(
             "KL reference policy: 'start' freezes LoRA weights from the beginning "
             "of this run (the resume adapter, or the fresh LoRA if not resuming); "

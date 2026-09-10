@@ -71,6 +71,56 @@ class GrpoConfig:
     runtime: GrpoRuntimeSection = field(default_factory=GrpoRuntimeSection)
 
 
+@dataclass
+class MultiturnTrainSection:
+    steps: int = 5
+    tasks_per_step: int = 2
+    generations: int = 4
+    max_turns: int = 15
+    patience: int = 5
+    patience_eps: float = 0.2
+    history_window: int = 8
+    max_new_tokens: int = 256
+    temperature: float = 1.0
+    lr: float = 5e-6
+    max_grad_norm: float = 0.1
+    save_every: int = 5
+    beta: float = 0.0
+    kl_ref: str = "start"
+
+
+@dataclass
+class MultiturnDataSection:
+    start_seed: int = 5000
+    goal_freq_min_ghz: float = 4.0
+    goal_freq_max_ghz: float = 6.0
+    target_depth_db: float = -30.0
+    param_spread: float = 0.35
+    min_start_headroom_db: float = 5.0
+
+
+@dataclass
+class MultiturnRewardSection:
+    pass
+
+
+@dataclass
+class MultiturnRuntimeSection:
+    output_dir: str = "outputs/multiturn-grpo-demo"
+    resume_adapter: str = ""
+
+
+@dataclass
+class MultiturnConfig:
+    model: ModelSection = field(
+        default_factory=lambda: ModelSection(max_seq_length=2048)
+    )
+    train: MultiturnTrainSection = field(default_factory=MultiturnTrainSection)
+    data: MultiturnDataSection = field(default_factory=MultiturnDataSection)
+    reward: MultiturnRewardSection = field(default_factory=MultiturnRewardSection)
+    runtime: MultiturnRuntimeSection = field(default_factory=MultiturnRuntimeSection)
+
+
 def load_yaml(path: str | Path) -> dict:
     path = Path(path)
     if not path.is_file():
@@ -146,6 +196,53 @@ def resolve_grpo_config(args: argparse.Namespace) -> GrpoConfig:
     else:
         cfg = GrpoConfig()
     return merge_grpo_cli(cfg, args)
+
+
+MULTITURN_CLI_FIELD_MAP: dict[str, tuple[str, str]] = {
+    "model_name": ("model", "name"),
+    "max_seq_length": ("model", "max_seq_length"),
+    "tasks_per_step": ("train", "tasks_per_step"),
+    "generations": ("train", "generations"),
+    "max_turns": ("train", "max_turns"),
+    "patience": ("train", "patience"),
+    "patience_eps": ("train", "patience_eps"),
+    "history_window": ("train", "history_window"),
+    "max_new_tokens": ("train", "max_new_tokens"),
+    "temperature": ("train", "temperature"),
+    "lr": ("train", "lr"),
+    "max_grad_norm": ("train", "max_grad_norm"),
+    "save_every": ("train", "save_every"),
+    "beta": ("train", "beta"),
+    "kl_ref": ("train", "kl_ref"),
+    "steps": ("train", "steps"),
+    "start_seed": ("data", "start_seed"),
+    "goal_freq_min_ghz": ("data", "goal_freq_min_ghz"),
+    "goal_freq_max_ghz": ("data", "goal_freq_max_ghz"),
+    "target_depth_db": ("data", "target_depth_db"),
+    "param_spread": ("data", "param_spread"),
+    "min_start_headroom_db": ("data", "min_start_headroom_db"),
+    "output_dir": ("runtime", "output_dir"),
+    "resume_adapter": ("runtime", "resume_adapter"),
+}
+
+
+def merge_multiturn_cli(config: MultiturnConfig, args: argparse.Namespace) -> MultiturnConfig:
+    cfg = copy.deepcopy(config)
+    for dest, (section, name) in MULTITURN_CLI_FIELD_MAP.items():
+        value = getattr(args, dest, None)
+        if value is None:
+            continue
+        setattr(getattr(cfg, section), name, value)
+    return cfg
+
+
+def resolve_multiturn_config(args: argparse.Namespace) -> MultiturnConfig:
+    config_path = getattr(args, "config", None)
+    if config_path:
+        cfg = from_mapping(MultiturnConfig, load_yaml(config_path))
+    else:
+        cfg = MultiturnConfig()
+    return merge_multiturn_cli(cfg, args)
 
 
 def to_model_config(model: ModelSection, *, fast_inference: bool = False) -> ModelConfig:
