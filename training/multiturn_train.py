@@ -37,9 +37,15 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 from decision_log import append_record  # noqa: E402
+from training.config import (  # noqa: E402
+    MultiturnConfig,
+    config_to_dict,
+    resolve_multiturn_config,
+    to_model_config,
+)
 from training.diagnostics import build_step_stats  # noqa: E402
 from training.goals import sample_goal  # noqa: E402
-from training.modeling import ModelConfig, load_policy  # noqa: E402
+from training.modeling import load_policy  # noqa: E402
 from training.preflight import verify_runtime  # noqa: E402
 from training.rollout import (  # noqa: E402
     Trajectory,
@@ -148,30 +154,33 @@ def _canned_generate(_messages: list[dict[str, str]]) -> str:
     )
 
 
-def _dry_run(args: argparse.Namespace) -> None:
-    freq_range = (args.goal_freq_min_ghz * 1e9, args.goal_freq_max_ghz * 1e9)
+def _dry_run(config: MultiturnConfig) -> None:
+    d = config.data
+    t = config.train
+    freq_range = (d.goal_freq_min_ghz * 1e9, d.goal_freq_max_ghz * 1e9)
     goal = sample_goal(
-        args.start_seed,
+        d.start_seed,
         freq_range=freq_range,
-        target_depth_db=args.target_depth_db,
+        target_depth_db=d.target_depth_db,
     )
     traj = run_trajectory(
         _canned_generate,
         goal=goal,
-        seed=args.start_seed,
-        max_turns=args.max_turns,
-        history_window=args.history_window,
-        patience=args.patience,
-        patience_eps=args.patience_eps,
-        param_spread=args.param_spread,
+        seed=d.start_seed,
+        max_turns=t.max_turns,
+        history_window=t.history_window,
+        patience=t.patience,
+        patience_eps=t.patience_eps,
+        param_spread=d.param_spread,
     )
     print(json.dumps(trajectory_to_json(traj), sort_keys=True))
 
 
-def _make_generate_fn(model, tokenizer, args: argparse.Namespace):
+def _make_generate_fn(model, tokenizer, config: MultiturnConfig):
     import torch
 
     device = next(model.parameters()).device
+    t = config.train
 
     def generate(messages: list[dict[str, str]]) -> str:
         prompt_ids = tokenizer.apply_chat_template(
@@ -184,9 +193,9 @@ def _make_generate_fn(model, tokenizer, args: argparse.Namespace):
             model.eval()
             out = model.generate(
                 input_ids=prompt_ids,
-                max_new_tokens=args.max_new_tokens,
+                max_new_tokens=t.max_new_tokens,
                 do_sample=True,
-                temperature=args.temperature,
+                temperature=t.temperature,
                 pad_token_id=tokenizer.pad_token_id or tokenizer.eos_token_id,
             )
         completion_ids = out[0, prompt_ids.shape[1]:]
@@ -295,27 +304,29 @@ def _turn_logprob_sum(model, tokenizer, prompt_messages, completion_text, device
     return token_logps.sum()
 
 
-def train(args: argparse.Namespace) -> None:
+def train(config: MultiturnConfig) -> None:
     import torch
 
-    output_dir = Path(args.output_dir)
+    t = config.train
+    d = config.data
+    r = config.runtime
+
+    output_dir = Path(r.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     log_path = output_dir / "train.log"
     trajectories_path = output_dir / "trajectories.jsonl"
     completions_path = output_dir / "completions.jsonl"
 
-    model, tokenizer = load_policy(
-        ModelConfig(model_name=args.model_name, max_seq_length=args.max_seq_length)
-    )
-    if args.resume_adapter:
-        _load_trainable_adapter(model, args.resume_adapter)
+    model, tokenizer = load_policy(to_model_config(config.model))
+    if r.resume_adapter:
+        _load_trainable_adapter(model, r.resume_adapter)
     device = next(model.parameters()).device
-    generate_fn = _make_generate_fn(model, tokenizer, args)
+    generate_fn = _make_generate_fn(model, tokenizer, config)
 
     trainable_params = [p for p in model.parameters() if p.requires_grad]
-    optimizer = torch.optim.AdamW(trainable_params, lr=args.lr)
+    optimizer = torch.optim.AdamW(trainable_params, lr=t.lr)
 
-    freq_range = (args.goal_freq_min_ghz * 1e9, args.goal_freq_max_ghz * 1e9)
+    freq_range = (d.goal_freq_min_ghz * 1e9, d.goal_freq_max_ghz * 1e9)
 
     def log(msg: str) -> None:
         line = f"[{time.strftime('%H:%M:%S')}] {msg}"
@@ -323,33 +334,33 @@ def train(args: argparse.Namespace) -> None:
         with log_path.open("a") as fh:
             fh.write(line + "\n")
 
-    seed_cursor = args.start_seed
-    total_trajectories = args.steps * args.tasks_per_step * args.generations
+    seed_cursor = d.start_seed
+    total_trajectories = t.steps * t.tasks_per_step * t.generations
     trajectories_done = 0
-    start_lora = _snapshot_lora(model) if args.beta > 0 and args.kl_ref == "start" else {}
-    if args.resume_adapter:
+    start_lora = _snapshot_lora(model) if t.beta > 0 and t.kl_ref == "start" else {}
+    if r.resume_adapter:
         log(
-            f"resuming LoRA from {args.resume_adapter} start_seed={args.start_seed} "
-            f"beta={args.beta} kl_ref={args.kl_ref}"
+            f"resuming LoRA from {r.resume_adapter} start_seed={d.start_seed} "
+            f"beta={t.beta} kl_ref={t.kl_ref}"
         )
-    elif args.beta > 0:
-        log(f"KL enabled beta={args.beta} kl_ref={args.kl_ref}")
-    for step in range(1, args.steps + 1):
+    elif t.beta > 0:
+        log(f"KL enabled beta={t.beta} kl_ref={t.kl_ref}")
+    for step in range(1, t.steps + 1):
         step_trajectories: list[Trajectory] = []
         step_goal_groups: list[list[Trajectory]] = []
         step_resamples = 0
 
-        for task_idx in range(args.tasks_per_step):
+        for task_idx in range(t.tasks_per_step):
             goal = sample_goal(
                 seed_cursor,
                 freq_range=freq_range,
-                target_depth_db=args.target_depth_db,
+                target_depth_db=d.target_depth_db,
             )
             shared_params, initial_db, seed_used, n_resamples = sample_params_with_headroom(
                 start_seed=seed_cursor,
                 goal=goal,
-                spread=args.param_spread,
-                headroom_db=args.min_start_headroom_db,
+                spread=d.param_spread,
+                headroom_db=d.min_start_headroom_db,
             )
             step_resamples += n_resamples
             if n_resamples:
@@ -357,7 +368,7 @@ def train(args: argparse.Namespace) -> None:
                     "  resampled start task %d/%d times=%d seed %d->%d initial_db=%.2f"
                     % (
                         task_idx + 1,
-                        args.tasks_per_step,
+                        t.tasks_per_step,
                         n_resamples,
                         seed_cursor,
                         seed_used,
@@ -365,7 +376,7 @@ def train(args: argparse.Namespace) -> None:
                     )
                 )
             group: list[Trajectory] = []
-            for gen_idx in range(args.generations):
+            for gen_idx in range(t.generations):
                 turn_counter = {"n": 0}
 
                 def _on_turn(
@@ -383,11 +394,11 @@ def train(args: argparse.Namespace) -> None:
                         % (
                             step,
                             _task_idx + 1,
-                            args.tasks_per_step,
+                            t.tasks_per_step,
                             _gen_idx + 1,
-                            args.generations,
+                            t.generations,
                             _counter["n"],
-                            args.max_turns,
+                            t.max_turns,
                             turn.valid,
                             turn.db_before,
                             turn.db_after,
@@ -417,13 +428,13 @@ def train(args: argparse.Namespace) -> None:
                     generate_fn,
                     goal=goal,
                     seed=seed_used,
-                    max_turns=args.max_turns,
-                    history_window=args.history_window,
+                    max_turns=t.max_turns,
+                    history_window=t.history_window,
                     on_turn=_on_turn,
                     initial_params=shared_params,
-                    patience=args.patience,
-                    patience_eps=args.patience_eps,
-                    param_spread=args.param_spread,
+                    patience=t.patience,
+                    patience_eps=t.patience_eps,
+                    param_spread=d.param_spread,
                 )
                 if traj.turns:
                     append_record(
@@ -451,9 +462,9 @@ def train(args: argparse.Namespace) -> None:
                     % (
                         step,
                         task_idx + 1,
-                        args.tasks_per_step,
+                        t.tasks_per_step,
                         gen_idx + 1,
-                        args.generations,
+                        t.generations,
                         traj.num_turns,
                         traj.terminated_reason,
                         traj.reward,
@@ -492,14 +503,14 @@ def train(args: argparse.Namespace) -> None:
         if total_turns > 0:
             for grad_turn_idx, (traj, turn, adv) in enumerate(scored, start=1):
                 logp = _turn_logprob_sum(model, tokenizer, turn.prompt, turn.completion_text, device)
-                if args.beta > 0:
+                if t.beta > 0:
                     with torch.no_grad():
-                        with _kl_ref_context(model, args.kl_ref, start_lora):
+                        with _kl_ref_context(model, t.kl_ref, start_lora):
                             logp_ref = _turn_logprob_sum(
                                 model, tokenizer, turn.prompt, turn.completion_text, device
                             )
                     kl = logp - logp_ref.detach()
-                    turn_loss = (-adv * logp + args.beta * kl) / total_turns
+                    turn_loss = (-adv * logp + t.beta * kl) / total_turns
                     kl_sum += kl.detach().item()
                     del logp_ref, kl
                 else:
@@ -509,22 +520,22 @@ def train(args: argparse.Namespace) -> None:
                 del logp, turn_loss
                 if grad_turn_idx % 20 == 0 or grad_turn_idx == total_turns:
                     log(f"  gradient pass {grad_turn_idx}/{total_turns} turns backpropagated")
-            torch.nn.utils.clip_grad_norm_(trainable_params, args.max_grad_norm)
+            torch.nn.utils.clip_grad_norm_(trainable_params, t.max_grad_norm)
             optimizer.step()
         loss_value = loss_sum
 
-        rewards_all = [t.reward for t in step_trajectories]
-        turns_all = [t.num_turns for t in step_trajectories]
-        met = sum(1 for t in step_trajectories if t.terminated_reason == "goal_met")
-        stopped = sum(1 for t in step_trajectories if t.terminated_reason == "stop")
-        patience_n = sum(1 for t in step_trajectories if t.terminated_reason == "patience")
-        kl_mean = (kl_sum / total_turns) if total_turns and args.beta > 0 else 0.0
+        rewards_all = [traj.reward for traj in step_trajectories]
+        turns_all = [traj.num_turns for traj in step_trajectories]
+        met = sum(1 for traj in step_trajectories if traj.terminated_reason == "goal_met")
+        stopped = sum(1 for traj in step_trajectories if traj.terminated_reason == "stop")
+        patience_n = sum(1 for traj in step_trajectories if traj.terminated_reason == "patience")
+        kl_mean = (kl_sum / total_turns) if total_turns and t.beta > 0 else 0.0
         log(
             "step %d/%d loss=%.5f reward_mean=%.3f reward_std=%.3f "
             "turns_mean=%.1f goal_met=%d/%d stop=%d patience=%d kl_mean=%.5f"
             % (
                 step,
-                args.steps,
+                t.steps,
                 loss_value,
                 statistics.fmean(rewards_all),
                 statistics.pstdev(rewards_all) if len(rewards_all) > 1 else 0.0,
@@ -537,7 +548,7 @@ def train(args: argparse.Namespace) -> None:
             )
         )
 
-        if step % args.save_every == 0 or step == args.steps:
+        if step % t.save_every == 0 or step == t.steps:
             ckpt_dir = output_dir / f"checkpoint-{step}"
             model.save_pretrained(ckpt_dir)
             tokenizer.save_pretrained(ckpt_dir)
@@ -551,12 +562,14 @@ def train(args: argparse.Namespace) -> None:
 
 def main(argv: list[str] | None = None) -> None:
     args = build_parser().parse_args(argv)
+    cfg = resolve_multiturn_config(args)
+    print("config:", json.dumps(config_to_dict(cfg), sort_keys=True))
     info = verify_runtime(require_cuda=not args.dry_run)
     print("preflight:", json.dumps(info, sort_keys=True))
     if args.dry_run:
-        _dry_run(args)
+        _dry_run(cfg)
         return
-    train(args)
+    train(cfg)
 
 
 if __name__ == "__main__":

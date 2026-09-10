@@ -105,6 +105,13 @@ class MultiturnConfigTests(unittest.TestCase):
         self.assertEqual(cfg.train.beta, 0.01)
         self.assertEqual(cfg.train.kl_ref, "base")
 
+    def test_train_accepts_config_parameter(self):
+        import inspect
+        from training import multiturn_train
+
+        params = inspect.signature(multiturn_train.train).parameters
+        self.assertIn("config", params)
+
 
 if __name__ == "__main__":
     unittest.main()
