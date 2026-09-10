@@ -146,6 +146,41 @@ class SimulationRewardTests(unittest.TestCase):
         self.assertEqual(record["intent"], {"ro": "decrease"})
         self.assertEqual(record["delta_db"], 5.0)
 
+    def test_same_delta_db_prefers_notch_closer_to_target(self):
+        def transition_off(**_kwargs):
+            return SimpleNamespace(
+                params={},
+                old_db=-10.0,
+                new_db=-20.0,
+                delta_db=10.0,
+                total_cost=0.1,
+                old_best_freq_hz=3.3e9,
+                new_best_freq_hz=3.3e9,
+            )
+
+        def transition_on(**_kwargs):
+            return SimpleNamespace(
+                params={},
+                old_db=-10.0,
+                new_db=-20.0,
+                delta_db=10.0,
+                total_cost=0.1,
+                old_best_freq_hz=3.3e9,
+                new_best_freq_hz=5.5e9,
+            )
+
+        kwargs = dict(
+            completions=[VALID],
+            params_json=['{"ri":0.3,"ro":8,"alpha":90,"Wf":0.6,"Lc":3}'],
+            baseline_cost_json=['{"total_cost":0.1,"best_freq_hz":3300000000.0}'],
+            goal_json=[self._goal_json()],
+            iteration=[1],
+            seed=[1],
+        )
+        off = make_simulation_reward(transition=transition_off, max_workers=1)(**kwargs)
+        on = make_simulation_reward(transition=transition_on, max_workers=1)(**kwargs)
+        self.assertGreater(on[0], off[0])
+
 
 if __name__ == "__main__":
     unittest.main()

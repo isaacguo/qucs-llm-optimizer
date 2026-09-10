@@ -9,8 +9,9 @@ A trajectory ends on the first of: goal met, an explicit stop / all-hold
 intent, ``patience`` consecutive turns without a new best dB, or
 ``max_turns``.
 
-Reward mixes best-so-far improvement with the final state so a run that
-found a deep notch then wandered is not scored as a failure.
+Reward mixes best-so-far |S21| improvement at the target frequency with
+the final state, plus a term that scores whether the deepest-notch
+frequency moved toward the goal frequency.
 """
 from __future__ import annotations
 
@@ -33,12 +34,17 @@ from qucs_sim import simulate  # noqa: E402
 from training.contracts import IntentParseError, parse_intent_completion  # noqa: E402
 from training.environment import sample_params  # noqa: E402
 from training.goals import GoalSpec  # noqa: E402
+from training.reward_math import (  # noqa: E402
+    FREQ_WEIGHT,
+    REWARD_CLIP,
+    clip_reward,
+    frequency_alignment,
+    mixed_terminal_reward,
+)
 
-REWARD_CLIP = 20.0
-BEST_WEIGHT = 0.7
-FINAL_WEIGHT = 0.3
 STOP_BONUS = 1.0
 STOP_BONUS_IMPROVE_EPS = 0.2
+clip_db_reward = clip_reward
 
 SYSTEM_PROMPT = """You control a butterfly radial-stub optimizer across several turns.
 This is one continuous optimization run: your own past decisions and their
@@ -74,6 +80,8 @@ class TurnRecord:
     params_after: dict[str, float]
     db_before: float
     db_after: float
+    freq_before_hz: float | None = None
+    freq_after_hz: float | None = None
     stopped: bool = False
 
     @property
@@ -90,28 +98,13 @@ class Trajectory:
     reward: float = 0.0
     initial_db: float = 0.0
     best_db: float = 0.0
+    initial_freq_hz: float | None = None
+    best_freq_hz: float | None = None
+    final_freq_hz: float | None = None
 
     @property
     def num_turns(self) -> int:
         return len(self.turns)
-
-
-def clip_db_reward(value: float, clip: float = REWARD_CLIP) -> float:
-    return max(-clip, min(clip, value))
-
-
-def mixed_terminal_reward(
-    initial_db: float,
-    best_db: float,
-    final_db: float,
-    *,
-    clip: float = REWARD_CLIP,
-    best_weight: float = BEST_WEIGHT,
-    final_weight: float = FINAL_WEIGHT,
-) -> float:
-    return best_weight * clip_db_reward(initial_db - best_db, clip) + final_weight * clip_db_reward(
-        initial_db - final_db, clip
-    )
 
 
 def _cost_dict(res, goal: GoalSpec) -> dict:
@@ -268,9 +261,19 @@ def run_trajectory(
     params = dict(initial_params) if initial_params is not None else sample_params(seed, spread=param_spread)
     cost = get_cost(params)
     initial_db = s21_db(cost["total_cost"])
+    initial_freq = cost.get("best_freq_hz")
     best_db = initial_db
+    current_freq = initial_freq
 
-    traj = Trajectory(goal=goal, seed=seed, initial_db=initial_db, best_db=best_db)
+    traj = Trajectory(
+        goal=goal,
+        seed=seed,
+        initial_db=initial_db,
+        best_db=best_db,
+        initial_freq_hz=initial_freq,
+        best_freq_hz=initial_freq,
+        final_freq_hz=initial_freq,
+    )
     current_db = initial_db
     stale = 0
 
@@ -300,6 +303,8 @@ def run_trajectory(
                 params_after=dict(params),
                 db_before=current_db,
                 db_after=current_db,
+                freq_before_hz=current_freq,
+                freq_after_hz=current_freq,
             )
             traj.turns.append(turn)
             if on_turn is not None:
@@ -324,6 +329,8 @@ def run_trajectory(
                     params_after=dict(params),
                     db_before=current_db,
                     db_after=current_db,
+                    freq_before_hz=current_freq,
+                    freq_after_hz=current_freq,
                     stopped=False,
                 )
                 traj.turns.append(turn)
@@ -344,6 +351,8 @@ def run_trajectory(
                 params_after=dict(params),
                 db_before=current_db,
                 db_after=current_db,
+                freq_before_hz=current_freq,
+                freq_after_hz=current_freq,
                 stopped=True,
             )
             traj.turns.append(turn)
@@ -355,6 +364,7 @@ def run_trajectory(
         new_params = apply_intent(params, parsed.intent, iteration=turn_index + 1)
         new_cost = get_cost(new_params)
         new_db = s21_db(new_cost["total_cost"])
+        new_freq = new_cost.get("best_freq_hz")
 
         turn = TurnRecord(
             turn_index=turn_index,
@@ -366,12 +376,14 @@ def run_trajectory(
             params_after=dict(new_params),
             db_before=current_db,
             db_after=new_db,
+            freq_before_hz=current_freq,
+            freq_after_hz=new_freq,
         )
         traj.turns.append(turn)
         if on_turn is not None:
             on_turn(turn)
 
-        params, cost, current_db = new_params, new_cost, new_db
+        params, cost, current_db, current_freq = new_params, new_cost, new_db, new_freq
         if new_db < best_db - patience_eps:
             best_db = new_db
             stale = 0
@@ -390,11 +402,19 @@ def run_trajectory(
     if not traj.terminated_reason:
         traj.terminated_reason = "max_turns"
 
-    traj.best_db = min(initial_db, best_db, current_db)
-    if traj.turns:
-        traj.best_db = min(initial_db, min(t.db_after for t in traj.turns))
+    snapshots = [(initial_db, initial_freq)]
+    snapshots.extend((t.db_after, t.freq_after_hz) for t in traj.turns)
+    traj.best_db, traj.best_freq_hz = min(snapshots, key=lambda item: item[0])
+    traj.final_freq_hz = current_freq
     reward = mixed_terminal_reward(
-        initial_db, traj.best_db, current_db, clip=reward_clip
+        initial_db,
+        traj.best_db,
+        current_db,
+        clip=reward_clip,
+        initial_freq_hz=initial_freq,
+        best_freq_hz=traj.best_freq_hz,
+        final_freq_hz=current_freq,
+        target_freq_hz=goal.target_freq_hz,
     )
     if (
         traj.terminated_reason == "stop"
@@ -422,7 +442,13 @@ def shaped_turn_advantages(
     out: dict[int, list[float]] = {}
     for traj in group:
         traj_adv = (traj.reward - mean_r) / (std_r + 1e-4)
-        deltas = [turn.delta_db for turn in traj.turns]
+        target_hz = traj.goal.target_freq_hz
+        deltas = []
+        for turn in traj.turns:
+            freq_delta = frequency_alignment(turn.freq_after_hz, target_hz) - frequency_alignment(
+                turn.freq_before_hz, target_hz
+            )
+            deltas.append(turn.delta_db + FREQ_WEIGHT * REWARD_CLIP * freq_delta)
         returns: list[float] = [0.0] * len(deltas)
         running = 0.0
         for i in range(len(deltas) - 1, -1, -1):
@@ -447,6 +473,9 @@ def trajectory_to_json(traj: Trajectory) -> dict:
         "reward": traj.reward,
         "initial_db": traj.initial_db,
         "best_db": traj.best_db,
+        "initial_freq_hz": traj.initial_freq_hz,
+        "best_freq_hz": traj.best_freq_hz,
+        "final_freq_hz": traj.final_freq_hz,
         "turns": [
             {
                 "turn_index": t.turn_index,
@@ -454,6 +483,8 @@ def trajectory_to_json(traj: Trajectory) -> dict:
                 "intent": t.intent,
                 "db_before": t.db_before,
                 "db_after": t.db_after,
+                "freq_before_hz": t.freq_before_hz,
+                "freq_after_hz": t.freq_after_hz,
                 "stopped": t.stopped,
             }
             for t in traj.turns

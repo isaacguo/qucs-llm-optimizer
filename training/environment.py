@@ -46,6 +46,8 @@ class TransitionResult:
     new_db: float
     delta_db: float
     total_cost: float
+    old_best_freq_hz: float | None = None
+    new_best_freq_hz: float | None = None
 
 
 def _cost_dict(cost: object) -> dict:
@@ -134,6 +136,7 @@ def run_transition(
     goal: GoalSpec,
     simulator: Callable = simulate,
     evaluator: Callable = evaluate,
+    baseline_best_freq_hz: float | None = None,
 ) -> TransitionResult:
     new_params = apply_intent(params, intent, iteration=iteration)
     result = simulator(new_params, export_layout=False)
@@ -146,4 +149,6 @@ def run_transition(
         new_db=new_db,
         delta_db=old_db - new_db,
         total_cost=cost.total_cost,
+        old_best_freq_hz=baseline_best_freq_hz,
+        new_best_freq_hz=getattr(cost, "best_freq_hz", None),
     )

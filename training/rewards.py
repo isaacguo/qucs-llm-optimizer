@@ -11,6 +11,7 @@ from typing import Callable
 from training.contracts import IntentParseError, parse_intent_completion
 from training.environment import run_transition
 from training.goals import goal_from_json
+from training.reward_math import combined_step_reward
 
 
 def completion_text(completion: object) -> str:
@@ -82,14 +83,24 @@ def make_simulation_reward(
                 _column_value(kwargs["baseline_cost_json"], index)
             )
             goal = goal_from_json(_column_value(kwargs["goal_json"], index))
+            old_freq = baseline.get("best_freq_hz")
             result = transition(
                 params=params,
                 iteration=int(record["iteration"]) + 1,
                 baseline_total_cost=float(baseline["total_cost"]),
                 intent=parsed.intent,
                 goal=goal,
+                baseline_best_freq_hz=old_freq,
             )
-            score = max(-20.0, min(20.0, float(result.delta_db)))
+            new_freq = getattr(result, "new_best_freq_hz", None)
+            if old_freq is None:
+                old_freq = getattr(result, "old_best_freq_hz", None)
+            score = combined_step_reward(
+                float(result.delta_db),
+                old_freq,
+                new_freq,
+                goal.target_freq_hz,
+            )
             record.update(
                 {
                     "valid": True,
@@ -99,6 +110,8 @@ def make_simulation_reward(
                     "old_db": result.old_db,
                     "new_db": result.new_db,
                     "delta_db": result.delta_db,
+                    "old_best_freq_hz": old_freq,
+                    "new_best_freq_hz": new_freq,
                     "reward": score,
                     "new_params": result.params,
                 }

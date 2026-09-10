@@ -65,6 +65,22 @@ class RewardMathTests(unittest.TestCase):
         mixed = mixed_terminal_reward(-10.0, -60.0, -60.0)
         self.assertAlmostEqual(mixed, 20.0)
 
+    def test_mixed_reward_higher_when_notch_moves_onto_target(self):
+        kwargs = dict(
+            initial_db=-10.0,
+            best_db=-20.0,
+            final_db=-20.0,
+            initial_freq_hz=3.3e9,
+            target_freq_hz=5.5e9,
+        )
+        off = mixed_terminal_reward(
+            **kwargs, best_freq_hz=3.3e9, final_freq_hz=3.3e9
+        )
+        on = mixed_terminal_reward(
+            **kwargs, best_freq_hz=5.5e9, final_freq_hz=5.5e9
+        )
+        self.assertGreater(on, off)
+
 
 class RolloutBehaviourTests(unittest.TestCase):
     def setUp(self):
@@ -212,6 +228,33 @@ class RolloutBehaviourTests(unittest.TestCase):
 
         traj = self._run(generate, max_turns=1, patience=10, db_by_ro={8.0: -10.0})
         self.assertGreaterEqual(traj.num_turns, 1)
+
+    def test_reward_higher_when_notch_frequency_moves_toward_target(self):
+        def generate(_messages):
+            return '<intent>{"ro":"decrease_strong"}</intent>'
+
+        def run_with_freq(end_freq_hz: float):
+            def cost_fn(params):
+                at_start = abs(params["ro"] - 8.0) < 1e-6
+                db = -10.0 if at_start else -20.0
+                freq = 3.3e9 if at_start else end_freq_hz
+                return _cost_from_db(db, freq)
+
+            return run_trajectory(
+                generate,
+                goal=self.goal,
+                seed=0,
+                initial_params=dict(self.start),
+                cost_fn=cost_fn,
+                max_turns=2,
+                patience=10,
+            )
+
+        closer = run_with_freq(self.goal.target_freq_hz)
+        farther = run_with_freq(3.3e9)
+        self.assertAlmostEqual(closer.initial_db, farther.initial_db)
+        self.assertAlmostEqual(closer.best_db, farther.best_db)
+        self.assertGreater(closer.reward, farther.reward)
 
     def test_json_includes_best_and_reason(self):
         def generate(_messages):
