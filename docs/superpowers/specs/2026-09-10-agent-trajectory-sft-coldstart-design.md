@@ -1,7 +1,7 @@
 # Agent trajectory SFT cold-start for multiturn GRPO
 
 **Date:** 2026-09-10  
-**Status:** Draft pending user review of this file  
+**Status:** Approved (user confirmed design sections + this file)  
 **Approach:** Corpus ops + rollout-aligned multiturn SFT + resume multiturn GRPO (Approach 2)
 
 ## Goal
