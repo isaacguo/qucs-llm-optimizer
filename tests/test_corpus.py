@@ -348,5 +348,169 @@ class MultiturnSftExportTests(unittest.TestCase):
         self.assertTrue(all(r["meta"].get("run_id") == "run_a" for r in records))
 
 
+class CorpusCliTests(unittest.TestCase):
+    """Smoke tests for qucs-corpus CLI (no Qucs)."""
+
+    def setUp(self):
+        from training import corpus_cli
+
+        self.corpus_cli = corpus_cli
+        self._td = tempfile.TemporaryDirectory()
+        self.root = Path(self._td.name)
+        self.runs_root = self.root / "runs"
+        self.goal_config = (
+            Path(__file__).resolve().parents[1] / "configs" / "goal_distribution.yaml"
+        )
+
+    def tearDown(self):
+        self._td.cleanup()
+
+    def test_assign_writes_state_skeleton_without_history(self):
+        code = self.corpus_cli.main(
+            [
+                "assign",
+                "--run",
+                "r001",
+                "--goal-config",
+                str(self.goal_config),
+                "--seed",
+                "7",
+                "--runs-root",
+                str(self.runs_root),
+            ]
+        )
+        self.assertEqual(code, 0)
+        state_path = self.runs_root / "r001" / "state.json"
+        self.assertTrue(state_path.is_file())
+        state = json.loads(state_path.read_text())
+        self.assertEqual(state["iteration"], -1)
+        self.assertEqual(state["history"], [])
+        self.assertEqual(state["start_seed"], 7)
+        self.assertIn("target_freq_hz", state["goal"])
+        self.assertIn("target_depth_db", state["goal"])
+        self.assertIn("band_hz", state["goal"])
+        self.assertIn("ri", state["initial_params"])
+        # assign must not simulate: no baseline history entry yet
+        self.assertFalse(state["history"])
+
+    def test_gate_appends_eligible_run_to_index(self):
+        run_dir = self.runs_root / "r_ok"
+        run_dir.mkdir(parents=True)
+        state = _state_with_goal(-70.0, 2.5e-4)
+        state["history"][0]["params"] = _params()
+        state["history"][1]["params"] = _params(ro=5.0)
+        (run_dir / "state.json").write_text(json.dumps(state))
+        index_path = self.root / "corpus" / "index.jsonl"
+
+        code = self.corpus_cli.main(
+            [
+                "gate",
+                "--run",
+                "r_ok",
+                "--index",
+                str(index_path),
+                "--runs-root",
+                str(self.runs_root),
+            ]
+        )
+        self.assertEqual(code, 0)
+        rows = load_index(index_path)
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["run_id"], "r_ok")
+        saved = json.loads((run_dir / "state.json").read_text())
+        self.assertTrue(saved["corpus"]["eligible"])
+
+    def test_gate_skips_index_when_ineligible(self):
+        run_dir = self.runs_root / "r_bad"
+        run_dir.mkdir(parents=True)
+        state = _state_with_goal(-70.0, 1.0e-3)
+        (run_dir / "state.json").write_text(json.dumps(state))
+        index_path = self.root / "corpus" / "index.jsonl"
+
+        code = self.corpus_cli.main(
+            [
+                "gate",
+                "--run",
+                "r_bad",
+                "--index",
+                str(index_path),
+                "--runs-root",
+                str(self.runs_root),
+            ]
+        )
+        self.assertEqual(code, 0)
+        self.assertEqual(load_index(index_path), [])
+        saved = json.loads((run_dir / "state.json").read_text())
+        self.assertFalse(saved["corpus"]["eligible"])
+
+    def test_coverage_prints_bin_counts(self):
+        index_path = self.root / "index.jsonl"
+        append_index(
+            index_path,
+            {
+                "run_id": "a",
+                "goal": {
+                    "target_freq_hz": 5.2e9,
+                    "target_depth_db": -62.0,
+                    "band_hz": [4.2e9, 6.2e9],
+                },
+            },
+        )
+        import io
+        from contextlib import redirect_stdout
+
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            code = self.corpus_cli.main(
+                [
+                    "coverage",
+                    "--index",
+                    str(index_path),
+                    "--goal-config",
+                    str(self.goal_config),
+                ]
+            )
+        self.assertEqual(code, 0)
+        out = buf.getvalue()
+        self.assertRegex(out, r"total\s*[:=]\s*1")
+        self.assertIn("bins", out.lower())
+
+    def test_export_writes_jsonl(self):
+        state = _multiturn_fixture_state()
+        run_dir = self.runs_root / "run_a"
+        run_dir.mkdir(parents=True)
+        (run_dir / "state.json").write_text(json.dumps(state))
+        index_path = self.root / "index.jsonl"
+        append_index(
+            index_path,
+            {
+                "run_id": "run_a",
+                "run_dir": "run_a",
+                "goal": state["goal"],
+                "best_db": -26.0,
+                "n_steps": 2,
+                "goal_met_iteration": 2,
+            },
+        )
+        out_path = self.root / "out.jsonl"
+        code = self.corpus_cli.main(
+            [
+                "export",
+                "--index",
+                str(index_path),
+                "--out",
+                str(out_path),
+                "--runs-root",
+                str(self.runs_root),
+                "--history-window",
+                "8",
+            ]
+        )
+        self.assertEqual(code, 0)
+        lines = [json.loads(l) for l in out_path.read_text().splitlines() if l.strip()]
+        self.assertEqual(len(lines), 2)
+        self.assertIn("messages", lines[0])
+
+
 if __name__ == "__main__":
     unittest.main()
