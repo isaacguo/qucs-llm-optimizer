@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import re
 import sys
+import warnings
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -163,16 +164,26 @@ def export_multiturn_sft_records(
     *,
     history_window: int = 8,
     run_id: str | None = None,
+    patience_eps: float = 0.2,
 ) -> list[dict]:
-    """Rebuild step-wise SFT examples via ``build_multiturn_prompt`` (not report_text)."""
+    """Rebuild step-wise SFT examples via ``build_multiturn_prompt`` (not report_text).
+
+    ``best_db`` passed into later-turn prompts follows ``run_trajectory``: update
+    only when ``new_db < best_db - patience_eps`` (default 0.2), not strict min.
+    """
     goal = _goal_from_state(state["goal"])
     history = state.get("history") or []
     if not history:
+        warnings.warn(
+            "export_multiturn_sft_records: zero turns exported (empty history)",
+            stacklevel=2,
+        )
         return []
 
     records: list[dict] = []
     prior_turns: list[TurnRecord] = []
     initial_db: float | None = None
+    best_db: float | None = None
     turn_index = 0
 
     for idx, entry in enumerate(history):
@@ -181,6 +192,7 @@ def export_multiturn_sft_records(
         if intent is None:
             if isinstance(cost, dict) and "total_cost" in cost and initial_db is None:
                 initial_db = s21_db(float(cost["total_cost"]))
+                best_db = initial_db
             continue
 
         if idx == 0:
@@ -197,6 +209,7 @@ def export_multiturn_sft_records(
         db_before = s21_db(float(before_cost["total_cost"]))
         if initial_db is None:
             initial_db = db_before
+            best_db = db_before
 
         # First tuning turn: match rollout by letting build_multiturn_prompt
         # derive init/best from the current cost when no prior turns exist.
@@ -205,13 +218,7 @@ def export_multiturn_sft_records(
             prompt_best: float | None = None
         else:
             prompt_init = initial_db
-            prompt_best = db_before
-            for prev in history[:idx]:
-                pc = prev.get("cost")
-                if isinstance(pc, dict) and "total_cost" in pc:
-                    pdb = s21_db(float(pc["total_cost"]))
-                    if pdb < prompt_best:
-                        prompt_best = pdb
+            prompt_best = best_db
 
         prompt = build_multiturn_prompt(
             goal,
@@ -253,6 +260,9 @@ def export_multiturn_sft_records(
             if isinstance(after_cost, dict) and "total_cost" in after_cost
             else db_before
         )
+        # Same patience gate as run_trajectory (not strict historical min).
+        if best_db is None or db_after < best_db - patience_eps:
+            best_db = db_after
         after_params = entry.get("params") or before_params
         prior_turns.append(
             TurnRecord(
@@ -269,6 +279,11 @@ def export_multiturn_sft_records(
         )
         turn_index += 1
 
+    if not records:
+        warnings.warn(
+            "export_multiturn_sft_records: zero turns exported for this run",
+            stacklevel=2,
+        )
     return records
 
 

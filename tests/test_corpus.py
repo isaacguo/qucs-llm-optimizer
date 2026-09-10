@@ -4,8 +4,10 @@ from __future__ import annotations
 import json
 import tempfile
 import unittest
+import warnings
 from pathlib import Path
 
+from cost import s21_db
 from training.corpus import (
     append_index,
     coverage_counts,
@@ -16,6 +18,10 @@ from training.corpus import (
 )
 from training.goals import GoalDistributionConfig, GoalSpec
 from training.rollout import SYSTEM_PROMPT, TurnRecord, build_multiturn_prompt
+
+
+def _mag_for_db(db: float) -> float:
+    return 10.0 ** (db / 20.0)
 
 
 def _params(**overrides) -> dict:
@@ -178,8 +184,6 @@ class MultiturnSftExportTests(unittest.TestCase):
         self.assertIn("meta", first)
 
         # Second turn: history must include first completed TurnRecord facts.
-        from cost import s21_db
-
         prior = TurnRecord(
             turn_index=0,
             prompt=[],
@@ -192,6 +196,10 @@ class MultiturnSftExportTests(unittest.TestCase):
             db_after=s21_db(state["history"][1]["cost"]["total_cost"]),
         )
         mid = state["history"][1]
+        init_db = s21_db(baseline["cost"]["total_cost"])
+        mid_db = s21_db(mid["cost"]["total_cost"])
+        # Patience gate (eps=0.2): large step updates best_db.
+        patience_best = mid_db if mid_db < init_db - 0.2 else init_db
         expected_second = build_multiturn_prompt(
             goal,
             turn_index=1,
@@ -199,13 +207,118 @@ class MultiturnSftExportTests(unittest.TestCase):
             cost=mid["cost"],
             history=[prior],
             history_window=8,
-            initial_db=s21_db(baseline["cost"]["total_cost"]),
-            best_db=min(
-                s21_db(baseline["cost"]["total_cost"]),
-                s21_db(mid["cost"]["total_cost"]),
-            ),
+            initial_db=init_db,
+            best_db=patience_best,
         )
         self.assertEqual(records[1]["messages"][1]["content"], expected_second[1]["content"])
+
+    def test_export_best_db_uses_patience_gate_not_strict_min(self):
+        """Sub-eps improvement (~0.1 dB) must not update best_db for later turns."""
+        init_db = -20.0
+        tiny_improve_db = -20.1  # delta 0.1 < patience_eps 0.2
+        init_mag = _mag_for_db(init_db)
+        tiny_mag = _mag_for_db(tiny_improve_db)
+        state = {
+            "goal": {
+                "target_freq_hz": 5.5e9,
+                "band_hz": [4.5e9, 6.5e9],
+                "target_depth_db": -60.0,
+            },
+            "history": [
+                {
+                    "iteration": 0,
+                    "intent": None,
+                    "params": _params(ro=8.0),
+                    "cost": _cost(init_mag),
+                    "thinking": "Baseline.",
+                },
+                {
+                    "iteration": 1,
+                    "intent": {"ro": "decrease_slight"},
+                    "params": _params(ro=7.5),
+                    "cost": _cost(tiny_mag),
+                    "thinking": "Tiny step.",
+                },
+                {
+                    "iteration": 2,
+                    "intent": {"alpha": "increase_slight"},
+                    "params": _params(ro=7.5, alpha=92.0),
+                    "cost": _cost(tiny_mag),
+                    "thinking": "Hold course.",
+                },
+            ],
+        }
+        records = export_multiturn_sft_records(state)
+        self.assertEqual(len(records), 2)
+
+        goal = GoalSpec(
+            target_freq_hz=5.5e9,
+            band_hz=(4.5e9, 6.5e9),
+            target_depth_db=-60.0,
+        )
+        baseline = state["history"][0]
+        mid = state["history"][1]
+        prior = TurnRecord(
+            turn_index=0,
+            prompt=[],
+            completion_text="",
+            valid=True,
+            intent={"ro": "decrease_slight"},
+            params_before=baseline["params"],
+            params_after=mid["params"],
+            db_before=init_db,
+            db_after=tiny_improve_db,
+        )
+        patience_tracked = init_db  # 0.1 dB < 0.2 eps → no update
+        strict_min = tiny_improve_db
+        self.assertLess(strict_min, patience_tracked)
+        self.assertLess(patience_tracked - strict_min, 0.2)
+
+        expected_patience = build_multiturn_prompt(
+            goal,
+            turn_index=1,
+            params=mid["params"],
+            cost=mid["cost"],
+            history=[prior],
+            history_window=8,
+            initial_db=init_db,
+            best_db=patience_tracked,
+        )
+        expected_strict = build_multiturn_prompt(
+            goal,
+            turn_index=1,
+            params=mid["params"],
+            cost=mid["cost"],
+            history=[prior],
+            history_window=8,
+            initial_db=init_db,
+            best_db=strict_min,
+        )
+        user_text = records[1]["messages"][1]["content"]
+        self.assertEqual(user_text, expected_patience[1]["content"])
+        self.assertNotEqual(user_text, expected_strict[1]["content"])
+
+    def test_export_warns_when_zero_turns(self):
+        state = {
+            "goal": {
+                "target_freq_hz": 5.5e9,
+                "band_hz": [4.5e9, 6.5e9],
+                "target_depth_db": -60.0,
+            },
+            "history": [
+                {
+                    "iteration": 0,
+                    "intent": None,
+                    "params": _params(),
+                    "cost": _cost(0.1),
+                }
+            ],
+        }
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            records = export_multiturn_sft_records(state)
+        self.assertEqual(records, [])
+        self.assertTrue(any("zero" in str(w.message).lower() for w in caught))
 
     def test_export_from_index_ignores_unlisted_runs(self):
         state = _multiturn_fixture_state()
