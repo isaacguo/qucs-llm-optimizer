@@ -7,8 +7,10 @@ Workflow:
   qucs-corpus coverage --index corpus/index.jsonl --goal-config ...
   qucs-corpus export --index corpus/index.jsonl --out path.jsonl
 
-Optional legacy import (e.g. runs/llm1 without goal metadata):
-  qucs-corpus import-run --run llm1
+Optional legacy import (rewrites state.json; copy the run first):
+  cp -R runs/llm1 runs/llm1-import
+  qucs-corpus import-run --run llm1-import
+  # refuses if existing goal differs unless --force
 
 ``--prefer-coverage`` (assign): samples a short seed window and picks the goal
 whose coverage bin is least filled in the current index. If the index is empty
@@ -169,6 +171,17 @@ def cmd_gate(args: argparse.Namespace) -> int:
     )
 
 
+def _goals_match_llm1_reference(existing: dict, reference: dict) -> bool:
+    """True when freq/depth match the llm1 reference (band derived from freq)."""
+    try:
+        return (
+            float(existing["target_freq_hz"]) == float(reference["target_freq_hz"])
+            and float(existing["target_depth_db"]) == float(reference["target_depth_db"])
+        )
+    except (KeyError, TypeError, ValueError):
+        return False
+
+
 def cmd_import_run(args: argparse.Namespace) -> int:
     """Attach the llm1 reference goal (5.5 GHz / −70 dB), then gate + index."""
     run_dir = Path(args.runs_root) / args.run
@@ -177,6 +190,21 @@ def cmd_import_run(args: argparse.Namespace) -> int:
         raise SystemExit(f"missing state: {state_path}")
     goal = _llm1_reference_goal()
     run_state = RunState(run_dir)
+    existing = run_state.goal
+    if existing is not None and not _goals_match_llm1_reference(existing, goal):
+        if not getattr(args, "force", False):
+            raise SystemExit(
+                f"import-run {args.run}: existing state.goal differs from llm1 "
+                f"reference (5.5e9 Hz / -70 dB); refuse to overwrite without --force "
+                f"(got target_freq_hz={existing.get('target_freq_hz')!r} "
+                f"target_depth_db={existing.get('target_depth_db')!r})"
+            )
+    elif existing is None:
+        print(
+            f"import-run {args.run}: warning: writing llm1 reference goal onto a "
+            f"previously goal-less run (rewrites state.json)",
+            file=sys.stderr,
+        )
     run_state.set_run_meta(goal=goal)
     print(
         f"import-run {args.run}: attached goal="
@@ -272,6 +300,11 @@ def build_parser() -> argparse.ArgumentParser:
     p_import.add_argument("--run", required=True, help="Run id under --runs-root (e.g. llm1)")
     p_import.add_argument("--index", default="corpus/index.jsonl")
     p_import.add_argument("--runs-root", default="runs")
+    p_import.add_argument(
+        "--force",
+        action="store_true",
+        help="Overwrite an existing state.goal that differs from the llm1 reference",
+    )
     p_import.set_defaults(func=cmd_import_run)
 
     return parser

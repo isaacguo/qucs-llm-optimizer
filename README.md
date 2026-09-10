@@ -290,12 +290,18 @@ uv run python -m training.multiturn_train \
   --resume-adapter outputs/sft-coldstart/final_lora
 ```
 
-Optional one-shot import of the legacy reference run (attaches goal
-**5.5 GHz / −70 dB**, then gates/indexes if eligible):
+Optional one-shot import of a legacy reference-shaped run (rewrites
+`state.json`: attaches goal **5.5 GHz / −70 dB** + corpus metadata, then
+gates/indexes if eligible). Prefer a copy so tracked runs stay clean:
 
 ```bash
-uv run qucs-corpus import-run --run llm1
+cp -R runs/llm1 runs/llm1-import
+uv run qucs-corpus import-run --run llm1-import
 ```
+
+If `state.goal` already exists and differs from that reference, `import-run`
+refuses unless you pass `--force`. Writing onto a goal-less run prints a
+stderr warning.
 
 ### Smoke milestones
 

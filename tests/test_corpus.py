@@ -569,6 +569,53 @@ class CorpusCliTests(unittest.TestCase):
         self.assertFalse(saved["corpus"]["eligible"])
         self.assertEqual(load_index(index_path), [])
 
+    def test_import_run_refuses_different_existing_goal_without_force(self):
+        """Existing different goal → SystemExit; --force overwrites and continues."""
+        state = _state_with_goal(-60.0, 2.5e-4)
+        state["goal"]["target_freq_hz"] = 7.0e9
+        state["goal"]["band_hz"] = [6.0e9, 8.0e9]
+        state["history"][0]["params"] = _params()
+        state["history"][1]["params"] = _params(ro=5.0)
+        run_dir = self.runs_root / "sampled"
+        run_dir.mkdir(parents=True)
+        state_path = run_dir / "state.json"
+        state_path.write_text(json.dumps(state))
+        before = state_path.read_text()
+        index_path = self.root / "corpus" / "index.jsonl"
+
+        with self.assertRaises(SystemExit) as ctx:
+            self.corpus_cli.main(
+                [
+                    "import-run",
+                    "--run",
+                    "sampled",
+                    "--index",
+                    str(index_path),
+                    "--runs-root",
+                    str(self.runs_root),
+                ]
+            )
+        self.assertIn("force", str(ctx.exception).lower())
+        self.assertEqual(state_path.read_text(), before)
+        self.assertEqual(load_index(index_path), [])
+
+        code = self.corpus_cli.main(
+            [
+                "import-run",
+                "--run",
+                "sampled",
+                "--force",
+                "--index",
+                str(index_path),
+                "--runs-root",
+                str(self.runs_root),
+            ]
+        )
+        self.assertEqual(code, 0)
+        saved = json.loads(state_path.read_text())
+        self.assertEqual(saved["goal"]["target_freq_hz"], 5.5e9)
+        self.assertEqual(saved["goal"]["target_depth_db"], -70.0)
+
 
 if __name__ == "__main__":
     unittest.main()
