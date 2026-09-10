@@ -1,11 +1,15 @@
 """Typed training recipes: YAML load + dataclass schemas + CLI merge."""
 from __future__ import annotations
 
+import argparse
+import copy
 from dataclasses import dataclass, field, fields, is_dataclass
 from pathlib import Path
 from typing import Any, TypeVar, get_type_hints
 
 import yaml
+
+from training.modeling import ModelConfig
 
 T = TypeVar("T")
 
@@ -107,3 +111,55 @@ def from_mapping(cls: type[T], data: dict | None, path: str = "") -> T:
         else:
             kwargs[name] = value
     return cls(**kwargs)
+
+
+GRPO_CLI_FIELD_MAP: dict[str, tuple[str, str]] = {
+    "model_name": ("model", "name"),
+    "tasks": ("data", "tasks"),
+    "start_seed": ("data", "start_seed"),
+    "max_iteration": ("data", "max_iteration"),
+    "goal_freq_min_ghz": ("data", "goal_freq_min_ghz"),
+    "goal_freq_max_ghz": ("data", "goal_freq_max_ghz"),
+    "steps": ("train", "steps"),
+    "generations": ("train", "generations"),
+    "sim_workers": ("runtime", "sim_workers"),
+    "output_dir": ("runtime", "output_dir"),
+    "resume_from_checkpoint": ("runtime", "resume_from_checkpoint"),
+    "use_vllm": ("runtime", "use_vllm"),
+}
+
+
+def merge_grpo_cli(config: GrpoConfig, args: argparse.Namespace) -> GrpoConfig:
+    cfg = copy.deepcopy(config)
+    for dest, (section, name) in GRPO_CLI_FIELD_MAP.items():
+        value = getattr(args, dest, None)
+        if value is None:
+            continue
+        setattr(getattr(cfg, section), name, value)
+    return cfg
+
+
+def resolve_grpo_config(args: argparse.Namespace) -> GrpoConfig:
+    config_path = getattr(args, "config", None)
+    if config_path:
+        cfg = from_mapping(GrpoConfig, load_yaml(config_path))
+    else:
+        cfg = GrpoConfig()
+    return merge_grpo_cli(cfg, args)
+
+
+def to_model_config(model: ModelSection, *, fast_inference: bool = False) -> ModelConfig:
+    return ModelConfig(
+        model_name=model.name,
+        max_seq_length=model.max_seq_length,
+        lora_rank=model.lora_rank,
+        fast_inference=fast_inference,
+    )
+
+
+def config_to_dict(obj: Any) -> Any:
+    if is_dataclass(obj):
+        return {f.name: config_to_dict(getattr(obj, f.name)) for f in fields(obj)}
+    if isinstance(obj, list):
+        return [config_to_dict(x) for x in obj]
+    return obj

@@ -5,7 +5,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from training.config import GrpoConfig, from_mapping, load_yaml
+from training.config import GrpoConfig, from_mapping, load_yaml, resolve_grpo_config
+from training.grpo import build_parser, grpo_config_kwargs
 
 
 class LoadYamlTests(unittest.TestCase):
@@ -46,6 +47,31 @@ class GrpoFromMappingTests(unittest.TestCase):
         with self.assertRaises(ValueError) as ctx:
             from_mapping(GrpoConfig, {"train": {"learnning_rate": 1e-5}})
         self.assertIn("learnning_rate", str(ctx.exception))
+
+
+class GrpoMergeTests(unittest.TestCase):
+    def test_cli_overrides_yaml(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "g.yaml"
+            path.write_text(
+                "train:\n  steps: 50\n  learning_rate: 1.0e-5\n",
+                encoding="utf-8",
+            )
+            args = build_parser().parse_args(["--config", str(path), "--steps", "3"])
+            cfg = resolve_grpo_config(args)
+        self.assertEqual(cfg.train.steps, 3)
+        self.assertEqual(cfg.train.learning_rate, 1e-5)
+
+    def test_no_config_matches_legacy_defaults(self):
+        args = build_parser().parse_args([])
+        cfg = resolve_grpo_config(args)
+        self.assertEqual(cfg.model.name, "unsloth/Qwen3-1.7B-bnb-4bit")
+        self.assertEqual(cfg.train.generations, 8)
+        kwargs = grpo_config_kwargs(cfg)
+        self.assertEqual(kwargs["learning_rate"], 5e-6)
+        self.assertEqual(kwargs["beta"], 0.01)
+        self.assertEqual(kwargs["reward_weights"], [0.2, 0.2, 1.0])
+        self.assertEqual(kwargs["num_generations"], 8)
 
 
 if __name__ == "__main__":

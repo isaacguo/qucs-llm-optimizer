@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import unittest
 
+from training.config import resolve_grpo_config
 from training.grpo import build_parser as build_grpo_parser
 from training.grpo import grpo_config_kwargs
 from training.multiturn_train import build_parser as build_multiturn_parser
@@ -13,17 +14,19 @@ from training.sft import build_parser as build_sft_parser
 class GrpoCliTests(unittest.TestCase):
     def test_defaults_use_real_qwen_and_eight_generations(self):
         args = build_grpo_parser().parse_args([])
-        self.assertEqual(args.model_name, "unsloth/Qwen3-1.7B-bnb-4bit")
-        self.assertEqual(args.generations, 8)
-        self.assertEqual(args.tasks, 32)
-        self.assertEqual(args.steps, 100)
-        self.assertFalse(args.use_vllm)
+        cfg = resolve_grpo_config(args)
+        self.assertEqual(cfg.model.name, "unsloth/Qwen3-1.7B-bnb-4bit")
+        self.assertEqual(cfg.train.generations, 8)
+        self.assertEqual(cfg.data.tasks, 32)
+        self.assertEqual(cfg.train.steps, 100)
+        self.assertFalse(cfg.runtime.use_vllm)
 
     def test_grpo_config_is_conservative_for_eight_gb(self):
         args = build_grpo_parser().parse_args(
             ["--steps", "3", "--generations", "4", "--output-dir", "custom"]
         )
-        config = grpo_config_kwargs(args)
+        cfg = resolve_grpo_config(args)
+        config = grpo_config_kwargs(cfg)
         self.assertEqual(config["max_steps"], 3)
         self.assertEqual(config["num_generations"], 4)
         self.assertFalse(config["use_vllm"])
