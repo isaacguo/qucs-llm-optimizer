@@ -9,6 +9,9 @@ from __future__ import annotations
 import json
 import random
 from dataclasses import asdict, dataclass
+from pathlib import Path
+
+import yaml
 
 TRAIN_FREQ_RANGE_HZ = (4.0e9, 6.0e9)
 BAND_HALF_WIDTH_HZ = 1.0e9
@@ -38,8 +41,39 @@ class GoalSpec:
         )
 
 
-def band_for(target_freq_hz: float) -> tuple[float, float]:
-    return (target_freq_hz - BAND_HALF_WIDTH_HZ, target_freq_hz + BAND_HALF_WIDTH_HZ)
+@dataclass(frozen=True)
+class GoalDistributionConfig:
+    freq_min_hz: float
+    freq_max_hz: float
+    depth_db_min: float
+    depth_db_max: float
+    band_half_width_hz: float
+    heldout_enabled: bool
+    freq_bin_hz: float
+    depth_bin_db: float
+
+
+def load_goal_distribution(path: str | Path) -> GoalDistributionConfig:
+    with open(path, encoding="utf-8") as fh:
+        data = yaml.safe_load(fh)
+    return GoalDistributionConfig(
+        freq_min_hz=float(data["freq_min_hz"]),
+        freq_max_hz=float(data["freq_max_hz"]),
+        depth_db_min=float(data["depth_db_min"]),
+        depth_db_max=float(data["depth_db_max"]),
+        band_half_width_hz=float(data["band_half_width_hz"]),
+        heldout_enabled=bool(data["heldout_enabled"]),
+        freq_bin_hz=float(data["freq_bin_hz"]),
+        depth_bin_db=float(data["depth_bin_db"]),
+    )
+
+
+def band_for(
+    target_freq_hz: float,
+    half_width_hz: float | None = None,
+) -> tuple[float, float]:
+    hw = BAND_HALF_WIDTH_HZ if half_width_hz is None else half_width_hz
+    return (target_freq_hz - hw, target_freq_hz + hw)
 
 
 def sample_goal(
@@ -67,6 +101,43 @@ def sample_goal(
         band_hz=band_for(freq),
         target_depth_db=target_depth_db,
     )
+
+
+def sample_goal_from_distribution(seed: int, dist: GoalDistributionConfig) -> GoalSpec:
+    """Sample freq and depth from ``dist``; apply held-out exclusion only if enabled."""
+    rng = random.Random(seed ^ 0x60A1)
+    depth = rng.uniform(dist.depth_db_min, dist.depth_db_max)
+    lo, hi = dist.freq_min_hz, dist.freq_max_hz
+    half = dist.band_half_width_hz
+
+    if not dist.heldout_enabled:
+        freq = rng.uniform(lo, hi)
+        return GoalSpec(
+            target_freq_hz=freq,
+            band_hz=band_for(freq, half),
+            target_depth_db=depth,
+        )
+
+    for _ in range(50):
+        freq = rng.uniform(lo, hi)
+        if all(abs(freq - h) >= _HELDOUT_EXCLUSION_HZ for h in HELDOUT_FREQS_HZ):
+            return GoalSpec(
+                target_freq_hz=freq,
+                band_hz=band_for(freq, half),
+                target_depth_db=depth,
+            )
+    nearest = min(HELDOUT_FREQS_HZ, key=lambda h: abs(h - rng.uniform(lo, hi)))
+    freq = min(max(nearest - _HELDOUT_EXCLUSION_HZ, lo), hi)
+    return GoalSpec(
+        target_freq_hz=freq,
+        band_hz=band_for(freq, half),
+        target_depth_db=depth,
+    )
+
+
+def is_goal_met(cost: dict, goal: GoalSpec) -> bool:
+    threshold = 10 ** (goal.target_depth_db / 20.0)
+    return cost["total_cost"] <= threshold
 
 
 def heldout_goals() -> list[GoalSpec]:
