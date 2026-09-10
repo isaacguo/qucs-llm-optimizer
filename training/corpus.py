@@ -1,7 +1,8 @@
-"""Hard-success corpus gate, JSONL index, and coverage bins."""
+"""Hard-success corpus gate, JSONL index, coverage bins, and multiturn SFT export."""
 from __future__ import annotations
 
 import json
+import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -18,6 +19,7 @@ from training.goals import (  # noqa: E402
     GoalSpec,
     is_goal_met,
 )
+from training.rollout import TurnRecord, build_multiturn_prompt  # noqa: E402
 
 
 def _goal_from_state(raw: dict | GoalSpec) -> GoalSpec:
@@ -141,3 +143,158 @@ def index_record_from_run(
         "goal_met_iteration": corpus.get("goal_met_iteration"),
         "added_at": datetime.now(timezone.utc).isoformat(),
     }
+
+
+def _compress_thinking(text: str, *, max_sentences: int = 3) -> str:
+    """Keep at most ``max_sentences`` sentences (split on ``. `` / newlines)."""
+    raw = (text or "").strip()
+    if not raw:
+        return ""
+    parts = re.split(r"(?:\n|\. )+", raw)
+    sentences = [p.strip().rstrip(".") for p in parts if p.strip()]
+    kept = sentences[:max_sentences]
+    if not kept:
+        return ""
+    return ". ".join(kept) + ("." if kept else "")
+
+
+def export_multiturn_sft_records(
+    state: dict,
+    *,
+    history_window: int = 8,
+    run_id: str | None = None,
+) -> list[dict]:
+    """Rebuild step-wise SFT examples via ``build_multiturn_prompt`` (not report_text)."""
+    goal = _goal_from_state(state["goal"])
+    history = state.get("history") or []
+    if not history:
+        return []
+
+    records: list[dict] = []
+    prior_turns: list[TurnRecord] = []
+    initial_db: float | None = None
+    turn_index = 0
+
+    for idx, entry in enumerate(history):
+        intent = entry.get("intent")
+        cost = entry.get("cost")
+        if intent is None:
+            if isinstance(cost, dict) and "total_cost" in cost and initial_db is None:
+                initial_db = s21_db(float(cost["total_cost"]))
+            continue
+
+        if idx == 0:
+            continue
+
+        before = history[idx - 1]
+        before_params = before.get("params")
+        before_cost = before.get("cost")
+        if not isinstance(before_params, dict) or not isinstance(before_cost, dict):
+            continue
+        if "total_cost" not in before_cost:
+            continue
+
+        db_before = s21_db(float(before_cost["total_cost"]))
+        if initial_db is None:
+            initial_db = db_before
+
+        # First tuning turn: match rollout by letting build_multiturn_prompt
+        # derive init/best from the current cost when no prior turns exist.
+        if not prior_turns:
+            prompt_init: float | None = None
+            prompt_best: float | None = None
+        else:
+            prompt_init = initial_db
+            prompt_best = db_before
+            for prev in history[:idx]:
+                pc = prev.get("cost")
+                if isinstance(pc, dict) and "total_cost" in pc:
+                    pdb = s21_db(float(pc["total_cost"]))
+                    if pdb < prompt_best:
+                        prompt_best = pdb
+
+        prompt = build_multiturn_prompt(
+            goal,
+            turn_index,
+            before_params,
+            before_cost,
+            prior_turns,
+            history_window=history_window,
+            initial_db=prompt_init,
+            best_db=prompt_best,
+        )
+        reasoning = _compress_thinking(entry.get("thinking") or entry.get("note") or "")
+        completion = (
+            f"<reasoning>{reasoning}</reasoning>\n"
+            f"<intent>{json.dumps(intent, sort_keys=True)}</intent>"
+        )
+        meta: dict = {
+            "turn_index": turn_index,
+            "iteration": entry.get("iteration"),
+            "goal": state["goal"],
+        }
+        if run_id is not None:
+            meta["run_id"] = run_id
+
+        records.append(
+            {
+                "messages": [
+                    prompt[0],
+                    prompt[1],
+                    {"role": "assistant", "content": completion},
+                ],
+                "meta": meta,
+            }
+        )
+
+        after_cost = entry.get("cost") or {}
+        db_after = (
+            s21_db(float(after_cost["total_cost"]))
+            if isinstance(after_cost, dict) and "total_cost" in after_cost
+            else db_before
+        )
+        after_params = entry.get("params") or before_params
+        prior_turns.append(
+            TurnRecord(
+                turn_index=turn_index,
+                prompt=prompt,
+                completion_text=completion,
+                valid=True,
+                intent=dict(intent),
+                params_before=dict(before_params),
+                params_after=dict(after_params),
+                db_before=db_before,
+                db_after=db_after,
+            )
+        )
+        turn_index += 1
+
+    return records
+
+
+def export_from_index(
+    index_path: Path,
+    runs_root: Path,
+    history_window: int = 8,
+) -> list[dict]:
+    """Export multiturn SFT records for runs listed in the corpus index only."""
+    runs_root = Path(runs_root)
+    rows = load_index(Path(index_path))
+    out: list[dict] = []
+    for record in rows:
+        run_id = record["run_id"]
+        run_dir = Path(record.get("run_dir") or run_id)
+        if not run_dir.is_absolute():
+            run_dir = runs_root / run_dir
+        state_path = run_dir / "state.json"
+        if not state_path.is_file():
+            raise FileNotFoundError(f"missing state for indexed run {run_id}: {state_path}")
+        state = json.loads(state_path.read_text(encoding="utf-8"))
+        out.extend(
+            export_multiturn_sft_records(
+                state,
+                history_window=history_window,
+                run_id=run_id,
+            )
+        )
+    return out
