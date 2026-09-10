@@ -87,7 +87,7 @@ class MultiturnConfigTests(unittest.TestCase):
         cfg = from_mapping(MultiturnConfig, {})
         self.assertEqual(cfg.train.max_turns, 15)
         self.assertEqual(cfg.train.patience, 5)
-        self.assertEqual(cfg.data.target_depth_db, -30.0)
+        self.assertEqual(cfg.data.goal_config, "configs/goal_distribution.yaml")
         self.assertEqual(cfg.train.generations, 4)
         self.assertEqual(cfg.model.max_seq_length, 2048)
         self.assertEqual(cfg.train.beta, 0.0)

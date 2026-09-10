@@ -29,6 +29,7 @@ import statistics
 import sys
 import time
 from contextlib import contextmanager
+from dataclasses import replace
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -37,14 +38,21 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 from decision_log import append_record  # noqa: E402
+
 from training.config import (  # noqa: E402
     MultiturnConfig,
+    MultiturnDataSection,
     config_to_dict,
     resolve_multiturn_config,
     to_model_config,
 )
 from training.diagnostics import build_step_stats  # noqa: E402
-from training.goals import sample_goal  # noqa: E402
+from training.goals import (  # noqa: E402
+    GoalDistributionConfig,
+    GoalSpec,
+    load_goal_distribution,
+    sample_goal_from_distribution,
+)
 from training.modeling import load_policy  # noqa: E402
 from training.preflight import verify_runtime  # noqa: E402
 from training.rollout import (  # noqa: E402
@@ -54,6 +62,23 @@ from training.rollout import (  # noqa: E402
     trajectory_to_json,
 )
 from training.starts import sample_params_with_headroom  # noqa: E402
+
+
+def resolve_multiturn_goal_distribution(data: MultiturnDataSection) -> GoalDistributionConfig:
+    """Load shared goal YAML; optional CLI freq bounds mutate a copy."""
+    dist = load_goal_distribution(data.goal_config)
+    overrides: dict[str, float] = {}
+    if data.goal_freq_min_ghz is not None:
+        overrides["freq_min_hz"] = data.goal_freq_min_ghz * 1e9
+    if data.goal_freq_max_ghz is not None:
+        overrides["freq_max_hz"] = data.goal_freq_max_ghz * 1e9
+    if overrides:
+        return replace(dist, **overrides)
+    return dist
+
+
+def sample_multiturn_goal(seed: int, data: MultiturnDataSection) -> GoalSpec:
+    return sample_goal_from_distribution(seed, resolve_multiturn_goal_distribution(data))
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -83,10 +108,9 @@ def build_parser() -> argparse.ArgumentParser:
         help="dB improvement required to reset patience",
     )
     parser.add_argument(
-        "--target-depth-db",
-        type=float,
+        "--goal-config",
         default=None,
-        help="training goal_met threshold; keep -70 for evaluation only",
+        help="path to shared goal distribution YAML (default: configs/goal_distribution.yaml)",
     )
     parser.add_argument(
         "--param-spread",
@@ -116,8 +140,17 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help=(
             "load a previously saved LoRA (checkpoint-* or final_lora) before "
-            "the first rollout, then keep training; omit to start from a fresh "
-            "random LoRA on the base model"
+            "the first rollout, then keep training; required for cold-start "
+            "unless --allow-raw-base"
+        ),
+    )
+    parser.add_argument(
+        "--allow-raw-base",
+        action="store_true",
+        default=None,
+        help=(
+            "escape hatch: allow training from a fresh random LoRA without "
+            "--resume-adapter (cold-start otherwise requires an SFT adapter)"
         ),
     )
     parser.add_argument(
@@ -157,12 +190,7 @@ def _canned_generate(_messages: list[dict[str, str]]) -> str:
 def _dry_run(config: MultiturnConfig) -> None:
     d = config.data
     t = config.train
-    freq_range = (d.goal_freq_min_ghz * 1e9, d.goal_freq_max_ghz * 1e9)
-    goal = sample_goal(
-        d.start_seed,
-        freq_range=freq_range,
-        target_depth_db=d.target_depth_db,
-    )
+    goal = sample_multiturn_goal(d.start_seed, d)
     traj = run_trajectory(
         _canned_generate,
         goal=goal,
@@ -305,11 +333,16 @@ def _turn_logprob_sum(model, tokenizer, prompt_messages, completion_text, device
 
 
 def train(config: MultiturnConfig) -> None:
-    import torch
-
     t = config.train
     d = config.data
     r = config.runtime
+
+    if not r.resume_adapter and not r.allow_raw_base:
+        raise SystemExit(
+            "cold-start requires --resume-adapter / runtime.resume_adapter"
+        )
+
+    import torch
 
     output_dir = Path(r.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -325,8 +358,6 @@ def train(config: MultiturnConfig) -> None:
 
     trainable_params = [p for p in model.parameters() if p.requires_grad]
     optimizer = torch.optim.AdamW(trainable_params, lr=t.lr)
-
-    freq_range = (d.goal_freq_min_ghz * 1e9, d.goal_freq_max_ghz * 1e9)
 
     def log(msg: str) -> None:
         line = f"[{time.strftime('%H:%M:%S')}] {msg}"
@@ -351,11 +382,7 @@ def train(config: MultiturnConfig) -> None:
         step_resamples = 0
 
         for task_idx in range(t.tasks_per_step):
-            goal = sample_goal(
-                seed_cursor,
-                freq_range=freq_range,
-                target_depth_db=d.target_depth_db,
-            )
+            goal = sample_multiturn_goal(seed_cursor, d)
             shared_params, initial_db, seed_used, n_resamples = sample_params_with_headroom(
                 start_seed=seed_cursor,
                 goal=goal,

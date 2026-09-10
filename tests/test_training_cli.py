@@ -62,7 +62,7 @@ class MultiturnCliTests(unittest.TestCase):
         cfg = resolve_multiturn_config(args)
         self.assertEqual(cfg.train.max_turns, 15)
         self.assertEqual(cfg.train.patience, 5)
-        self.assertEqual(cfg.data.target_depth_db, -30.0)
+        self.assertEqual(cfg.data.goal_config, "configs/goal_distribution.yaml")
         self.assertEqual(cfg.train.generations, 4)
         self.assertAlmostEqual(cfg.data.param_spread, 0.35)
         self.assertAlmostEqual(cfg.data.min_start_headroom_db, 5.0)

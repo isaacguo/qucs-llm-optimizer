@@ -99,9 +99,10 @@ class MultiturnTrainSection:
 @dataclass
 class MultiturnDataSection:
     start_seed: int = 5000
-    goal_freq_min_ghz: float = 4.0
-    goal_freq_max_ghz: float = 6.0
-    target_depth_db: float = -30.0
+    goal_config: str = "configs/goal_distribution.yaml"
+    # Optional CLI overrides that mutate a loaded distribution copy (None = use YAML).
+    goal_freq_min_ghz: float | None = None
+    goal_freq_max_ghz: float | None = None
     param_spread: float = 0.35
     min_start_headroom_db: float = 5.0
 
@@ -115,6 +116,7 @@ class MultiturnRewardSection:
 class MultiturnRuntimeSection:
     output_dir: str = "outputs/multiturn-grpo-demo"
     resume_adapter: str = ""
+    allow_raw_base: bool = False
 
 
 @dataclass
@@ -221,13 +223,14 @@ MULTITURN_CLI_FIELD_MAP: dict[str, tuple[str, str]] = {
     "kl_ref": ("train", "kl_ref"),
     "steps": ("train", "steps"),
     "start_seed": ("data", "start_seed"),
+    "goal_config": ("data", "goal_config"),
     "goal_freq_min_ghz": ("data", "goal_freq_min_ghz"),
     "goal_freq_max_ghz": ("data", "goal_freq_max_ghz"),
-    "target_depth_db": ("data", "target_depth_db"),
     "param_spread": ("data", "param_spread"),
     "min_start_headroom_db": ("data", "min_start_headroom_db"),
     "output_dir": ("runtime", "output_dir"),
     "resume_adapter": ("runtime", "resume_adapter"),
+    "allow_raw_base": ("runtime", "allow_raw_base"),
 }
 
 
