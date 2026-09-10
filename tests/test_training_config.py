@@ -93,6 +93,15 @@ class MultiturnConfigTests(unittest.TestCase):
         self.assertEqual(cfg.train.beta, 0.0)
         self.assertEqual(cfg.train.kl_ref, "start")
 
+    def test_partial_model_yaml_keeps_multiturn_max_seq_length(self):
+        cfg = from_mapping(MultiturnConfig, {"model": {"name": "unsloth/Qwen3-4B"}})
+        self.assertEqual(cfg.model.name, "unsloth/Qwen3-4B")
+        self.assertEqual(cfg.model.max_seq_length, 2048)
+
+    def test_partial_model_yaml_keeps_grpo_max_seq_length(self):
+        cfg = from_mapping(GrpoConfig, {"model": {"name": "x"}})
+        self.assertEqual(cfg.model.max_seq_length, 1024)
+
     def test_resolve_cli_overrides_yaml(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "m.yaml"

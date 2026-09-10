@@ -22,6 +22,13 @@ class ModelSection:
 
 
 @dataclass
+class MultiturnModelSection:
+    name: str = "unsloth/Qwen3-1.7B-bnb-4bit"
+    max_seq_length: int = 2048
+    lora_rank: int = 16
+
+
+@dataclass
 class GrpoTrainSection:
     steps: int = 100
     generations: int = 8
@@ -112,9 +119,7 @@ class MultiturnRuntimeSection:
 
 @dataclass
 class MultiturnConfig:
-    model: ModelSection = field(
-        default_factory=lambda: ModelSection(max_seq_length=2048)
-    )
+    model: MultiturnModelSection = field(default_factory=MultiturnModelSection)
     train: MultiturnTrainSection = field(default_factory=MultiturnTrainSection)
     data: MultiturnDataSection = field(default_factory=MultiturnDataSection)
     reward: MultiturnRewardSection = field(default_factory=MultiturnRewardSection)
@@ -245,7 +250,9 @@ def resolve_multiturn_config(args: argparse.Namespace) -> MultiturnConfig:
     return merge_multiturn_cli(cfg, args)
 
 
-def to_model_config(model: ModelSection, *, fast_inference: bool = False) -> ModelConfig:
+def to_model_config(
+    model: ModelSection | MultiturnModelSection, *, fast_inference: bool = False
+) -> ModelConfig:
     return ModelConfig(
         model_name=model.name,
         max_seq_length=model.max_seq_length,
