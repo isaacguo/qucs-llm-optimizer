@@ -35,6 +35,41 @@ class RunState:
     def conclusion(self) -> str:
         return self._data.get("conclusion", "")
 
+    @property
+    def goal(self) -> dict | None:
+        return self._data.get("goal")
+
+    @property
+    def start_seed(self) -> int | None:
+        return self._data.get("start_seed")
+
+    @property
+    def initial_params(self) -> dict | None:
+        return self._data.get("initial_params")
+
+    @property
+    def corpus(self) -> dict | None:
+        return self._data.get("corpus")
+
+    def set_run_meta(
+        self,
+        *,
+        goal: dict | None = None,
+        start_seed: int | None = None,
+        initial_params: dict | None = None,
+        corpus: dict | None = None,
+    ) -> None:
+        """Persist run-level metadata without touching history/iteration."""
+        if goal is not None:
+            self._data["goal"] = goal
+        if start_seed is not None:
+            self._data["start_seed"] = start_seed
+        if initial_params is not None:
+            self._data["initial_params"] = initial_params
+        if corpus is not None:
+            self._data["corpus"] = corpus
+        self._save()
+
     def conclude(self, text: str) -> None:
         """Record why the run stopped. Closes the decision log without simulating."""
         self._data["conclusion"] = text
