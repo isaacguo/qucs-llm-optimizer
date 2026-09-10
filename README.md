@@ -240,7 +240,7 @@ that support it and falls back to FP16 on GPUs such as T4.
 SFT cold-start trains from the corpus index: each indexed run is exported to
 rollout-aligned multiturn chat records (`history_window` default 8,
 `max_length` 2048). Gate successful runs into `corpus/index.jsonl` first
-(see `qucs-corpus`), then:
+(see **Corpus cold-start** below), then:
 
 ```bash
 uv run qucs-sft --dry-run   # count exported examples; no model load
@@ -253,6 +253,56 @@ warning). Prefer the index path for multiturn cold-start.
 
 Run `qucs-probe` first. Use SFT only if the base policy cannot reliably
 produce valid intents or its completion groups have no reward variance.
+
+## Corpus cold-start (agent → SFT → multiturn GRPO)
+
+Collect hard-successful Cursor-agent trajectories under a shared goal
+distribution, export rollout-aligned SFT data, then resume multiturn GRPO
+from the SFT LoRA.
+
+### Operator flow
+
+```bash
+# 1. Assign a sampled goal + initial_params (does not simulate)
+uv run qucs-corpus assign --run r001
+# optional: --prefer-coverage --index corpus/index.jsonl
+
+# 2. Teacher loop (Cursor agent / human via run_step)
+python3 run_step.py init    --run r001   # preserves goal; simulates baseline
+python3 run_step.py observe --run r001
+python3 run_step.py step    --run r001 --intent '{"ro":"decrease_strong"}' \
+    --note "…" --thinking-file /tmp/reasoning.md
+# repeat observe/step until goal met or iteration cap
+
+# 3. Hard-success gate → append to corpus/index.jsonl if eligible
+uv run qucs-corpus gate --run r001
+
+# 4. Steer the next assign toward holes
+uv run qucs-corpus coverage
+
+# 5. Export + SFT (at milestones below)
+uv run qucs-corpus export --out /tmp/sft.jsonl
+uv run qucs-sft --index corpus/index.jsonl --dry-run
+uv run qucs-sft --index corpus/index.jsonl --output-dir outputs/sft-coldstart
+
+# 6. Multiturn GRPO cold-start from SFT LoRA
+uv run python -m training.multiturn_train \
+  --resume-adapter outputs/sft-coldstart/final_lora
+```
+
+Optional one-shot import of the legacy reference run (attaches goal
+**5.5 GHz / −70 dB**, then gates/indexes if eligible):
+
+```bash
+uv run qucs-corpus import-run --run llm1
+```
+
+### Smoke milestones
+
+At index sizes **50 / 150 / 300 / 500**, run export + `qucs-sft --dry-run`
+(and a short SFT when useful) so packing/prompt bugs surface early. Target
+coverage is **≥ 500** hard successes without large empty bins; there is no
+code hard-cap — scale is ops via `coverage` + `assign --prefer-coverage`.
 
 ## Runs
 

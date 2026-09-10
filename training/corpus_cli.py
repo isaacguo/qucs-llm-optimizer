@@ -1,4 +1,4 @@
-"""Operator CLI for corpus assign / gate / coverage / export.
+"""Operator CLI for corpus assign / gate / coverage / export / import-run.
 
 Workflow:
   qucs-corpus assign --run ID --goal-config configs/goal_distribution.yaml
@@ -6,6 +6,9 @@ Workflow:
   qucs-corpus gate --run ID
   qucs-corpus coverage --index corpus/index.jsonl --goal-config ...
   qucs-corpus export --index corpus/index.jsonl --out path.jsonl
+
+Optional legacy import (e.g. runs/llm1 without goal metadata):
+  qucs-corpus import-run --run llm1
 
 ``--prefer-coverage`` (assign): samples a short seed window and picks the goal
 whose coverage bin is least filled in the current index. If the index is empty
@@ -40,11 +43,25 @@ from training.environment import sample_params  # noqa: E402
 from training.goals import (  # noqa: E402
     GoalDistributionConfig,
     GoalSpec,
+    band_for,
     load_goal_distribution,
     sample_goal_from_distribution,
 )
 
 _PREFER_COVERAGE_TRIES = 32
+
+# Reference goal for the historical runs/llm1 trajectory (5.5 GHz / −70 dB).
+_LLM1_TARGET_FREQ_HZ = 5.5e9
+_LLM1_TARGET_DEPTH_DB = -70.0
+
+
+def _llm1_reference_goal() -> dict:
+    band = band_for(_LLM1_TARGET_FREQ_HZ)
+    return {
+        "target_freq_hz": _LLM1_TARGET_FREQ_HZ,
+        "band_hz": [float(band[0]), float(band[1])],
+        "target_depth_db": _LLM1_TARGET_DEPTH_DB,
+    }
 
 
 def _goal_dict(goal: GoalSpec) -> dict:
@@ -113,8 +130,13 @@ def cmd_assign(args: argparse.Namespace) -> int:
     return 0
 
 
-def cmd_gate(args: argparse.Namespace) -> int:
-    run_dir = Path(args.runs_root) / args.run
+def _gate_and_maybe_index(
+    *,
+    run_id: str,
+    runs_root: Path,
+    index_path: Path,
+) -> int:
+    run_dir = Path(runs_root) / run_id
     state_path = run_dir / "state.json"
     if not state_path.is_file():
         raise SystemExit(f"missing state: {state_path}")
@@ -122,19 +144,49 @@ def cmd_gate(args: argparse.Namespace) -> int:
     corpus = gate_run(state)
     run_state = RunState(run_dir)
     run_state.set_run_meta(corpus=corpus)
+    # Re-read so index record sees any goal/corpus just persisted.
+    state = json.loads(state_path.read_text(encoding="utf-8"))
     print(json.dumps(corpus, sort_keys=True))
     if corpus.get("eligible"):
         record = index_record_from_run(
-            args.run,
-            str(Path(args.run)),
+            run_id,
+            str(Path(run_id)),
             state,
             corpus,
         )
-        append_index(Path(args.index), record)
-        print(f"appended to {args.index}")
+        append_index(Path(index_path), record)
+        print(f"appended to {index_path}")
     else:
         print(f"not indexed ({corpus.get('reason')})")
     return 0
+
+
+def cmd_gate(args: argparse.Namespace) -> int:
+    return _gate_and_maybe_index(
+        run_id=args.run,
+        runs_root=Path(args.runs_root),
+        index_path=Path(args.index),
+    )
+
+
+def cmd_import_run(args: argparse.Namespace) -> int:
+    """Attach the llm1 reference goal (5.5 GHz / −70 dB), then gate + index."""
+    run_dir = Path(args.runs_root) / args.run
+    state_path = run_dir / "state.json"
+    if not state_path.is_file():
+        raise SystemExit(f"missing state: {state_path}")
+    goal = _llm1_reference_goal()
+    run_state = RunState(run_dir)
+    run_state.set_run_meta(goal=goal)
+    print(
+        f"import-run {args.run}: attached goal="
+        f"{goal['target_freq_hz'] / 1e9:.3f} GHz / {goal['target_depth_db']:.1f} dB"
+    )
+    return _gate_and_maybe_index(
+        run_id=args.run,
+        runs_root=Path(args.runs_root),
+        index_path=Path(args.index),
+    )
 
 
 def cmd_coverage(args: argparse.Namespace) -> int:
@@ -167,7 +219,7 @@ def cmd_export(args: argparse.Namespace) -> int:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="qucs-corpus",
-        description="Corpus assign / gate / coverage / export",
+        description="Corpus assign / gate / coverage / export / import-run",
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
@@ -212,6 +264,15 @@ def build_parser() -> argparse.ArgumentParser:
     p_export.add_argument("--runs-root", default="runs")
     p_export.add_argument("--history-window", type=int, default=8)
     p_export.set_defaults(func=cmd_export)
+
+    p_import = sub.add_parser(
+        "import-run",
+        help="Attach llm1 reference goal (5.5 GHz / −70 dB), gate, index if eligible",
+    )
+    p_import.add_argument("--run", required=True, help="Run id under --runs-root (e.g. llm1)")
+    p_import.add_argument("--index", default="corpus/index.jsonl")
+    p_import.add_argument("--runs-root", default="runs")
+    p_import.set_defaults(func=cmd_import_run)
 
     return parser
 

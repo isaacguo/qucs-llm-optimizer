@@ -511,6 +511,64 @@ class CorpusCliTests(unittest.TestCase):
         self.assertEqual(len(lines), 2)
         self.assertIn("messages", lines[0])
 
+    def test_import_run_attaches_llm1_goal_gates_and_indexes(self):
+        """Legacy llm1-shaped run: no goal → attach 5.5 GHz / −70 dB, gate, index."""
+        state = _state_with_goal(-70.0, 2.5e-4)
+        del state["goal"]
+        state["history"][0]["params"] = _params()
+        state["history"][1]["params"] = _params(ro=5.0)
+        run_dir = self.runs_root / "llm1"
+        run_dir.mkdir(parents=True)
+        (run_dir / "state.json").write_text(json.dumps(state))
+        index_path = self.root / "corpus" / "index.jsonl"
+
+        code = self.corpus_cli.main(
+            [
+                "import-run",
+                "--run",
+                "llm1",
+                "--index",
+                str(index_path),
+                "--runs-root",
+                str(self.runs_root),
+            ]
+        )
+        self.assertEqual(code, 0)
+        saved = json.loads((run_dir / "state.json").read_text())
+        self.assertEqual(saved["goal"]["target_freq_hz"], 5.5e9)
+        self.assertEqual(saved["goal"]["target_depth_db"], -70.0)
+        self.assertEqual(saved["goal"]["band_hz"], [4.5e9, 6.5e9])
+        self.assertTrue(saved["corpus"]["eligible"])
+        rows = load_index(index_path)
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["run_id"], "llm1")
+        self.assertEqual(rows[0]["goal"]["target_freq_hz"], 5.5e9)
+
+    def test_import_run_does_not_index_when_ineligible(self):
+        state = _state_with_goal(-70.0, 1.0e-3)
+        del state["goal"]
+        run_dir = self.runs_root / "llm1_bad"
+        run_dir.mkdir(parents=True)
+        (run_dir / "state.json").write_text(json.dumps(state))
+        index_path = self.root / "corpus" / "index.jsonl"
+
+        code = self.corpus_cli.main(
+            [
+                "import-run",
+                "--run",
+                "llm1_bad",
+                "--index",
+                str(index_path),
+                "--runs-root",
+                str(self.runs_root),
+            ]
+        )
+        self.assertEqual(code, 0)
+        saved = json.loads((run_dir / "state.json").read_text())
+        self.assertEqual(saved["goal"]["target_freq_hz"], 5.5e9)
+        self.assertFalse(saved["corpus"]["eligible"])
+        self.assertEqual(load_index(index_path), [])
+
 
 if __name__ == "__main__":
     unittest.main()
