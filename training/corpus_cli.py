@@ -143,21 +143,34 @@ def _gate_and_maybe_index(
     if not state_path.is_file():
         raise SystemExit(f"missing state: {state_path}")
     state = json.loads(state_path.read_text(encoding="utf-8"))
-    corpus = gate_run(state)
+    try:
+        corpus = gate_run(state)
+    except KeyError as exc:
+        raise SystemExit(
+            f"run {run_id}: missing state.goal; run qucs-corpus assign first "
+            f"({exc})"
+        ) from exc
     run_state = RunState(run_dir)
     run_state.set_run_meta(corpus=corpus)
     # Re-read so index record sees any goal/corpus just persisted.
     state = json.loads(state_path.read_text(encoding="utf-8"))
     print(json.dumps(corpus, sort_keys=True))
     if corpus.get("eligible"):
-        record = index_record_from_run(
-            run_id,
-            str(Path(run_id)),
-            state,
-            corpus,
-        )
-        append_index(Path(index_path), record)
-        print(f"appended to {index_path}")
+        index_file = Path(index_path)
+        if any(row.get("run_id") == run_id for row in load_index(index_file)):
+            print(
+                f"run {run_id}: already indexed in {index_file}; not appending again",
+                file=sys.stderr,
+            )
+        else:
+            record = index_record_from_run(
+                run_id,
+                str(Path(run_id)),
+                state,
+                corpus,
+            )
+            append_index(index_file, record)
+            print(f"appended to {index_path}")
     else:
         print(f"not indexed ({corpus.get('reason')})")
     return 0

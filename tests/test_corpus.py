@@ -2,13 +2,18 @@
 from __future__ import annotations
 
 import json
+import sys
 import tempfile
 import unittest
 import warnings
 from pathlib import Path
 
-from cost import s21_db
-from training.corpus import (
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "src"))
+
+from cost import s21_db  # noqa: E402
+from training.corpus import (  # noqa: E402
     append_index,
     coverage_counts,
     export_from_index,
@@ -16,8 +21,8 @@ from training.corpus import (
     gate_run,
     load_index,
 )
-from training.goals import GoalDistributionConfig, GoalSpec
-from training.rollout import SYSTEM_PROMPT, TurnRecord, build_multiturn_prompt
+from training.goals import GoalDistributionConfig, GoalSpec  # noqa: E402
+from training.rollout import SYSTEM_PROMPT, TurnRecord, build_multiturn_prompt  # noqa: E402
 
 
 def _mag_for_db(db: float) -> float:
@@ -442,6 +447,56 @@ class CorpusCliTests(unittest.TestCase):
         self.assertEqual(load_index(index_path), [])
         saved = json.loads((run_dir / "state.json").read_text())
         self.assertFalse(saved["corpus"]["eligible"])
+
+    def test_gate_same_eligible_run_twice_yields_one_index_line(self):
+        run_dir = self.runs_root / "r_dup"
+        run_dir.mkdir(parents=True)
+        state = _state_with_goal(-70.0, 2.5e-4)
+        state["history"][0]["params"] = _params()
+        state["history"][1]["params"] = _params(ro=5.0)
+        (run_dir / "state.json").write_text(json.dumps(state))
+        index_path = self.root / "corpus" / "index.jsonl"
+        argv = [
+            "gate",
+            "--run",
+            "r_dup",
+            "--index",
+            str(index_path),
+            "--runs-root",
+            str(self.runs_root),
+        ]
+        self.assertEqual(self.corpus_cli.main(argv), 0)
+        self.assertEqual(self.corpus_cli.main(argv), 0)
+        rows = load_index(index_path)
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["run_id"], "r_dup")
+
+    def test_gate_missing_goal_exits_with_clear_message(self):
+        run_dir = self.runs_root / "r_nogoal"
+        run_dir.mkdir(parents=True)
+        state = _state_with_goal(-70.0, 2.5e-4)
+        del state["goal"]
+        (run_dir / "state.json").write_text(json.dumps(state))
+        index_path = self.root / "corpus" / "index.jsonl"
+
+        with self.assertRaises(SystemExit) as ctx:
+            self.corpus_cli.main(
+                [
+                    "gate",
+                    "--run",
+                    "r_nogoal",
+                    "--index",
+                    str(index_path),
+                    "--runs-root",
+                    str(self.runs_root),
+                ]
+            )
+        msg = str(ctx.exception).lower()
+        self.assertIn("r_nogoal", msg)
+        self.assertIn("missing", msg)
+        self.assertIn("goal", msg)
+        self.assertIn("assign", msg)
+        self.assertEqual(load_index(index_path), [])
 
     def test_coverage_prints_bin_counts(self):
         index_path = self.root / "index.jsonl"
