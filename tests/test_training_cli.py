@@ -51,7 +51,9 @@ class OtherCliTests(unittest.TestCase):
     def test_sft_is_explicit_and_shallow(self):
         args = build_sft_parser().parse_args([])
         self.assertEqual(args.epochs, 1)
-        self.assertIn("runs/llm1/state.json", args.state)
+        self.assertEqual(args.index, "corpus/index.jsonl")
+        self.assertIsNone(args.state)
+        self.assertEqual(args.max_length, 2048)
 
 
 class MultiturnCliTests(unittest.TestCase):

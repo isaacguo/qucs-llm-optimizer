@@ -237,13 +237,19 @@ Writing every checkpoint directly to Drive is more durable but usually slower
 than local `/content` storage. The training configuration selects BF16 on GPUs
 that support it and falls back to FP16 on GPUs such as T4.
 
-SFT is present but deliberately optional. The command below performs one
-shallow epoch over the 11 usable decision records in `runs/llm1/state.json`:
+SFT cold-start trains from the corpus index: each indexed run is exported to
+rollout-aligned multiturn chat records (`history_window` default 8,
+`max_length` 2048). Gate successful runs into `corpus/index.jsonl` first
+(see `qucs-corpus`), then:
 
 ```bash
-uv run qucs-sft --dry-run  # inspect the example count only
-uv run qucs-sft            # actually update a LoRA adapter
+uv run qucs-sft --dry-run   # count exported examples; no model load
+uv run qucs-sft             # one shallow epoch → outputs/sft-qwen3-1.7b
+# overrides: --index PATH --runs-root runs --history-window 8 --max-length 2048
 ```
+
+Legacy single-file mode remains via `--state runs/llm1/state.json` (prints a
+warning). Prefer the index path for multiturn cold-start.
 
 Run `qucs-probe` first. Use SFT only if the base policy cannot reliably
 produce valid intents or its completion groups have no reward variance.
