@@ -12,6 +12,7 @@ train = [
     "datasets",
     "mergekit",
     "peft",
+    "PyYAML",
     "transformers==4.56.2",
     "trl",
     "unsloth",
