@@ -113,5 +113,22 @@ class MultiturnConfigTests(unittest.TestCase):
         self.assertIn("config", params)
 
 
+ROOT = Path(__file__).resolve().parents[1]
+
+
+class ExampleRecipeTests(unittest.TestCase):
+    def test_grpo_example_loads(self):
+        data = load_yaml(ROOT / "configs/grpo_qwen3_1_7b.yaml")
+        cfg = from_mapping(GrpoConfig, data)
+        self.assertEqual(cfg.model.name, "unsloth/Qwen3-1.7B-bnb-4bit")
+        self.assertEqual(cfg.train.steps, 100)
+
+    def test_multiturn_example_loads(self):
+        data = load_yaml(ROOT / "configs/multiturn_qwen3_1_7b.yaml")
+        cfg = from_mapping(MultiturnConfig, data)
+        self.assertEqual(cfg.train.max_turns, 15)
+        self.assertEqual(cfg.model.max_seq_length, 2048)
+
+
 if __name__ == "__main__":
     unittest.main()
