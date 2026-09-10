@@ -89,7 +89,9 @@ def main(argv: list[str] | None = None) -> None:
         return
 
     print("preflight:", json.dumps(verify_runtime(), sort_keys=True))
-    model, tokenizer = load_policy(ModelConfig(model_name=args.model_name))
+    model, tokenizer = load_policy(
+        ModelConfig(model_name=args.model_name, max_seq_length=args.max_length)
+    )
     from datasets import Dataset
     from trl import SFTConfig, SFTTrainer
 

@@ -11,6 +11,7 @@ from unittest.mock import patch
 
 from training.corpus import append_index
 from training.data import build_grpo_records, load_sft_records
+from training.modeling import ModelConfig
 from training.sft import build_parser, main as sft_main
 
 
@@ -190,6 +191,53 @@ class SftIndexCliTests(unittest.TestCase):
                     ]
                 )
             self.assertIn("index", str(ctx.exception).lower())
+
+    def test_non_dry_run_passes_max_seq_length_from_max_length(self):
+        state = _multiturn_fixture_state()
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            run_dir = root / "run_a"
+            run_dir.mkdir()
+            (run_dir / "state.json").write_text(json.dumps(state))
+            index_path = root / "index.jsonl"
+            append_index(
+                index_path,
+                {
+                    "run_id": "run_a",
+                    "run_dir": "run_a",
+                    "goal": state["goal"],
+                    "best_db": -26.0,
+                    "n_steps": 2,
+                    "goal_met_iteration": 2,
+                },
+            )
+            buf = io.StringIO()
+            with (
+                redirect_stdout(buf),
+                patch("training.sft.verify_runtime", return_value={}),
+                patch(
+                    "training.sft.load_policy",
+                    side_effect=RuntimeError("stop-after-load_policy"),
+                ) as load_policy,
+            ):
+                with self.assertRaises(RuntimeError) as ctx:
+                    sft_main(
+                        [
+                            "--index",
+                            str(index_path),
+                            "--runs-root",
+                            str(root),
+                            "--output-dir",
+                            str(root / "out"),
+                            "--max-length",
+                            "2048",
+                        ]
+                    )
+            self.assertIn("stop-after-load_policy", str(ctx.exception))
+            load_policy.assert_called_once()
+            config = load_policy.call_args.args[0]
+            self.assertIsInstance(config, ModelConfig)
+            self.assertEqual(config.max_seq_length, 2048)
 
 
 if __name__ == "__main__":
