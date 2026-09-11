@@ -10,7 +10,7 @@ class SftCliTests(unittest.TestCase):
     def test_sft_is_explicit_and_shallow(self):
         args = build_sft_parser().parse_args([])
         self.assertEqual(args.epochs, 1)
-        self.assertEqual(args.index, "corpus/index.jsonl")
+        self.assertIsNone(args.index)
         self.assertIsNone(args.state)
         self.assertEqual(args.max_length, 2048)
 

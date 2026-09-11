@@ -1,4 +1,4 @@
-"""Dataset builders for optional trajectory SFT (legacy state + corpus index)."""
+"""Dataset builders for optional trajectory SFT (legacy state + jsonl index)."""
 from __future__ import annotations
 
 import json
@@ -38,7 +38,7 @@ def load_multiturn_sft_from_index(
     *,
     history_window: int = 8,
 ) -> list[dict]:
-    """Thin wrapper: corpus index → multiturn SFT records isomorphic to rollout prompts."""
-    from corpus.index import export_from_index
+    """Thin wrapper: jsonl index → multiturn SFT records isomorphic to rollout prompts."""
+    from training.sft.export import export_from_index
 
     return export_from_index(index_path, runs_root, history_window=history_window)

@@ -1,4 +1,4 @@
-"""Optional one-epoch SFT warm-up from corpus index (or legacy state)."""
+"""Optional one-epoch SFT warm-up from a JSONL run index (or legacy state)."""
 from __future__ import annotations
 
 import argparse
@@ -11,7 +11,6 @@ from training.common.preflight import verify_runtime
 from training.sft.data import load_multiturn_sft_from_index, load_sft_records
 
 DEFAULT_MODEL = "unsloth/Qwen3-4B-Instruct-2507-bnb-4bit"
-DEFAULT_INDEX = "corpus/index.jsonl"
 DEFAULT_RUNS_ROOT = "runs"
 DEFAULT_HISTORY_WINDOW = 8
 DEFAULT_MAX_LENGTH = 2048
@@ -22,8 +21,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--model-name", default=DEFAULT_MODEL)
     parser.add_argument(
         "--index",
-        default=DEFAULT_INDEX,
-        help="corpus index JSONL (default path for SFT from teacher trajectories)",
+        default=None,
+        help="JSONL run index path (required unless --state); no default path",
     )
     parser.add_argument(
         "--runs-root",
@@ -60,13 +59,16 @@ def build_parser() -> argparse.ArgumentParser:
 def _load_records(args: argparse.Namespace) -> list[dict]:
     if args.state is not None:
         warnings.warn(
-            "--state is legacy single-file SFT; prefer --index for corpus-based SFT",
+            "--state is legacy single-file SFT; prefer --index for indexed SFT",
             stacklevel=2,
         )
         records = load_sft_records(Path(args.state))
         if not records:
             raise RuntimeError(f"no SFT records found in {args.state}")
         return records
+
+    if not args.index:
+        raise RuntimeError("pass --index PATH to a JSONL run index (or legacy --state)")
 
     records = load_multiturn_sft_from_index(
         Path(args.index),

@@ -1,4 +1,4 @@
-"""Tests for optional SFT examples (legacy state + corpus index)."""
+"""Tests for optional SFT examples (legacy state + jsonl index)."""
 from __future__ import annotations
 
 import io
@@ -9,7 +9,7 @@ from contextlib import redirect_stdout
 from pathlib import Path
 from unittest.mock import patch
 
-from corpus.index import append_index
+from training.common.jsonl_index import append_index
 from training.common.modeling import ModelConfig
 from training.sft.data import load_sft_records
 from training.sft.train import build_parser, main as sft_main
@@ -98,14 +98,19 @@ class SftDataTests(unittest.TestCase):
 
 
 class SftIndexCliTests(unittest.TestCase):
-    def test_parser_defaults_use_index_multiturn_path(self):
+    def test_parser_requires_explicit_index_path(self):
         args = build_parser().parse_args([])
-        self.assertEqual(args.index, "corpus/index.jsonl")
+        self.assertIsNone(args.index)
         self.assertEqual(args.runs_root, "runs")
         self.assertEqual(args.history_window, 8)
         self.assertEqual(args.max_length, 2048)
         self.assertIsNone(args.state)
         self.assertFalse(args.dry_run)
+
+    def test_missing_index_and_state_raises(self):
+        with self.assertRaises(RuntimeError) as ctx:
+            sft_main(["--dry-run"])
+        self.assertIn("--index", str(ctx.exception).lower())
 
     def test_dry_run_counts_export_from_temp_index_without_model(self):
         state = _multiturn_fixture_state()

@@ -18,7 +18,6 @@ train = [
 ]
 
 [project.scripts]
-qucs-corpus = "corpus.cli:main"
 qucs-multiturn = "training.grpo.train:main"
 qucs-sft = "training.sft.train:main"
 
