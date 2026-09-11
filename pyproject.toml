@@ -29,7 +29,7 @@ package = true
 py-modules = []
 
 [tool.setuptools.packages.find]
-include = ["training*", "corpus*"]
+include = ["training*", "jobs*"]
 
 [dependency-groups]
 dev = [

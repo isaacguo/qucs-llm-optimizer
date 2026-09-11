@@ -7,10 +7,11 @@ from pathlib import Path
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
 from qucs_sim import SimResult, parse_dataset, render_schematic, simulate  # noqa: E402
-from tasks.butterworth_bpf5 import INITIAL_GUESS, TEMPLATE_PATH  # noqa: E402
+from jobs.bpf5_agent.task import INITIAL_GUESS, TEMPLATE_PATH  # noqa: E402
 
 
 def _has_qucs_tools() -> bool:

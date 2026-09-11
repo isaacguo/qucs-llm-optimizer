@@ -13,11 +13,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from goals_bpf import BpfGoalSpec
-from tasks.butterworth_bpf5 import VARIABLES
+from jobs.bpf5_agent.goals import BpfGoalSpec
+from jobs.bpf5_agent.task import VARIABLES
 
-_REPO_ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_SKILLS_PATH = _REPO_ROOT / "prompts" / "bpf_tuning_skills_system.md"
+DEFAULT_SKILLS_PATH = (
+    Path(__file__).resolve().parent / "prompts" / "bpf_tuning_skills_system.md"
+)
 
 _SERIES_L = ("L1", "L3", "L5")
 _SERIES_C = ("C1", "C3", "C5")

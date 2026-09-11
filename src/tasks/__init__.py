@@ -32,10 +32,13 @@ def _config_from_module(m) -> TaskConfig:
 def _register_builtins() -> None:
     from task_registry import register_builtin_config
     from tasks import butterfly_stub as butterfly_stub_m
-    from tasks import butterworth_bpf5 as butterworth_bpf5_m
 
     register_builtin_config(_config_from_module(butterfly_stub_m))
-    register_builtin_config(_config_from_module(butterworth_bpf5_m))
+
+
+def ensure_builtin_tasks() -> None:
+    """Re-register config-only builtins (e.g. after clear_plugins_for_tests)."""
+    _register_builtins()
 
 
 def get_task(name: str) -> TaskConfig:

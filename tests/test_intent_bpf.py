@@ -1,18 +1,26 @@
 # tests/test_intent_bpf.py
 from __future__ import annotations
+import importlib
 import sys
 import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
 from intent import apply_intent  # noqa: E402
-from tasks import get_task  # noqa: E402
-from tasks.butterworth_bpf5 import BOUNDS, INITIAL_GUESS, VARIABLES  # noqa: E402
+from jobs.bpf5_agent.task import BOUNDS, INITIAL_GUESS, VARIABLES  # noqa: E402
+from task_registry import clear_plugins_for_tests  # noqa: E402
+from tasks import ensure_builtin_tasks, get_task  # noqa: E402
 
 
 class IntentBpfTests(unittest.TestCase):
+    def setUp(self):
+        clear_plugins_for_tests()
+        ensure_builtin_tasks()
+        importlib.import_module("jobs.bpf5_agent.register").register()
+
     def test_get_task_bpf(self):
         t = get_task("butterworth_bpf5")
         self.assertEqual(t.variables, VARIABLES)

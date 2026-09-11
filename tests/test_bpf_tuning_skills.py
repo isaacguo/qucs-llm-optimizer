@@ -6,15 +6,16 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
-from bpf_tuning_skills import (  # noqa: E402
+from jobs.bpf5_agent.skills import (  # noqa: E402
     choose_intent_from_skills,
     format_skills_reasoning,
     load_skills_system_prompt,
     peak_margin_hz,
 )
-from goals_bpf import BpfGoalSpec  # noqa: E402
+from jobs.bpf5_agent.goals import BpfGoalSpec  # noqa: E402
 
 
 class BpfTuningSkillsTests(unittest.TestCase):

@@ -13,7 +13,7 @@ INITIAL_GUESS = {
     "L5": 163.9296, "C5": 6.8675,
 }
 
-TEMPLATE_PATH = Path(__file__).resolve().parents[2] / "templates" / "butterworth_bpf5.sch.tpl"
+TEMPLATE_PATH = Path(__file__).resolve().parent / "templates" / "butterworth_bpf5.sch.tpl"
 TASK_NAME = "butterworth_bpf5"
 EXPORT_LAYOUT = False
 SWEEP_POINTS = 301

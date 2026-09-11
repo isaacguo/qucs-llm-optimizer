@@ -19,6 +19,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import math
 import sys
@@ -28,13 +29,13 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 
 from cost import TARGET_DEPTH_DB, TARGET_NOTCH_HZ, evaluate, s21_db
-from cost_bpf import evaluate as evaluate_bpf
 from decision_log import append_record, format_agent_completion
-from goals_bpf import BpfGoalSpec, default_goal as default_bpf_goal
-from goals_bpf import goal_from_dict as bpf_goal_from_dict
-from goals_bpf import is_goal_met as bpf_is_goal_met
-from goals_bpf import validate_goal as validate_bpf_goal
 from intent import BOUNDS, VARIABLES, apply_intent
+from jobs.bpf5_agent.cost import evaluate as evaluate_bpf
+from jobs.bpf5_agent.goals import BpfGoalSpec, default_goal as default_bpf_goal
+from jobs.bpf5_agent.goals import goal_from_dict as bpf_goal_from_dict
+from jobs.bpf5_agent.goals import is_goal_met as bpf_is_goal_met
+from jobs.bpf5_agent.goals import validate_goal as validate_bpf_goal
 from qucs_sim import simulate
 from report_html import write_report
 from state import RunState
@@ -50,6 +51,32 @@ RUNS_ROOT = Path(__file__).resolve().parent / "runs"
 TARGET_BAND_HZ = (4e9, 6e9)
 _BPF_TASK = "butterworth_bpf5"
 _DEFAULT_TASK = "butterfly_stub"
+
+
+def discover_job_plugins(repo_root: Path) -> None:
+    """Load jobs/*/register.py and call register() (temporary; Task 3 refines)."""
+    jobs_root = repo_root / "jobs"
+    if not jobs_root.is_dir():
+        return
+    root_s = str(repo_root)
+    if root_s not in sys.path:
+        sys.path.insert(0, root_s)
+    for reg in sorted(jobs_root.glob("*/register.py")):
+        job_id = reg.parent.name
+        mod_name = f"jobs.{job_id}.register"
+        if mod_name in sys.modules:
+            module = sys.modules[mod_name]
+        else:
+            spec = importlib.util.spec_from_file_location(mod_name, reg)
+            if spec is None or spec.loader is None:
+                continue
+            module = importlib.util.module_from_spec(spec)
+            sys.modules[mod_name] = module
+            spec.loader.exec_module(module)
+        module.register()
+
+
+discover_job_plugins(_ROOT)
 
 
 def _cli_task_name(args) -> str:
@@ -291,7 +318,7 @@ def format_observation(
         f"free variables and bounds:\n{bounds_txt}"
     )
     if _is_bpf(task_name) and include_skills_system:
-        from bpf_tuning_skills import load_skills_system_prompt
+        from jobs.bpf5_agent.skills import load_skills_system_prompt
 
         skills = load_skills_system_prompt()
         return (

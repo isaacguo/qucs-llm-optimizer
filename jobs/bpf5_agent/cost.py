@@ -1,10 +1,10 @@
-# src/cost_bpf.py
+# jobs/bpf5_agent/cost.py
 from __future__ import annotations
 
 import math
 from dataclasses import asdict, dataclass
 
-from goals_bpf import BpfGoalSpec, split_bands
+from jobs.bpf5_agent.goals import BpfGoalSpec, split_bands
 from qucs_sim import SimResult
 
 

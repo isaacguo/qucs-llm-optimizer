@@ -137,7 +137,7 @@ class BpfInitDispatchTests(unittest.TestCase):
 
 class BpfFormatTests(unittest.TestCase):
     def test_format_report_and_observation_bpf(self):
-        from goals_bpf import default_goal
+        from jobs.bpf5_agent.goals import default_goal
 
         task = get_task("butterworth_bpf5")
         goal = default_goal()
@@ -191,7 +191,7 @@ class BpfFormatTests(unittest.TestCase):
         self.assertIn("S21 peak frequency", obs2)
 
     def test_format_report_goal_met_true(self):
-        from goals_bpf import default_goal
+        from jobs.bpf5_agent.goals import default_goal
 
         task = get_task("butterworth_bpf5")
         entry = {

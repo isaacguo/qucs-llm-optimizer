@@ -1,4 +1,4 @@
-# src/goals_bpf.py
+# jobs/bpf5_agent/goals.py
 from __future__ import annotations
 
 import json

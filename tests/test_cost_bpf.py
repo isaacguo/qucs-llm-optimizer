@@ -6,10 +6,11 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
-from cost_bpf import evaluate  # noqa: E402
-from goals_bpf import default_goal  # noqa: E402
+from jobs.bpf5_agent.cost import evaluate  # noqa: E402
+from jobs.bpf5_agent.goals import default_goal  # noqa: E402
 from qucs_sim import SimResult  # noqa: E402
 
 
@@ -44,7 +45,7 @@ class CostBpfTests(unittest.TestCase):
         # sweep only inside passband+guard so stop bands empty
         g = default_goal()
         # override via goal with tiny sweep equal to passband
-        from goals_bpf import BpfGoalSpec
+        from jobs.bpf5_agent.goals import BpfGoalSpec
         tight = BpfGoalSpec(
             f_low_hz=140e6,
             f_high_hz=160e6,

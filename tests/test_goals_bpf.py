@@ -5,9 +5,10 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
-from goals_bpf import (  # noqa: E402
+from jobs.bpf5_agent.goals import (  # noqa: E402
     BpfGoalSpec,
     default_goal,
     goal_from_dict,

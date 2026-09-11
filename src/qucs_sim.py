@@ -24,7 +24,7 @@ from pathlib import Path
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent
 SCH_TEMPLATE_PATH = _REPO_ROOT / "templates" / "butterfly_stub.sch.tpl"
-BPF_TEMPLATE_PATH = _REPO_ROOT / "templates" / "butterworth_bpf5.sch.tpl"
+_BPF_TEMPLATE_NAME = "butterworth_bpf5.sch.tpl"
 
 # Fixed substrate: Rogers RO4003C, 20 mil, 1oz copper.
 SUBSTRATE = dict(er=3.38, h_mm=0.508, t_mm=0.035, tand=0.0027, rho=1.72e-08, d_m=1.5e-07)
@@ -160,7 +160,7 @@ def render_schematic(
         values = _template_values(
             params, f0_hz, sweep_start_hz, sweep_stop_hz, sweep_points
         )
-    elif resolved == BPF_TEMPLATE_PATH.resolve():
+    elif path.name == _BPF_TEMPLATE_NAME:
         values = _bpf_template_values(
             params, f0_hz, sweep_start_hz, sweep_stop_hz, sweep_points
         )
