@@ -51,6 +51,10 @@ class RunState:
     def corpus(self) -> dict | None:
         return self._data.get("corpus")
 
+    @property
+    def task(self) -> str | None:
+        return self._data.get("task")
+
     def set_run_meta(
         self,
         *,
@@ -58,6 +62,7 @@ class RunState:
         start_seed: int | None = None,
         initial_params: dict | None = None,
         corpus: dict | None = None,
+        task: str | None = None,
     ) -> None:
         """Persist run-level metadata without touching history/iteration."""
         if goal is not None:
@@ -68,6 +73,8 @@ class RunState:
             self._data["initial_params"] = initial_params
         if corpus is not None:
             self._data["corpus"] = corpus
+        if task is not None:
+            self._data["task"] = task
         self._save()
 
     def conclude(self, text: str) -> None:
