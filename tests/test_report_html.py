@@ -117,6 +117,83 @@ class BuildReportTests(unittest.TestCase):
         self.assertIn("<!DOCTYPE html>", out.read_text())
 
 
+def _bpf_cost(**overrides) -> dict:
+    base = {
+        "total_cost": 0.42,
+        "passband_min_s21_db": -0.8,
+        "stopband_max_s21_db": -22.0,
+        "passband_mean_s21_db": -0.5,
+        "s11_passband_max_db": -12.0,
+        "has_passband_samples": True,
+        "has_stopband_samples": True,
+        "f_low_hz": 135e6,
+        "f_high_hz": 165e6,
+    }
+    base.update(overrides)
+    return base
+
+
+def _bpf_history() -> list[dict]:
+    params0 = {
+        "L1": 160.0, "C1": 7.0, "L2": 6.5, "C2": 170.0, "L3": 530.0,
+        "C3": 2.1, "L4": 6.5, "C4": 170.0, "L5": 160.0, "C5": 7.0,
+    }
+    params1 = dict(params0, L3=500.0, C3=2.3)
+    return [
+        {
+            "iteration": 0,
+            "params": params0,
+            "cost": _bpf_cost(total_cost=0.5, passband_min_s21_db=-1.2),
+            "intent": None,
+            "note": "baseline",
+            "thinking": "",
+            "observation": None,
+        },
+        {
+            "iteration": 1,
+            "params": params1,
+            "cost": _bpf_cost(total_cost=0.3, passband_min_s21_db=-0.6),
+            "intent": {"L3": "decrease", "C3": "increase"},
+            "note": "tune L3/C3",
+            "thinking": "passband IL high; adjust series resonator",
+            "observation": {"from_iteration": 0, "report_text": "--- bpf iter 0 ---"},
+        },
+    ]
+
+
+class BpfReportTests(unittest.TestCase):
+    def setUp(self):
+        self._td = tempfile.TemporaryDirectory()
+        self.run_dir = Path(self._td.name)
+        for it in (0, 1):
+            (self.run_dir / f"iter_{it:03d}").mkdir()
+            # No layout.svg — lumped BPF skips qucsrflayout.
+
+    def tearDown(self):
+        self._td.cleanup()
+
+    def test_write_report_bpf_without_layout_succeeds(self):
+        out = self.run_dir / "report.html"
+        write_report(
+            "bpf_demo",
+            self.run_dir,
+            _bpf_history(),
+            out,
+            task="butterworth_bpf5",
+        )
+        html = out.read_text()
+        self.assertIn("<!DOCTYPE html>", html)
+        self.assertIn("passband_min_s21_db", html)
+        self.assertIn("total_cost", html)
+        self.assertIn("no layout.svg", html)
+        self.assertIn("L3", html)
+
+    def test_build_report_detects_bpf_cost_keys(self):
+        html = build_report("bpf_demo", self.run_dir, _bpf_history())
+        self.assertIn("passband_min_s21_db", html)
+        self.assertIn("total_cost", html)
+
+
 class StateThinkingTests(unittest.TestCase):
     def test_record_persists_thinking_and_observation(self):
         with tempfile.TemporaryDirectory() as td:

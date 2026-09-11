@@ -4,7 +4,7 @@ report_html.py — self-contained static HTML report for one optimization run.
 Each iteration becomes a collapsible panel holding the full decision record:
 what the strategy layer was shown (observation), what it reasoned (thinking),
 what it emitted (intent), and what the simulator returned (result), next to
-the Qucs-RFlayout copper geometry for that iteration.
+the Qucs-RFlayout copper geometry for that iteration (when present).
 
 No external assets: the layout SVGs are inlined, CSS/JS are embedded.
 """
@@ -19,6 +19,7 @@ from pathlib import Path
 VARIABLES = ("ri", "ro", "alpha", "Wf", "Lc")
 UNITS = {"ri": "mm", "ro": "mm", "alpha": "deg", "Wf": "mm", "Lc": "mm"}
 TARGET_DEPTH_DB = -70.0
+BPF_TASK = "butterworth_bpf5"
 
 # Rendering of an intent token: (arrow, human label, css class).
 INTENT_TOKENS = {
@@ -38,6 +39,29 @@ def db(mag: float) -> float:
 
 def _esc(text: object) -> str:
     return html.escape(str(text), quote=True)
+
+
+def _is_bpf(task: str | None, cost: dict | None = None) -> bool:
+    if task == BPF_TASK:
+        return True
+    if cost is not None and "passband_min_s21_db" in cost:
+        return True
+    return False
+
+
+def _unit_for(var: str) -> str:
+    if var in UNITS:
+        return UNITS[var]
+    if var.startswith("L"):
+        return "nH"
+    if var.startswith("C"):
+        return "pF"
+    return ""
+
+
+def _param_vars(params: dict) -> tuple[str, ...]:
+    ordered = tuple(v for v in VARIABLES if v in params)
+    return ordered if ordered else tuple(params.keys())
 
 
 def _inline_layout_svg(svg_path: Path) -> str:
@@ -69,9 +93,9 @@ def _intent_chips(intent: dict | None) -> str:
 
 def _param_table(params: dict, prev: dict | None) -> str:
     rows = []
-    for v in VARIABLES:
+    for v in _param_vars(params):
         now = params[v]
-        if prev is None:
+        if prev is None or v not in prev:
             delta_cell = '<td class="dim">&mdash;</td><td class="dim">&mdash;</td>'
         else:
             before = prev[v]
@@ -85,7 +109,7 @@ def _param_table(params: dict, prev: dict | None) -> str:
                               f'<td class="{cls}">{change:+.4f}</td>')
         rows.append(
             f"<tr><th>{_esc(v)}</th>{delta_cell}"
-            f'<td class="now">{now:.4f}</td><td class="dim">{UNITS[v]}</td></tr>'
+            f'<td class="now">{now:.4f}</td><td class="dim">{_unit_for(v)}</td></tr>'
         )
     return (
         '<table class="params"><thead><tr>'
@@ -95,22 +119,37 @@ def _param_table(params: dict, prev: dict | None) -> str:
 
 
 def _cost_table(cost: dict) -> str:
-    total = cost["total_cost"]
-    target_hz = cost.get("target_freq_hz", 5.5e9)
-    rows = [
-        ("total_cost = |S21| @ %.2f GHz" % (target_hz / 1e9),
-         f"{total:.6f}  ({db(total):.2f} dB)", "primary"),
-        ("deepest notch in sweep",
-         f"{cost['best_s21_mag']:.6f}  ({db(cost['best_s21_mag']):.2f} dB) "
-         f"@ {cost['best_freq_hz']/1e9:.3f} GHz", ""),
-        ("mean |S21| in 4-6 GHz", f"{cost['mean_cost']:.4f}", ""),
-        ("stopband max |S21|",
-         f"{cost.get('stopband_max_s21', float('nan')):.4f} "
-         f"@ {cost.get('worst_freq_hz', 0)/1e9:.3f} GHz", ""),
-        ("passband mean |S21| (&lt;4 GHz / &gt;6 GHz)",
-         f"{cost.get('passband_low_mean', float('nan')):.4f} / "
-         f"{cost.get('passband_high_mean', float('nan')):.4f}", ""),
-    ]
+    if _is_bpf(None, cost):
+        rows = [
+            ("total_cost", f"{cost['total_cost']:.6f}", "primary"),
+            ("passband_min_s21_db",
+             f"{cost['passband_min_s21_db']:.2f} dB", ""),
+            ("stopband_max_s21_db",
+             f"{cost['stopband_max_s21_db']:.2f} dB", ""),
+            ("passband_mean_s21_db",
+             f"{cost.get('passband_mean_s21_db', float('nan')):.2f} dB", ""),
+            ("s11_passband_max_db",
+             f"{cost.get('s11_passband_max_db', float('nan')):.2f} dB", ""),
+            ("passband (Hz)",
+             f"{cost.get('f_low_hz', 0):.3e} .. {cost.get('f_high_hz', 0):.3e}", ""),
+        ]
+    else:
+        total = cost["total_cost"]
+        target_hz = cost.get("target_freq_hz", 5.5e9)
+        rows = [
+            ("total_cost = |S21| @ %.2f GHz" % (target_hz / 1e9),
+             f"{total:.6f}  ({db(total):.2f} dB)", "primary"),
+            ("deepest notch in sweep",
+             f"{cost['best_s21_mag']:.6f}  ({db(cost['best_s21_mag']):.2f} dB) "
+             f"@ {cost['best_freq_hz']/1e9:.3f} GHz", ""),
+            ("mean |S21| in 4-6 GHz", f"{cost['mean_cost']:.4f}", ""),
+            ("stopband max |S21|",
+             f"{cost.get('stopband_max_s21', float('nan')):.4f} "
+             f"@ {cost.get('worst_freq_hz', 0)/1e9:.3f} GHz", ""),
+            ("passband mean |S21| (&lt;4 GHz / &gt;6 GHz)",
+             f"{cost.get('passband_low_mean', float('nan')):.4f} / "
+             f"{cost.get('passband_high_mean', float('nan')):.4f}", ""),
+        ]
     body = "".join(
         f'<tr class="{cls}"><th>{label}</th><td>{_esc(value)}</td></tr>'
         for label, value, cls in rows
@@ -118,12 +157,25 @@ def _cost_table(cost: dict) -> str:
     return f'<table class="cost"><tbody>{body}</tbody></table>'
 
 
-def _convergence_svg(history: list[dict]) -> str:
-    """Line chart of total_cost in dB against iteration, with the goal line."""
-    vals = [db(e["cost"]["total_cost"]) for e in history]
+def _convergence_svg(history: list[dict], *, bpf: bool = False) -> str:
+    """Line chart of progress against iteration (notch dB or BPF passband IL)."""
+    if bpf:
+        vals = [float(e["cost"]["passband_min_s21_db"]) for e in history]
+        aria = "passband_min_s21_db against iteration"
+        goal_db: float | None = None
+        goal_label = ""
+    else:
+        vals = [db(e["cost"]["total_cost"]) for e in history]
+        aria = "total_cost in dB against iteration"
+        goal_db = TARGET_DEPTH_DB
+        goal_label = f"goal {TARGET_DEPTH_DB:.0f} dB"
+
     n = len(vals)
-    lo = min(min(vals), TARGET_DEPTH_DB) - 4
-    hi = max(max(vals), -5.0) + 2
+    lo = min(vals) - 4
+    hi = max(vals) + 2
+    if goal_db is not None:
+        lo = min(lo, goal_db - 4)
+        hi = max(hi, -5.0)
     w, h = 720.0, 220.0
     pad_l, pad_r, pad_t, pad_b = 52.0, 14.0, 14.0, 30.0
 
@@ -133,7 +185,12 @@ def _convergence_svg(history: list[dict]) -> str:
     def py(v: float) -> float:
         return pad_t + (hi - v) * (h - pad_t - pad_b) / (hi - lo)
 
-    best_i = min(range(n), key=lambda i: vals[i])
+    # BPF: higher passband_min_s21_db (closer to 0) is better; notch: lower dB is better.
+    if bpf:
+        best_i = max(range(n), key=lambda i: vals[i])
+    else:
+        best_i = min(range(n), key=lambda i: vals[i])
+
     grid, ticks = [], []
     step = 10
     first = int(math.ceil(lo / step) * step)
@@ -141,7 +198,17 @@ def _convergence_svg(history: list[dict]) -> str:
         y = py(level)
         grid.append(f'<line class="grid" x1="{pad_l}" y1="{y:.1f}" x2="{w-pad_r}" y2="{y:.1f}"/>')
         ticks.append(f'<text class="tick" x="{pad_l-8}" y="{y+3.5:.1f}">{level}</text>')
-    goal_y = py(TARGET_DEPTH_DB)
+
+    goal_svg = ""
+    if goal_db is not None:
+        goal_y = py(goal_db)
+        goal_svg = (
+            f'<line class="goal" x1="{pad_l}" y1="{goal_y:.1f}" '
+            f'x2="{w-pad_r}" y2="{goal_y:.1f}"/>'
+            f'<text class="goal-label" x="{w-pad_r-4}" y="{goal_y-5:.1f}" '
+            f'text-anchor="end">{_esc(goal_label)}</text>'
+        )
+
     poly = " ".join(f"{px(i):.1f},{py(v):.1f}" for i, v in enumerate(vals))
     dots = "".join(
         f'<circle class="dot{" best" if i == best_i else ""}" '
@@ -154,10 +221,9 @@ def _convergence_svg(history: list[dict]) -> str:
         for i in range(n) if n <= 24 or i % 2 == 0
     )
     return f"""<svg class="chart" viewBox="0 0 {w:.0f} {h:.0f}" role="img"
-     aria-label="total_cost in dB against iteration">
+     aria-label="{aria}">
   {''.join(grid)}
-  <line class="goal" x1="{pad_l}" y1="{goal_y:.1f}" x2="{w-pad_r}" y2="{goal_y:.1f}"/>
-  <text class="goal-label" x="{w-pad_r-4}" y="{goal_y-5:.1f}" text-anchor="end">goal {TARGET_DEPTH_DB:.0f} dB</text>
+  {goal_svg}
   <polyline class="trace" points="{poly}"/>
   {dots}
   {''.join(ticks)}
@@ -167,16 +233,22 @@ def _convergence_svg(history: list[dict]) -> str:
 </svg>"""
 
 
-def _panel(entry: dict, prev: dict | None, run_dir: Path, is_best: bool) -> str:
+def _panel(entry: dict, prev: dict | None, run_dir: Path, is_best: bool, *, bpf: bool) -> str:
     it = entry["iteration"]
     cost = entry["cost"]
-    total_db = db(cost["total_cost"])
+    if bpf:
+        metric_db = float(cost["passband_min_s21_db"])
+        hit_goal = False
+        layout_caption = "lumped LC &mdash; no qucsrflayout for this task"
+    else:
+        metric_db = db(cost["total_cost"])
+        hit_goal = metric_db <= TARGET_DEPTH_DB
+        layout_caption = "Qucs-RFlayout copper geometry"
     thinking = (entry.get("thinking") or "").strip()
     note = (entry.get("note") or "").strip()
     observation = entry.get("observation") or {}
     obs_text = (observation.get("report_text") or "").strip()
     layout = _inline_layout_svg(run_dir / f"iter_{it:03d}" / "layout.svg")
-    hit_goal = total_db <= TARGET_DEPTH_DB
 
     if obs_text:
         obs_block = (f'<p class="hint">state after iteration '
@@ -205,7 +277,7 @@ def _panel(entry: dict, prev: dict | None, run_dir: Path, is_best: bool) -> str:
     return f"""<details class="iter{' is-best' if is_best else ''}" id="iter-{it:03d}">
   <summary>
     <span class="it">iter {it:03d}</span>
-    <span class="db{' good' if hit_goal else ''}">{total_db:.2f} dB</span>
+    <span class="db{' good' if hit_goal else ''}">{metric_db:.2f} dB</span>
     <span class="chips">{_intent_chips(entry.get("intent"))}</span>
     <span class="tag">{_esc(note) if note else ''}</span>
     {''.join(badges)}
@@ -213,7 +285,7 @@ def _panel(entry: dict, prev: dict | None, run_dir: Path, is_best: bool) -> str:
   <div class="body">
     <div class="left">
       <div class="layout">{layout}</div>
-      <p class="caption">Qucs-RFlayout copper geometry</p>
+      <p class="caption">{layout_caption}</p>
       {_param_table(entry["params"], prev["params"] if prev else None)}
     </div>
     <div class="right">
@@ -343,22 +415,48 @@ def build_report(
     run_dir: Path,
     history: list[dict],
     conclusion: str = "",
+    task: str | None = None,
 ) -> str:
+    bpf = _is_bpf(task, history[0]["cost"] if history else None)
     best = min(history, key=lambda e: e["cost"]["total_cost"])
     best_it = best["iteration"]
-    start_db = db(history[0]["cost"]["total_cost"])
-    best_db = db(best["cost"]["total_cost"])
+    if bpf:
+        start_db = float(history[0]["cost"]["passband_min_s21_db"])
+        best_db = float(best["cost"]["passband_min_s21_db"])
+        title = f"Butterworth BPF5 &mdash; run <span class=\"run\">{_esc(run_name)}</span>"
+        page_title = f"Butterworth BPF5 &mdash; run {_esc(run_name)}"
+        subtitle = (
+            "Objective: passband insertion loss and stopband attenuation on a "
+            "5th-order lumped LC ladder. No qucsrflayout; open circuit.sch in Qucs-S."
+        )
+        footer_extra = "BPF runs omit layout.svg."
+        win_cls = ""
+    else:
+        start_db = db(history[0]["cost"]["total_cost"])
+        best_db = db(best["cost"]["total_cost"])
+        title = f"Butterfly radial stub &mdash; run <span class=\"run\">{_esc(run_name)}</span>"
+        page_title = f"Butterfly stub optimization &mdash; run {_esc(run_name)}"
+        subtitle = (
+            f"Objective: minimize |S21| at 5.5 GHz on a shunt butterfly notch, "
+            f"goal {TARGET_DEPTH_DB:.0f} dB. The strategy layer sees only the measured "
+            f"report and emits qualitative intent; <code>intent.py</code> owns every number."
+        )
+        footer_extra = "Layouts are Qucs-RFlayout output, recoloured with CSS."
+        win_cls = "win" if best_db <= TARGET_DEPTH_DB else ""
+
     reasoned = sum(1 for e in history if (e.get("thinking") or "").strip())
 
     panels = []
     for i, entry in enumerate(history):
         prev = history[i - 1] if i > 0 else None
-        panels.append(_panel(entry, prev, run_dir, is_best=entry["iteration"] == best_it))
+        panels.append(
+            _panel(entry, prev, run_dir, is_best=entry["iteration"] == best_it, bpf=bpf)
+        )
 
     cards = [
         ("iterations", f"{len(history)}", ""),
         ("baseline", f"{start_db:.1f} dB", ""),
-        ("best", f"{best_db:.1f} dB", "win" if best_db <= TARGET_DEPTH_DB else ""),
+        ("best", f"{best_db:.1f} dB", win_cls),
         ("best iteration", f"{best_it:03d}", ""),
         ("reasoning captured", f"{reasoned}/{len(history)}", ""),
     ]
@@ -376,15 +474,13 @@ def build_report(
 <html lang="en"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Butterfly stub optimization &mdash; run {_esc(run_name)}</title>
+<title>{page_title}</title>
 <style>{CSS}</style>
 </head><body><div class="wrap">
-<h1>Butterfly radial stub &mdash; run <span class="run">{_esc(run_name)}</span></h1>
-<p class="sub">Objective: minimize |S21| at 5.5 GHz on a shunt butterfly notch,
-goal {TARGET_DEPTH_DB:.0f} dB. The strategy layer sees only the measured report and
-emits qualitative intent; <code>intent.py</code> owns every number.</p>
+<h1>{title}</h1>
+<p class="sub">{subtitle}</p>
 <div class="cards">{card_html}</div>
-<div class="chartbox">{_convergence_svg(history)}</div>
+<div class="chartbox">{_convergence_svg(history, bpf=bpf)}</div>
 <div class="toolbar">
   <button id="expand" type="button">expand all</button>
   <button id="collapse" type="button">collapse all</button>
@@ -392,7 +488,7 @@ emits qualitative intent; <code>intent.py</code> owns every number.</p>
 {''.join(panels)}
 {conclusion_html}
 <footer>Generated by <code>run_step.py html --run {_esc(run_name)}</code>.
-Layouts are Qucs-RFlayout output, recoloured with CSS.</footer>
+{footer_extra}</footer>
 </div><script>{JS}</script></body></html>"""
 
 
@@ -402,7 +498,10 @@ def write_report(
     history: list[dict],
     out_path: Path,
     conclusion: str = "",
+    task: str | None = None,
 ) -> Path:
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text(build_report(run_name, run_dir, history, conclusion))
+    out_path.write_text(
+        build_report(run_name, run_dir, history, conclusion, task=task)
+    )
     return out_path

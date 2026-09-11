@@ -108,6 +108,22 @@ python3 run_step.py html    --run demo   # -> runs/demo/report.html
 
 Max 20 iterations per run (enforced in `state.py`).
 
+## Butterworth BPF5 task
+
+```bash
+python3 run_step.py init --run bpf_demo --task butterworth_bpf5
+python3 run_step.py observe --run bpf_demo
+python3 run_step.py step --run bpf_demo --intent '{"L3":"decrease","C3":"increase"}' --note "..."
+```
+
+Optional `--goal-json` example:
+
+```json
+{"f_low_hz": 135e6, "f_high_hz": 165e6, "passband_il_max_db": -1.0, "stopband_atten_min_db": -20.0, "stopband_guard_hz": 10e6, "sweep_hz": [0, 3e8]}
+```
+
+No `qucsrflayout` for this lumped task. Open `runs/<run>/iter_*/circuit.sch` in Qucs-S to view embedded S-parameter plots.
+
 ## Decision log (`report.html`)
 
 `observe` prints exactly the evidence the strategy layer is allowed to see;

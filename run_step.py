@@ -440,7 +440,14 @@ def cmd_html(args):
         print(f"run '{args.run}' has no history yet", file=sys.stderr)
         sys.exit(1)
     out = Path(args.out) if args.out else run_dir / "report.html"
-    write_report(args.run, run_dir, state.history, out, conclusion=state.conclusion)
+    write_report(
+        args.run,
+        run_dir,
+        state.history,
+        out,
+        conclusion=state.conclusion,
+        task=state.task,
+    )
     print(f"wrote {out}")
 
 
