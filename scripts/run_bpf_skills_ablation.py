@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Ablation: cold-start tune 10 CFs with skills system prompt + skill policy.
+"""Ablation: tune 10 CFs from initial_guess with skills system prompt + skill policy.
 
 Baseline (previous batch) used a directed crawl toward analytic L/C targets.
 This script uses only observation diagnostics + the skills system prompt policy
@@ -60,7 +60,8 @@ def last_state(run: str) -> dict:
 
 
 def skills_crawl(run: str, goal: BpfGoalSpec) -> dict:
-    think = Path("/tmp/bpf_skills_think.md")
+    think_dir = ROOT / "runs" / run / "think"
+    think_dir.mkdir(parents=True, exist_ok=True)
     prev_cost = None
     prev_thinking = None
     while True:
@@ -89,6 +90,7 @@ def skills_crawl(run: str, goal: BpfGoalSpec) -> dict:
         if "=== SYSTEM: BPF tuning skills" not in obs:
             raise RuntimeError("skills system block missing from observe output")
         # Reasoning only — intent goes to <intent> via run_step / format_agent_completion.
+        think = think_dir / f"step_{st['iteration']:02d}.md"
         think.write_text(
             format_skills_reasoning(
                 cost, goal, intent, diag, iteration=st["iteration"]
@@ -138,7 +140,7 @@ def main() -> None:
                 "--goal-json",
                 json.dumps(g.to_dict()),
                 "--note",
-                f"skills-system v3 cold start CF={cf_mhz}MHz BW=5",
+                f"skills-system v3 start CF={cf_mhz}MHz BW=5",
             ]
         )
         final = skills_crawl(run, g)

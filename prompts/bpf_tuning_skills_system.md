@@ -22,7 +22,7 @@ Read PB (passband min S21), SB (stopband max S21), S21 peak vs goal window.
    window. Do **not** treat “near” as a cue to narrow (that over-fired on wide BW).
 6. **Peak inside but clearly off-center** (toward one edge) while PB is bad → nudge
    center toward the window mid before narrowing.
-7. **Peak centered inside, both metrics bad** → narrow-BW (cold-start from wide seed).
+7. **Peak centered inside, both metrics bad** → narrow-BW (start from a wide seed).
 
 ### Peak hysteresis / anti-oscillation (BW-aware)
 

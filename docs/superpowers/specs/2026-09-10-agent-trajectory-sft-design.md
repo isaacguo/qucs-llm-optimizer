@@ -1,4 +1,4 @@
-# Agent trajectory SFT cold-start for multiturn GRPO
+# Agent trajectory SFT for multiturn GRPO
 
 **Date:** 2026-09-10  
 **Status:** Approved (user confirmed design sections + this file)  
@@ -6,7 +6,7 @@
 
 ## Goal
 
-Cold-start a small intent policy (Qwen3-1.7B class) for **multiturn** notch optimization by supervised fine-tuning on **hard-successful** trajectories produced by a **Cursor agent** (auto model) through the existing `run_step.py` loop. After SFT, multiturn GRPO resumes from the SFT LoRA so RL does not start from an unformatted, domain-naive base policy.
+Train a small intent policy (Qwen3-1.7B class) for **multiturn** notch optimization by supervised fine-tuning on **hard-successful** trajectories produced by a **Cursor agent** (auto model) through the existing `run_step.py` loop. After SFT, multiturn GRPO resumes from the SFT LoRA so RL does not start from an unformatted, domain-naive base policy.
 
 ## Motivation
 
@@ -164,12 +164,12 @@ Scale / ops:
 - Align `max_seq_length` with multiturn recipes (e.g. 2048), not the old 1024 single-turn default when prompts include history.
 - Output: `final_lora` under `outputs/`.
 
-Cold-start check: after SFT, format / valid-intent rates on a **multiturn** probe improve, and rollouts are no longer systematically dead.
+After-SFT check: after SFT, format / valid-intent rates on a **multiturn** probe improve, and rollouts are no longer systematically dead.
 
 #### 4.2 Multiturn GRPO
 
 - Set `resume_adapter` to the SFT `final_lora` (field already exists on multiturn recipes).
-- **Cold-start mode:** missing `resume_adapter` must error unless an explicit escape hatch (e.g. `--allow-raw-base`) is set.
+- **Resume-adapter mode:** missing `resume_adapter` must error unless an explicit escape hatch (e.g. `--allow-raw-base`) is set.
 - Goal sampling reads **Shared Goal Config** (1–10 GHz; depth in `[−55, −D_max]`), replacing conflicting narrow defaults in multiturn YAML/`goals.py` for this pipeline.
 - Keep real Qucs rewards and existing multiturn rollout/reward structure; thresholds must follow `GoalSpec`.
 
@@ -181,7 +181,7 @@ Cold-start check: after SFT, format / valid-intent rates on a **multiturn** prob
 | Missing `goal` or inconsistent goal | Refuse index admission / refuse export |
 | Floating-point goal check | Single shared predicate with rollout |
 | Prompt rebuild failure / incomplete history | Drop turn; warn if a run exports zero turns |
-| GRPO cold-start without adapter | Non-zero exit unless explicit bypass |
+| GRPO from an SFT adapter without adapter | Non-zero exit unless explicit bypass |
 | Simulator failure | No forged SFT label; GRPO follows existing failure handling |
 
 ### 6. Testing
@@ -194,7 +194,7 @@ Contract tests first (Qucs not required for most):
 4. SFT export isomorphism: exported user text matches `build_multiturn_prompt` on a fixture trajectory.
 5. Skip null-intent baselines; compressed reasoning still well-tagged.
 6. GRPO/task sampling respects shared freq/depth ranges.
-7. Cold-start entrypoint errors without `resume_adapter`.
+7. Multiturn entrypoint errors without `resume_adapter`.
 8. Optional integration: `assign-run` → fixture history → gate → export → `qucs-sft --dry-run` count.
 
 ### 7. Implementation sketch (for planning; not started)
@@ -205,7 +205,7 @@ Likely touch points:
 - `src/cost.py`, `run_step.py`, `src/state.py` — goal-conditioned cost and run metadata
 - New corpus CLI(s): assign, gate, coverage, export
 - `training/data.py`, `training/sft.py` — multiturn index export + train
-- `training/multiturn_train.py` / configs — shared goals + enforce resume for cold-start
+- `training/multiturn_train.py` / configs — shared goals + enforce resume for resume-adapter
 - Tests under `tests/` for contracts above
 
 TDD: write contract tests before production code for gate, export isomorphism, and resume enforcement.

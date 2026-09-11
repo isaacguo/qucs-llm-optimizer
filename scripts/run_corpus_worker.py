@@ -197,7 +197,7 @@ def run_one(run_id: str, seed: int, teacher_decide, _state) -> dict:
     if r.returncode != 0:
         return {"ok": False, "stage": "init", "err": (r.stderr or r.stdout)[-500:]}
 
-    think_dir = ROOT / "tmp" / "agent_think" / run_id
+    think_dir = ROOT / "runs" / run_id / "think"
     think_dir.mkdir(parents=True, exist_ok=True)
 
     for step_i in range(MAX_STEPS):

@@ -77,7 +77,7 @@ def _trash_run(run_id: str) -> None:
 
 
 def _agent_prompt(run_id: str, seed: int) -> str:
-    return f"""You are the Cursor RF strategy agent for the qucs-llm-optimizer corpus cold-start.
+    return f"""You are the Cursor RF strategy agent for the qucs-llm-optimizer corpus collection.
 
 Workspace root: {ROOT}
 Do all work only inside this repo. Do NOT commit or push. Do NOT edit training code.
@@ -99,8 +99,8 @@ Procedure (follow exactly):
      increase_strong|increase|increase_slight|hold|decrease_slight|decrease|decrease_strong
      (omit hold keys; only emit keys you change).
    - Heuristics from prior successful runs: notch freq roughly follows f≈k/(ro+c); ri moves frequency ~4× more per mm than ro; alpha is the fine depth knob; if deepest notch is shallow (>-20 dB) restore resonator first (grow ro/ri) before chasing the target.
-   - Write short reasoning to tmp/agent_think/{run_id}/step_XX.md
-   - uv run python run_step.py step --run {run_id} --intent '<json>' --note '<short>' --thinking-file tmp/agent_think/{run_id}/step_XX.md
+   - Write short reasoning to runs/{run_id}/think/step_XX.md
+   - uv run python run_step.py step --run {run_id} --intent '<json>' --note '<short>' --thinking-file runs/{run_id}/think/step_XX.md
    - Stop early when |S21| at target (total_cost in dB) is <= goal.target_depth_db.
 5) Gate:
    uv run qucs-corpus gate --run {run_id}

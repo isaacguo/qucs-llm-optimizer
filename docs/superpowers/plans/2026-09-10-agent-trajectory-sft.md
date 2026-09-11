@@ -1,25 +1,25 @@
-# Agent Trajectory SFT Cold-Start Implementation Plan
+# Agent Trajectory SFT Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build a corpus-ops pipeline so Cursor-agent hard-successful multiturn runs (shared 1–10 GHz / depth goals) export rollout-aligned SFT data, then multiturn GRPO resumes from that LoRA.
 
-**Architecture:** Shared `GoalDistributionConfig` feeds `assign-run`, hard-success gating, and multiturn GRPO sampling. Corpus index is the only SFT entrypoint. Export rebuilds each turn with `build_multiturn_prompt`. `qucs-sft` trains the LoRA; multiturn cold-start requires `resume_adapter`.
+**Architecture:** Shared `GoalDistributionConfig` feeds `assign-run`, hard-success gating, and multiturn GRPO sampling. Corpus index is the only SFT entrypoint. Export rebuilds each turn with `build_multiturn_prompt`. `qucs-sft` trains the LoRA; multiturn GRPO from an SFT adapter requires `resume_adapter`.
 
 **Tech Stack:** Python 3.12, existing `unittest`, PyYAML, `training/rollout.py`, HF/PEFT/TRL SFT (train extra), root `run_step.py` + `src/state.py` / `src/cost.py`.
 
 ## Global Constraints
 
-- Multiturn-only primary path (do not revive single-turn GRPO as the cold-start story).
+- Multiturn-only primary path (do not revive single-turn GRPO as the primary path).
 - Teacher = Cursor agent + `run_step.py` (no external API teacher, no synthetic main corpus).
 - Hard success = meet **that run’s** `target_depth_db`; depth sampling algebraic range `[depth_db_min, depth_db_max]` with `depth_db_max == -55` floor (shallower bound).
 - Frequency range Hz `[1e9, 10e9]`; `heldout_enabled: false` for this pipeline’s shared config.
 - SFT user text must call `training.rollout.build_multiturn_prompt` (same function object), not a copied template.
 - SFT reads **only** `corpus/index.jsonl`, never a raw scan of all `runs/`.
-- Cold-start multiturn GRPO errors if `resume_adapter` is empty unless `--allow-raw-base`.
+- Multiturn GRPO errors if `resume_adapter` is empty unless `--allow-raw-base`.
 - TDD: failing test → implement → pass → commit per task.
 - Do not load GPU models in unit tests; use `--dry-run` for SFT count checks.
-- Spec: `docs/superpowers/specs/2026-09-10-agent-trajectory-sft-coldstart-design.md`.
+- Spec: `docs/superpowers/specs/2026-09-10-agent-trajectory-sft-qwen3-1.7b-design.md`.
 
 ## File map
 
@@ -42,7 +42,7 @@
 | `tests/test_corpus.py` | Gate, index, coverage, export isomorphism |
 | `tests/test_run_step_goal.py` | Goal-conditioned cost path (mock sim if needed) |
 | `tests/test_training_data.py` | Update/extend for multiturn export |
-| `tests/test_multiturn_coldstart_cli.py` | Resume-adapter enforcement |
+| `tests/test_multiturn_resume_adapter_cli.py` | Resume-adapter enforcement |
 | `corpus/.gitkeep` | Ensure `corpus/` exists; `index.jsonl` gitignored or empty |
 
 ---
@@ -83,7 +83,7 @@ from training.goals import (
 
 
 class LoadGoalDistributionTests(unittest.TestCase):
-    def test_loads_coldstart_defaults(self):
+    def test_loads_default_goal_distribution(self):
         path = Path("configs/goal_distribution.yaml")
         dist = load_goal_distribution(path)
         self.assertEqual(dist.freq_min_hz, 1e9)
@@ -438,7 +438,7 @@ git commit -m "Add qucs-corpus CLI for assign, gate, coverage, export."
 **Files:**
 - Modify: `training/sft.py`
 - Modify: `tests/test_training_data.py` (dry-run path / argparse)
-- Modify: `README.md` (SFT section: index-based multiturn cold-start)
+- Modify: `README.md` (SFT section: index-based multiturn GRPO from an SFT adapter)
 
 **Interfaces:**
 - CLI:
@@ -470,12 +470,12 @@ git commit -m "Train multiturn SFT from corpus index with rollout-aligned data."
 - Modify: `training/config.py` (`MultiturnDataSection`: add `goal_config: str = "configs/goal_distribution.yaml"`; add `depth_db_min`/`depth_db_max` optional overrides OR drop fixed `target_depth_db` in favor of distribution)
 - Modify: `configs/multiturn_qwen3_1_7b.yaml`
 - Modify: `training/multiturn_train.py`
-- Create: `tests/test_multiturn_coldstart_cli.py`
+- Create: `tests/test_multiturn_resume_adapter_cli.py`
 
 **Interfaces:**
 - When resolving tasks, call `sample_goal_from_distribution(seed, load_goal_distribution(path))` instead of fixed `target_depth_db`.
 - Add CLI `--allow-raw-base` (default False).
-- At start of `train()`: if not `runtime.resume_adapter` and not `allow_raw_base`: `raise SystemExit("cold-start requires --resume-adapter / runtime.resume_adapter")`.
+- At start of `train()`: if not `runtime.resume_adapter` and not `allow_raw_base`: `raise SystemExit("multiturn training requires --resume-adapter / runtime.resume_adapter")`.
 
 Locked field mapping:
 - Prefer `data.goal_config` path to YAML distribution.
@@ -490,7 +490,7 @@ Locked field mapping:
 - [ ] **Step 4: Commit**
 
 ```bash
-git add training/config.py training/multiturn_train.py configs/multiturn_qwen3_1_7b.yaml tests/test_multiturn_coldstart_cli.py
+git add training/config.py training/multiturn_train.py configs/multiturn_qwen3_1_7b.yaml tests/test_multiturn_resume_adapter_cli.py
 git commit -m "Wire multiturn GRPO to shared goals and require SFT resume."
 ```
 
@@ -500,7 +500,7 @@ git commit -m "Wire multiturn GRPO to shared goals and require SFT resume."
 
 **Files:**
 - Modify: `README.md` (corpus workflow, milestones 50/150/300/500)
-- Modify: `docs/superpowers/specs/2026-09-10-agent-trajectory-sft-coldstart-design.md` status → Approved
+- Modify: `docs/superpowers/specs/2026-09-10-agent-trajectory-sft-qwen3-1.7b-design.md` status → Approved
 - Optional: `qucs-corpus import-run --run llm1` that attaches a goal matching llm1’s 5.5 GHz / −70 dB, gates, and indexes if eligible
 
 - [ ] **Step 1: Document end-to-end operator flow**
@@ -513,8 +513,8 @@ uv run qucs-corpus coverage
 # milestones: export + SFT dry-run / short SFT
 uv run qucs-corpus export --out /tmp/sft.jsonl
 uv run qucs-sft --index corpus/index.jsonl --dry-run
-uv run qucs-sft --index corpus/index.jsonl --output-dir outputs/sft-coldstart
-# then multiturn with resume_adapter: outputs/sft-coldstart/final_lora
+uv run qucs-sft --index corpus/index.jsonl --output-dir outputs/sft-qwen3-1.7b
+# then multiturn with resume_adapter: outputs/sft-qwen3-1.7b/final_lora
 ```
 
 - [ ] **Step 2: If implementing import-run, TDD gate for llm1 fixture path**
@@ -522,8 +522,8 @@ uv run qucs-sft --index corpus/index.jsonl --output-dir outputs/sft-coldstart
 - [ ] **Step 3: Commit**
 
 ```bash
-git add README.md docs/superpowers/specs/2026-09-10-agent-trajectory-sft-coldstart-design.md training/corpus_cli.py tests/
-git commit -m "Document corpus cold-start operator workflow and milestones."
+git add README.md docs/superpowers/specs/2026-09-10-agent-trajectory-sft-qwen3-1.7b-design.md training/corpus_cli.py tests/
+git commit -m "Document corpus collection operator workflow and milestones."
 ```
 
 ---
@@ -558,7 +558,7 @@ No TBD steps. `depth_db_min` default **−80.0** is explicit in shipped YAML (co
 
 ## Execution handoff
 
-Plan complete and saved to `docs/superpowers/plans/2026-09-10-agent-trajectory-sft-coldstart.md`.
+Plan complete and saved to `docs/superpowers/plans/2026-09-10-agent-trajectory-sft-qwen3-1.7b.md`.
 
 **Two execution options:**
 

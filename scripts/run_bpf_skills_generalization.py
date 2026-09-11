@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Generalization probe: random CFs × BW=15 MHz under skills-policy v3.
 
-Cold-start from task initial_guess (no analytic target L/C). Compares against
+Start from task initial_guess (no analytic target L/C). Compares against
 the previous BW=5 linspace ablation only as a headline rate reference.
 """
 from __future__ import annotations
@@ -58,7 +58,8 @@ def last_state(run: str) -> dict:
 
 
 def skills_crawl(run: str, goal: BpfGoalSpec) -> dict:
-    think = Path("/tmp/bpf_skills_think_gen.md")
+    think_dir = ROOT / "runs" / run / "think"
+    think_dir.mkdir(parents=True, exist_ok=True)
     prev_cost = None
     prev_thinking = None
     while True:
@@ -86,6 +87,7 @@ def skills_crawl(run: str, goal: BpfGoalSpec) -> dict:
         ).stdout
         if "=== SYSTEM: BPF tuning skills" not in obs:
             raise RuntimeError("skills system block missing from observe output")
+        think = think_dir / f"step_{st['iteration']:02d}.md"
         think.write_text(
             format_skills_reasoning(
                 cost, goal, intent, diag, iteration=st["iteration"]
@@ -174,7 +176,7 @@ def main() -> None:
                 "--goal-json",
                 json.dumps(g.to_dict()),
                 "--note",
-                f"skills-gen cold start CF={cf_mhz}MHz BW={args.bw_mhz:g} seed={args.seed}",
+                f"skills-gen start CF={cf_mhz}MHz BW={args.bw_mhz:g} seed={args.seed}",
             ]
         )
         seed_cost = last_state(run)["history"][-1]["cost"]
