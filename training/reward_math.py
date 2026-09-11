@@ -2,6 +2,11 @@
 
 ``best_freq_hz`` is the sweep frequency of the deepest |S21|. Alignment is
 linear in |f_notch - f_target| and hits 0 at one stopband half-width (1 GHz).
+A spec term scores ``target_depth_db - best_db`` so a clipped 20 dB start-relative
+gain that still misses the goal is not treated as equal to actually meeting it.
+``GOAL_MET_BONUS`` is applied when the trajectory hits the spec.
+``patience`` / ``max_turns`` / ``stop`` then scale the shaped score by
+``NON_SUCCESS_SCALE`` so unsuccessful rollouts stay near zero.
 """
 from __future__ import annotations
 
@@ -11,6 +16,10 @@ REWARD_CLIP = 20.0
 BEST_WEIGHT = 0.7
 FINAL_WEIGHT = 0.3
 FREQ_WEIGHT = 0.5
+SPEC_WEIGHT = 0.5
+GOAL_MET_BONUS = 5.0
+NON_SUCCESS_SCALE = 0.1
+NON_SUCCESS_REASONS = frozenset({"patience", "max_turns", "stop"})
 
 
 def clip_reward(value: float, clip: float = REWARD_CLIP) -> float:
@@ -69,16 +78,35 @@ def mixed_terminal_reward(
     best_freq_hz: float | None = None,
     final_freq_hz: float | None = None,
     target_freq_hz: float | None = None,
+    target_depth_db: float | None = None,
     freq_weight: float = FREQ_WEIGHT,
+    spec_weight: float = SPEC_WEIGHT,
 ) -> float:
     depth = best_weight * clip_reward(initial_db - best_db, clip) + final_weight * clip_reward(
         initial_db - final_db, clip
     )
+    spec = 0.0
+    if target_depth_db is not None:
+        spec = spec_weight * clip_reward(target_depth_db - best_db, clip)
     if target_freq_hz is None:
-        return depth
+        return depth + spec
     freq = best_weight * frequency_improvement_reward(
         initial_freq_hz, best_freq_hz, target_freq_hz, clip=clip
     ) + final_weight * frequency_improvement_reward(
         initial_freq_hz, final_freq_hz, target_freq_hz, clip=clip
     )
-    return depth + freq_weight * freq
+    return depth + spec + freq_weight * freq
+
+
+def finalize_trajectory_reward(mixed: float, reason: str) -> float:
+    """Map shaped score M onto the outcome classes used by GRPO.
+
+    ``goal_met`` keeps M and adds ``GOAL_MET_BONUS``. ``patience``,
+    ``max_turns``, and ``stop`` keep ordering among failures but scale M by
+    ``NON_SUCCESS_SCALE`` so those boxes sit near 0.
+    """
+    if reason == "goal_met":
+        return float(mixed) + GOAL_MET_BONUS
+    if reason in NON_SUCCESS_REASONS:
+        return float(mixed) * NON_SUCCESS_SCALE
+    return float(mixed)

@@ -9,7 +9,7 @@ from training.data import load_sft_records
 from training.modeling import ModelConfig, load_policy, mixed_precision_config
 from training.preflight import verify_runtime
 
-DEFAULT_MODEL = "unsloth/Qwen3-1.7B-bnb-4bit"
+DEFAULT_MODEL = "unsloth/Qwen3-4B-Instruct-2507-bnb-4bit"
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -17,7 +17,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--model-name", default=DEFAULT_MODEL)
     parser.add_argument("--state", default="runs/llm1/state.json")
     parser.add_argument("--epochs", type=float, default=1)
-    parser.add_argument("--output-dir", default="outputs/sft-qwen3-1.7b")
+    parser.add_argument("--output-dir", default="outputs/sft-qwen3-4b")
     parser.add_argument(
         "--dry-run",
         action="store_true",

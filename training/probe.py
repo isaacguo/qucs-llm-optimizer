@@ -16,7 +16,7 @@ from training.rewards import (
     valid_intent_reward,
 )
 
-DEFAULT_MODEL = "unsloth/Qwen3-1.7B-bnb-4bit"
+DEFAULT_MODEL = "unsloth/Qwen3-4B-Instruct-2507-bnb-4bit"
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -26,7 +26,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--generations", type=int, default=4)
     parser.add_argument("--start-seed", type=int, default=2000)
     parser.add_argument("--max-new-tokens", type=int, default=256)
-    parser.add_argument("--output-dir", default="outputs/probe-qwen3-1.7b")
+    parser.add_argument("--output-dir", default="outputs/probe-qwen3-4b")
     parser.add_argument(
         "--skip-simulation",
         action="store_true",

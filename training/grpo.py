@@ -16,7 +16,7 @@ from training.rewards import (
     valid_intent_reward,
 )
 
-DEFAULT_MODEL = "unsloth/Qwen3-1.7B-bnb-4bit"
+DEFAULT_MODEL = "unsloth/Qwen3-4B-Instruct-2507-bnb-4bit"
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -40,7 +40,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--steps", type=int, default=100)
     parser.add_argument("--generations", type=int, default=8)
     parser.add_argument("--sim-workers", type=int, default=2)
-    parser.add_argument("--output-dir", default="outputs/grpo-qwen3-1.7b")
+    parser.add_argument("--output-dir", default="outputs/grpo-qwen3-4b")
     parser.add_argument("--resume-from-checkpoint", default="")
     parser.add_argument("--use-vllm", action="store_true")
     parser.add_argument(

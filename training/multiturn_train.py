@@ -49,7 +49,7 @@ from training.rollout import (  # noqa: E402
 )
 from training.starts import sample_params_with_headroom  # noqa: E402
 
-DEFAULT_MODEL = "unsloth/Qwen3-1.7B-bnb-4bit"
+DEFAULT_MODEL = "unsloth/Qwen3-4B-Instruct-2507-bnb-4bit"
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -95,7 +95,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--start-seed", type=int, default=5000)
     parser.add_argument("--goal-freq-min-ghz", type=float, default=4.0)
     parser.add_argument("--goal-freq-max-ghz", type=float, default=6.0)
-    parser.add_argument("--max-new-tokens", type=int, default=256)
+    parser.add_argument("--max-new-tokens", type=int, default=384)
     parser.add_argument("--temperature", type=float, default=1.0)
     parser.add_argument("--lr", type=float, default=5e-6)
     parser.add_argument("--max-grad-norm", type=float, default=0.1)

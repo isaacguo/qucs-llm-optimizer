@@ -133,7 +133,7 @@ fields degrade to placeholders.
 ## Unsloth training
 
 The optional `training/` package replaces the human strategy layer with a
-Qwen3-1.7B intent policy trained by Unsloth GRPO. Unsloth owns 4-bit model
+Qwen3-4B-Instruct intent policy trained by Unsloth GRPO. Unsloth owns 4-bit model
 loading, LoRA, generation, group-relative advantages and weight updates.
 This repository supplies the executable environment and verifiable reward:
 
@@ -142,8 +142,9 @@ observation -> Qwen3 completion -> strict intent JSON -> apply_intent
             -> qucsator_rf (no layout export) -> delta dB reward
 ```
 
-The default model is `unsloth/Qwen3-1.7B-bnb-4bit`, with rank-16 LoRA and
-vLLM disabled for the tested 8 GB GPU profile. Training never replaces the
+The default model is `unsloth/Qwen3-4B-Instruct-2507-bnb-4bit` (non-thinking),
+with rank-16 LoRA, a 2048-token max sequence length, and vLLM disabled for the
+tested 8 GB GPU profile. Training never replaces the
 Qucs reward with a mock or learned judge. Layout export is skipped only
 during reward evaluation; the electrical simulation is the same one used by
 `run_step.py`.
@@ -169,7 +170,7 @@ uv run qucs-probe 2>&1 | tee outputs/logs/probe.log
 `qucs-probe` samples four intents for each of two randomized circuit states,
 executes all candidates in Qucs, and writes format rate, valid-intent rate,
 and within-group reward standard deviation to
-`outputs/probe-qwen3-1.7b/summary.json`.
+`outputs/probe-qwen3-4b/summary.json`.
 
 Start GRPO:
 
@@ -192,7 +193,7 @@ directory. Resume with:
 
 ```bash
 uv run qucs-grpo \
-  --resume-from-checkpoint outputs/grpo-qwen3-1.7b/checkpoint-25
+  --resume-from-checkpoint outputs/grpo-qwen3-4b/checkpoint-25
 ```
 
 ### Google Colab from VS Code

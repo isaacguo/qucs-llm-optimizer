@@ -13,7 +13,7 @@ from training.sft import build_parser as build_sft_parser
 class GrpoCliTests(unittest.TestCase):
     def test_defaults_use_real_qwen_and_eight_generations(self):
         args = build_grpo_parser().parse_args([])
-        self.assertEqual(args.model_name, "unsloth/Qwen3-1.7B-bnb-4bit")
+        self.assertEqual(args.model_name, "unsloth/Qwen3-4B-Instruct-2507-bnb-4bit")
         self.assertEqual(args.generations, 8)
         self.assertEqual(args.tasks, 32)
         self.assertEqual(args.steps, 100)
