@@ -16,3 +16,4 @@ TEMPLATE_PATH = Path(__file__).resolve().parents[2] / "templates" / "butterworth
 TASK_NAME = "butterworth_bpf5"
 EXPORT_LAYOUT = False
 SWEEP_POINTS = 301
+STEP_MODE = "relative"

@@ -238,12 +238,14 @@ def _panel(entry: dict, prev: dict | None, run_dir: Path, is_best: bool, *, bpf:
     cost = entry["cost"]
     if bpf:
         metric_db = float(cost["passband_min_s21_db"])
-        hit_goal = False
+        hit_goal = bool(cost.get("goal_met", False))
         layout_caption = "lumped LC &mdash; no qucsrflayout for this task"
+        summary_metric = f"{metric_db:.2f} dB"
     else:
         metric_db = db(cost["total_cost"])
         hit_goal = metric_db <= TARGET_DEPTH_DB
         layout_caption = "Qucs-RFlayout copper geometry"
+        summary_metric = f"{metric_db:.2f} dB"
     thinking = (entry.get("thinking") or "").strip()
     note = (entry.get("note") or "").strip()
     observation = entry.get("observation") or {}
@@ -277,7 +279,7 @@ def _panel(entry: dict, prev: dict | None, run_dir: Path, is_best: bool, *, bpf:
     return f"""<details class="iter{' is-best' if is_best else ''}" id="iter-{it:03d}">
   <summary>
     <span class="it">iter {it:03d}</span>
-    <span class="db{' good' if hit_goal else ''}">{metric_db:.2f} dB</span>
+    <span class="db{' good' if hit_goal else ''}">{summary_metric}</span>
     <span class="chips">{_intent_chips(entry.get("intent"))}</span>
     <span class="tag">{_esc(note) if note else ''}</span>
     {''.join(badges)}
@@ -421,8 +423,10 @@ def build_report(
     best = min(history, key=lambda e: e["cost"]["total_cost"])
     best_it = best["iteration"]
     if bpf:
-        start_db = float(history[0]["cost"]["passband_min_s21_db"])
-        best_db = float(best["cost"]["passband_min_s21_db"])
+        start_cost = float(history[0]["cost"]["total_cost"])
+        best_cost = float(best["cost"]["total_cost"])
+        start_il = float(history[0]["cost"]["passband_min_s21_db"])
+        best_il = float(best["cost"]["passband_min_s21_db"])
         title = f"Butterworth BPF5 &mdash; run <span class=\"run\">{_esc(run_name)}</span>"
         page_title = f"Butterworth BPF5 &mdash; run {_esc(run_name)}"
         subtitle = (
@@ -430,7 +434,18 @@ def build_report(
             "5th-order lumped LC ladder. No qucsrflayout; open circuit.sch in Qucs-S."
         )
         footer_extra = "BPF runs omit layout.svg."
-        win_cls = ""
+        win_cls = "win" if best.get("cost", {}).get("goal_met") else ""
+        cards = [
+            ("iterations", f"{len(history)}", ""),
+            ("baseline", f"{start_cost:.6f}", ""),
+            ("best", f"{best_cost:.6f}", win_cls),
+            ("best iteration", f"{best_it:03d}", ""),
+            ("baseline IL", f"{start_il:.1f} dB", ""),
+            ("best IL", f"{best_il:.1f} dB", ""),
+            ("reasoning captured",
+             f"{sum(1 for e in history if (e.get('thinking') or '').strip())}/{len(history)}",
+             ""),
+        ]
     else:
         start_db = db(history[0]["cost"]["total_cost"])
         best_db = db(best["cost"]["total_cost"])
@@ -443,8 +458,15 @@ def build_report(
         )
         footer_extra = "Layouts are Qucs-RFlayout output, recoloured with CSS."
         win_cls = "win" if best_db <= TARGET_DEPTH_DB else ""
-
-    reasoned = sum(1 for e in history if (e.get("thinking") or "").strip())
+        cards = [
+            ("iterations", f"{len(history)}", ""),
+            ("baseline", f"{start_db:.1f} dB", ""),
+            ("best", f"{best_db:.1f} dB", win_cls),
+            ("best iteration", f"{best_it:03d}", ""),
+            ("reasoning captured",
+             f"{sum(1 for e in history if (e.get('thinking') or '').strip())}/{len(history)}",
+             ""),
+        ]
 
     panels = []
     for i, entry in enumerate(history):
@@ -453,13 +475,6 @@ def build_report(
             _panel(entry, prev, run_dir, is_best=entry["iteration"] == best_it, bpf=bpf)
         )
 
-    cards = [
-        ("iterations", f"{len(history)}", ""),
-        ("baseline", f"{start_db:.1f} dB", ""),
-        ("best", f"{best_db:.1f} dB", win_cls),
-        ("best iteration", f"{best_it:03d}", ""),
-        ("reasoning captured", f"{reasoned}/{len(history)}", ""),
-    ]
     card_html = "".join(
         f'<div class="card {cls}"><div class="k">{k}</div><div class="v">{v}</div></div>'
         for k, v, cls in cards

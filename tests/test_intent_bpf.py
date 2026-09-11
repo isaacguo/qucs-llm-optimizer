@@ -45,6 +45,65 @@ class IntentBpfTests(unittest.TestCase):
         out = apply_intent(dict(BF_INIT), {"ro": "decrease"}, iteration=0)
         self.assertLess(out["ro"], BF_INIT["ro"])
 
+    def test_relative_slight_step_on_small_L2_is_usable(self):
+        """Range-fraction steps make L2≈6.56 nH jump ~80 nH; relative must be ≪ 20 nH."""
+        params = dict(INITIAL_GUESS)
+        self.assertAlmostEqual(params["L2"], 6.5577, places=4)
+        out = apply_intent(
+            params,
+            {"L2": "increase_slight"},
+            iteration=0,
+            variables=VARIABLES,
+            bounds=BOUNDS,
+            step_mode="relative",
+        )
+        delta = out["L2"] - params["L2"]
+        self.assertGreater(delta, 0.0)
+        self.assertLess(delta, 20.0)
+        # ~4% of 6.56 ≈ 0.26 nH (order-of-magnitude check)
+        self.assertLess(delta, 1.0)
+
+    def test_relative_slight_decrease_does_not_slam_to_lo(self):
+        params = dict(INITIAL_GUESS)
+        seed = params["L2"]
+        out = apply_intent(
+            params,
+            {"L2": "decrease_slight"},
+            iteration=0,
+            variables=VARIABLES,
+            bounds=BOUNDS,
+            step_mode="relative",
+        )
+        lo = BOUNDS["L2"][0]
+        self.assertGreater(out["L2"], lo)
+        self.assertLess(out["L2"], seed)
+        self.assertGreater(out["L2"], seed - 20.0)
+
+    def test_range_mode_unchanged_for_butterfly_sized_step(self):
+        from intent import INITIAL_GUESS as BF_INIT, BOUNDS as BF_BOUNDS
+        out = apply_intent(
+            dict(BF_INIT),
+            {"ro": "decrease_slight"},
+            iteration=0,
+            step_mode="range",
+        )
+        lo, hi = BF_BOUNDS["ro"]
+        expected_step = 0.04 * (hi - lo)  # slight, iteration 0, decay=1
+        self.assertAlmostEqual(out["ro"], round(BF_INIT["ro"] - expected_step, 4), places=4)
+
+    def test_bpf_task_defaults_to_relative_via_get_task(self):
+        t = get_task("butterworth_bpf5")
+        self.assertEqual(t.step_mode, "relative")
+        out = apply_intent(
+            dict(INITIAL_GUESS),
+            {"L2": "increase_slight"},
+            iteration=0,
+            variables=t.variables,
+            bounds=t.bounds,
+            step_mode=t.step_mode,
+        )
+        self.assertLess(abs(out["L2"] - INITIAL_GUESS["L2"]), 20.0)
+
 
 if __name__ == "__main__":
     unittest.main()

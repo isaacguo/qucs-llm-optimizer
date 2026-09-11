@@ -32,6 +32,8 @@ from cost_bpf import evaluate as evaluate_bpf
 from decision_log import append_record, format_agent_completion
 from goals_bpf import BpfGoalSpec, default_goal as default_bpf_goal
 from goals_bpf import goal_from_dict as bpf_goal_from_dict
+from goals_bpf import is_goal_met as bpf_is_goal_met
+from goals_bpf import validate_goal as validate_bpf_goal
 from intent import BOUNDS, VARIABLES, apply_intent
 from qucs_sim import simulate
 from report_html import write_report
@@ -102,7 +104,38 @@ def _evaluate_for_run(res, goal: GoalSpec) -> dict:
 
 
 def _evaluate_bpf_for_run(res, goal: BpfGoalSpec) -> dict:
-    return evaluate_bpf(res, goal).to_dict()
+    cost = evaluate_bpf(res, goal).to_dict()
+    cost["goal_met"] = bpf_is_goal_met(cost, goal)
+    return cost
+
+
+def _resolve_bpf_goal(goal_json: str, state: RunState) -> BpfGoalSpec:
+    """Parse / default BPF goal and validate; exit(1) on bad input."""
+    try:
+        if goal_json.strip():
+            goal = bpf_goal_from_dict(json.loads(goal_json))
+        elif state.goal is None or "f_low_hz" not in state.goal:
+            goal = default_bpf_goal()
+        else:
+            goal = _bpf_goal_from_state(state)
+        validate_bpf_goal(goal)
+    except (KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
+        print(f"invalid BPF goal: {exc}", file=sys.stderr)
+        sys.exit(1)
+    return goal
+
+
+def _bpf_param_unit(var: str) -> str:
+    if var.startswith("L"):
+        return "nH"
+    if var.startswith("C"):
+        return "pF"
+    return ""
+
+
+def _fmt_param_value(val: float) -> str:
+    """Prefer fixed decimals that preserve round(..., 4) without .4g collapse."""
+    return f"{val:.4f}".rstrip("0").rstrip(".") if "." in f"{val:.4f}" else f"{val:.4f}"
 
 
 def _simulate_for_task(params: dict, workdir: Path, task: TaskConfig, bpf_goal: BpfGoalSpec | None):
@@ -133,10 +166,11 @@ def format_report(
     goal: GoalSpec | None = None,
     *,
     task: str | None = None,
+    bpf_goal: BpfGoalSpec | None = None,
 ) -> str:
     """Render one history entry as the plain-text block the CLI prints."""
     if _is_bpf(task):
-        return _format_report_bpf(entry)
+        return _format_report_bpf(entry, bpf_goal=bpf_goal)
     return _format_report_butterfly(entry, goal=goal)
 
 
@@ -181,16 +215,31 @@ def _format_report_butterfly(entry: dict, goal: GoalSpec | None = None) -> str:
     return "\n".join(lines)
 
 
-def _format_report_bpf(entry: dict) -> str:
+def _format_report_bpf(entry: dict, bpf_goal: BpfGoalSpec | None = None) -> str:
     p, c = entry["params"], entry["cost"]
     vars_ = tuple(p.keys()) if p else get_task(_BPF_TASK).variables
+    goal = bpf_goal or default_bpf_goal()
+    goal_met = c.get("goal_met")
+    if goal_met is None:
+        goal_met = bpf_is_goal_met(c, goal)
+    status = "goal met" if goal_met else "goal not met"
+    param_bits = []
+    for k in vars_:
+        unit = _bpf_param_unit(k)
+        suffix = f" {unit}" if unit else ""
+        param_bits.append(f"{k}={_fmt_param_value(p[k])}{suffix}")
+    sweep_lo, sweep_hi = goal.sweep_hz
     lines = [
         f"--- iteration {entry['iteration']} ---",
-        "params: " + ", ".join(f"{k}={p[k]:.4g}" for k in vars_),
+        "params: " + ", ".join(param_bits),
         f"total_cost = {c['total_cost']:.6f}",
         f"passband min S21 = {c['passband_min_s21_db']:.2f} dB "
-        f"(f_low={c.get('f_low_hz', 0)/1e6:.1f} MHz, f_high={c.get('f_high_hz', 0)/1e6:.1f} MHz)",
+        f"(f_low={c.get('f_low_hz', goal.f_low_hz)/1e6:.1f} MHz, "
+        f"f_high={c.get('f_high_hz', goal.f_high_hz)/1e6:.1f} MHz)",
         f"stopband max S21 = {c['stopband_max_s21_db']:.2f} dB",
+        f"goal thresholds: passband_il_max_db={goal.passband_il_max_db:.2f} dB, "
+        f"stopband_atten_min_db={goal.stopband_atten_min_db:.2f} dB  [{status}]",
+        f"sweep window: {sweep_lo/1e6:.1f} .. {sweep_hi/1e6:.1f} MHz",
     ]
     if "passband_mean_s21_db" in c:
         lines.append(f"passband mean S21 = {c['passband_mean_s21_db']:.2f} dB")
@@ -208,6 +257,7 @@ def format_observation(
     goal: GoalSpec | None = None,
     *,
     task: str | None = None,
+    bpf_goal: BpfGoalSpec | None = None,
 ) -> str:
     """
     Render the exact evidence block handed to the strategy layer before it
@@ -219,18 +269,31 @@ def format_observation(
     variables = cfg.variables if cfg else VARIABLES
     bounds = cfg.bounds if cfg else BOUNDS
     p = entry["params"]
-    bounds_txt = "\n".join(
-        f"  {v:<6} = {p[v]:>10.4g}   bounds [{bounds[v][0]}, {bounds[v][1]}]"
-        for v in variables
-    )
+    if _is_bpf(task_name):
+        bounds_txt = "\n".join(
+            f"  {v:<6} = {_fmt_param_value(p[v]):>10} {_bpf_param_unit(v):<2}  "
+            f"bounds [{bounds[v][0]}, {bounds[v][1]}]"
+            for v in variables
+        )
+    else:
+        bounds_txt = "\n".join(
+            f"  {v:<6} = {p[v]:>10.4g}   bounds [{bounds[v][0]}, {bounds[v][1]}]"
+            for v in variables
+        )
     return (
-        f"{format_report(entry, goal=goal, task=task_name)}\n\n"
+        f"{format_report(entry, goal=goal, task=task_name, bpf_goal=bpf_goal)}\n\n"
         f"free variables and bounds:\n{bounds_txt}"
     )
 
 
-def _print_report(entry: dict, goal: GoalSpec | None = None, *, task: str | None = None) -> None:
-    print(format_report(entry, goal=goal, task=task))
+def _print_report(
+    entry: dict,
+    goal: GoalSpec | None = None,
+    *,
+    task: str | None = None,
+    bpf_goal: BpfGoalSpec | None = None,
+) -> None:
+    print(format_report(entry, goal=goal, task=task, bpf_goal=bpf_goal))
 
 
 def _read_thinking(args) -> str:
@@ -266,14 +329,8 @@ def cmd_init(args):
     butterfly_goal: GoalSpec | None = None
 
     if _is_bpf(task_name):
-        if goal_json.strip():
-            bpf_goal = bpf_goal_from_dict(json.loads(goal_json))
-            state.set_run_meta(goal=bpf_goal.to_dict())
-        elif state.goal is None or "f_low_hz" not in state.goal:
-            bpf_goal = default_bpf_goal()
-            state.set_run_meta(goal=bpf_goal.to_dict())
-        else:
-            bpf_goal = _bpf_goal_from_state(state)
+        bpf_goal = _resolve_bpf_goal(goal_json, state)
+        state.set_run_meta(goal=bpf_goal.to_dict())
     else:
         if goal_json.strip():
             state.set_run_meta(goal=json.loads(goal_json))
@@ -313,7 +370,7 @@ def cmd_init(args):
                 "db_after": _cost_db_for_log(cost),
             },
         )
-    _print_report(state.history[it], goal=butterfly_goal, task=task_name)
+    _print_report(state.history[it], goal=butterfly_goal, task=task_name, bpf_goal=bpf_goal)
 
 
 def cmd_step(args):
@@ -337,7 +394,9 @@ def cmd_step(args):
     prev_entry = state.history[-1]
     observation = {
         "from_iteration": prev_entry["iteration"],
-        "report_text": format_observation(prev_entry, goal=butterfly_goal, task=task_name),
+        "report_text": format_observation(
+            prev_entry, goal=butterfly_goal, task=task_name, bpf_goal=bpf_goal
+        ),
     }
     new_iteration = state.iteration + 1
     new_params = apply_intent(
@@ -346,6 +405,7 @@ def cmd_step(args):
         iteration=new_iteration,
         variables=task.variables,
         bounds=task.bounds,
+        step_mode=task.step_mode,
     )
     res = _simulate_for_task(new_params, run_dir / f"iter_{new_iteration:03d}", task, bpf_goal)
     if _is_bpf(task_name):
@@ -376,7 +436,9 @@ def cmd_step(args):
             "db_after": _cost_db_for_log(cost),
         },
     )
-    _print_report(state.history[it], goal=butterfly_goal, task=task_name)
+    _print_report(
+        state.history[it], goal=butterfly_goal, task=task_name, bpf_goal=bpf_goal
+    )
 
 
 def cmd_report(args):
@@ -386,13 +448,14 @@ def cmd_report(args):
         print(f"run '{args.run}' has no history yet", file=sys.stderr)
         sys.exit(1)
     task_name = _task_name_from_state(state)
+    bpf_goal = _bpf_goal_from_state(state) if _is_bpf(task_name) else None
     goal = None if _is_bpf(task_name) else _goal_from_state(state)
     for entry in state.history:
-        _print_report(entry, goal=goal, task=task_name)
+        _print_report(entry, goal=goal, task=task_name, bpf_goal=bpf_goal)
         print()
     best = state.best()
     print("=== BEST SO FAR ===")
-    _print_report(best, goal=goal, task=task_name)
+    _print_report(best, goal=goal, task=task_name, bpf_goal=bpf_goal)
 
 
 def cmd_best(args):
@@ -403,8 +466,9 @@ def cmd_best(args):
         print(f"run '{args.run}' has no history yet", file=sys.stderr)
         sys.exit(1)
     task_name = _task_name_from_state(state)
+    bpf_goal = _bpf_goal_from_state(state) if _is_bpf(task_name) else None
     goal = None if _is_bpf(task_name) else _goal_from_state(state)
-    _print_report(best, goal=goal, task=task_name)
+    _print_report(best, goal=goal, task=task_name, bpf_goal=bpf_goal)
 
 
 def cmd_observe(args):
@@ -415,8 +479,9 @@ def cmd_observe(args):
         print(f"run '{args.run}' has no history yet", file=sys.stderr)
         sys.exit(1)
     task_name = _task_name_from_state(state)
+    bpf_goal = _bpf_goal_from_state(state) if _is_bpf(task_name) else None
     goal = None if _is_bpf(task_name) else _goal_from_state(state)
-    print(format_observation(state.history[-1], goal=goal, task=task_name))
+    print(format_observation(state.history[-1], goal=goal, task=task_name, bpf_goal=bpf_goal))
 
 
 def cmd_conclude(args):

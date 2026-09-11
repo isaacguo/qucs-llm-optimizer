@@ -137,7 +137,10 @@ class BpfInitDispatchTests(unittest.TestCase):
 
 class BpfFormatTests(unittest.TestCase):
     def test_format_report_and_observation_bpf(self):
+        from goals_bpf import default_goal
+
         task = get_task("butterworth_bpf5")
+        goal = default_goal()
         entry = {
             "iteration": 0,
             "params": dict(task.initial_guess),
@@ -151,24 +154,61 @@ class BpfFormatTests(unittest.TestCase):
                 "has_stopband_samples": True,
                 "f_low_hz": 135e6,
                 "f_high_hz": 165e6,
+                "goal_met": False,
             },
             "intent": None,
             "note": "baseline",
         }
-        text = run_step.format_report(entry, task="butterworth_bpf5")
+        text = run_step.format_report(entry, bpf_goal=goal, task="butterworth_bpf5")
         self.assertIn("passband", text.lower())
         self.assertIn("stopband", text.lower())
         self.assertIn("total_cost", text.lower())
         self.assertIn("-0.5", text)
         self.assertIn("-18", text)
+        self.assertIn("passband_il_max_db", text)
+        self.assertIn("stopband_atten_min_db", text)
+        self.assertIn("goal not met", text.lower())
 
-        obs = run_step.format_observation(entry, task="butterworth_bpf5")
+        obs = run_step.format_observation(entry, bpf_goal=goal, task="butterworth_bpf5")
         self.assertIn("L3", obs)
         self.assertIn("C3", obs)
         self.assertIn("bounds", obs.lower())
         # sample L and C bound edges from task tables
         self.assertIn("1.0", obs)  # L lower
         self.assertIn("2000.0", obs)  # L upper
+        # I4: units + sweep window + goal thresholds
+        self.assertIn("nH", obs)
+        self.assertIn("pF", obs)
+        self.assertIn("sweep", obs.lower())
+        self.assertIn("passband_il_max_db", obs)
+        # seed L2 keeps 4-decimal-ish precision in observation
+        self.assertIn("6.5577", obs)
+
+    def test_format_report_goal_met_true(self):
+        from goals_bpf import default_goal
+
+        task = get_task("butterworth_bpf5")
+        entry = {
+            "iteration": 1,
+            "params": dict(task.initial_guess),
+            "cost": {
+                "total_cost": 0.05,
+                "passband_min_s21_db": -0.5,
+                "stopband_max_s21_db": -25.0,
+                "has_passband_samples": True,
+                "has_stopband_samples": True,
+                "f_low_hz": 135e6,
+                "f_high_hz": 165e6,
+                "goal_met": True,
+            },
+            "intent": None,
+            "note": "",
+        }
+        text = run_step.format_report(
+            entry, bpf_goal=default_goal(), task="butterworth_bpf5"
+        )
+        self.assertIn("goal met", text.lower())
+        self.assertNotIn("goal not met", text.lower())
 
 
 class BpfStepDispatchTests(unittest.TestCase):
@@ -202,6 +242,70 @@ class BpfStepDispatchTests(unittest.TestCase):
             state = RunState(tmp_path / "bpf_step")
             self.assertEqual(state.iteration, 1)
             self.assertIn("passband_min_s21_db", state.history[1]["cost"])
+            self.assertIn("goal_met", state.history[0]["cost"])
+            self.assertIn("goal_met", state.history[1]["cost"])
+            self.assertIsInstance(state.history[1]["cost"]["goal_met"], bool)
+
+    def test_step_uses_relative_step_mode_for_small_L(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            with mock.patch.object(run_step, "RUNS_ROOT", tmp_path):
+                with mock.patch.object(
+                    run_step, "simulate", return_value=_synthetic_bpf_sim()
+                ):
+                    with redirect_stdout(io.StringIO()):
+                        run_step.cmd_init(_init_args("bpf_rel"))
+                        seed_l2 = RunState(tmp_path / "bpf_rel").params["L2"]
+                        run_step.cmd_step(
+                            mock.Mock(
+                                run="bpf_rel",
+                                intent='{"L2":"decrease_slight"}',
+                                note="",
+                                thinking="",
+                                thinking_file="",
+                            )
+                        )
+            state = RunState(tmp_path / "bpf_rel")
+            new_l2 = state.params["L2"]
+            self.assertGreater(new_l2, 1.0)
+            self.assertLess(abs(new_l2 - seed_l2), 20.0)
+
+
+class BpfGoalValidationInitTests(unittest.TestCase):
+    def test_init_rejects_invalid_goal_json(self):
+        bad = json.dumps(
+            {
+                "f_low_hz": 200e6,
+                "f_high_hz": 100e6,
+                "sweep_hz": [0.0, 300e6],
+            }
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            with mock.patch.object(run_step, "RUNS_ROOT", tmp_path):
+                err = io.StringIO()
+                with redirect_stderr(err):
+                    with self.assertRaises(SystemExit) as cm:
+                        run_step.cmd_init(
+                            _init_args("bad_goal", goal_json=bad)
+                        )
+            self.assertEqual(cm.exception.code, 1)
+            self.assertRegex(err.getvalue().lower(), r"goal|f_low|invalid")
+
+    def test_init_rejects_goal_missing_keys(self):
+        bad = json.dumps({"passband_il_max_db": -1.0})
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            with mock.patch.object(run_step, "RUNS_ROOT", tmp_path):
+                err = io.StringIO()
+                with redirect_stderr(err):
+                    with self.assertRaises(SystemExit) as cm:
+                        run_step.cmd_init(
+                            _init_args("miss_keys", goal_json=bad)
+                        )
+            self.assertEqual(cm.exception.code, 1)
+            msg = err.getvalue().lower()
+            self.assertTrue("goal" in msg or "f_low" in msg or "missing" in msg)
 
 
 if __name__ == "__main__":

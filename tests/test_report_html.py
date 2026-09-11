@@ -247,6 +247,23 @@ class BpfReportTests(unittest.TestCase):
             html,
             r'<circle class="dot best"[^>]*>\s*<title>iter 0:',
         )
+        # Overview cards use total_cost (same metric as best_it), not passband dB alone.
+        self.assertRegex(html, r'baseline</div><div class="v">0\.900000')
+        self.assertRegex(html, r'best</div><div class="v">0\.200000')
+
+    def test_bpf_panel_shows_goal_met_badge_when_cost_says_so(self):
+        history = _bpf_history()
+        history[1]["cost"] = _bpf_cost(
+            total_cost=0.05,
+            passband_min_s21_db=-0.4,
+            stopband_max_s21_db=-25.0,
+            goal_met=True,
+        )
+        html = build_report(
+            "bpf_goal", self.run_dir, history, task="butterworth_bpf5"
+        )
+        self.assertIn('<span class="badge goal">goal met</span>', html)
+        self.assertIn("good", html)  # summary metric styled as goal-met
 
 
 class StateThinkingTests(unittest.TestCase):
