@@ -1,0 +1,28 @@
+model:
+  name: unsloth/Qwen3-1.7B-bnb-4bit
+  max_seq_length: 2048
+  lora_rank: 16
+train:
+  steps: 5
+  tasks_per_step: 2
+  generations: 4
+  max_turns: 15
+  patience: 5
+  patience_eps: 0.2
+  history_window: 8
+  max_new_tokens: 256
+  temperature: 1.0
+  lr: 5.0e-6
+  max_grad_norm: 0.1
+  save_every: 5
+  beta: 0.0
+  kl_ref: start
+data:
+  start_seed: 5000
+  goal_config: configs/goal_distribution.yaml
+  param_spread: 0.35
+  min_start_headroom_db: 5.0
+reward: {}
+runtime:
+  output_dir: outputs/multiturn-grpo-demo
+  resume_adapter: ""

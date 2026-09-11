@@ -33,7 +33,7 @@ from qucs_sim import simulate  # noqa: E402
 
 from training.contracts import IntentParseError, parse_intent_completion  # noqa: E402
 from training.environment import sample_params  # noqa: E402
-from training.goals import GoalSpec  # noqa: E402
+from training.goals import GoalSpec, is_goal_met as _is_goal_met  # noqa: E402
 from training.reward_math import (  # noqa: E402
     FREQ_WEIGHT,
     REWARD_CLIP,
@@ -111,11 +111,6 @@ def _cost_dict(res, goal: GoalSpec) -> dict:
 
     cost = evaluate(res, goal.band_hz, target_hz=goal.target_freq_hz)
     return asdict(cost) if is_dataclass(cost) else dict(vars(cost))
-
-
-def _is_goal_met(cost: dict, goal: GoalSpec) -> bool:
-    threshold = 10 ** (goal.target_depth_db / 20.0)
-    return cost["total_cost"] <= threshold
 
 
 def stop_is_allowed(

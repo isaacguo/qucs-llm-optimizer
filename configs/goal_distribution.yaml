@@ -1,0 +1,8 @@
+freq_min_hz: 1.0e9
+freq_max_hz: 10.0e9
+depth_db_min: -80.0
+depth_db_max: -55.0
+band_half_width_hz: 1.0e9
+heldout_enabled: false
+freq_bin_hz: 1.0e9
+depth_bin_db: 5.0

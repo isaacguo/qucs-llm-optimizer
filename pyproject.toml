@@ -12,12 +12,14 @@ train = [
     "datasets",
     "mergekit",
     "peft",
+    "PyYAML",
     "transformers==4.56.2",
     "trl",
     "unsloth",
 ]
 
 [project.scripts]
+qucs-corpus = "training.corpus_cli:main"
 qucs-grpo = "training.grpo:main"
 qucs-probe = "training.probe:main"
 qucs-sft = "training.sft:main"

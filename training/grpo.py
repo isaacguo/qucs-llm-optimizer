@@ -5,10 +5,16 @@ import argparse
 import json
 from pathlib import Path
 
+from training.config import (
+    GrpoConfig,
+    config_to_dict,
+    resolve_grpo_config,
+    to_model_config,
+)
 from training.data import build_grpo_dataset
 from training.environment import generate_task
 from training.goals import sample_goal
-from training.modeling import ModelConfig, load_policy, mixed_precision_config
+from training.modeling import load_policy, mixed_precision_config
 from training.preflight import verify_runtime
 from training.rewards import (
     format_reward,
@@ -16,33 +22,32 @@ from training.rewards import (
     valid_intent_reward,
 )
 
-DEFAULT_MODEL = "unsloth/Qwen3-4B-Instruct-2507-bnb-4bit"
-
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--model-name", default=DEFAULT_MODEL)
-    parser.add_argument("--tasks", type=int, default=32)
-    parser.add_argument("--start-seed", type=int, default=1000)
-    parser.add_argument("--max-iteration", type=int, default=12)
+    parser.add_argument("--config", default=None, help="YAML hyperparameter config path")
+    parser.add_argument("--model-name", default=None)
+    parser.add_argument("--tasks", type=int, default=None)
+    parser.add_argument("--start-seed", type=int, default=None)
+    parser.add_argument("--max-iteration", type=int, default=None)
     parser.add_argument(
         "--goal-freq-min-ghz",
         type=float,
-        default=4.0,
+        default=None,
         help="lower bound of the randomized notch-target training distribution",
     )
     parser.add_argument(
         "--goal-freq-max-ghz",
         type=float,
-        default=6.0,
+        default=None,
         help="upper bound of the randomized notch-target training distribution",
     )
-    parser.add_argument("--steps", type=int, default=100)
-    parser.add_argument("--generations", type=int, default=8)
-    parser.add_argument("--sim-workers", type=int, default=2)
-    parser.add_argument("--output-dir", default="outputs/grpo-qwen3-4b")
-    parser.add_argument("--resume-from-checkpoint", default="")
-    parser.add_argument("--use-vllm", action="store_true")
+    parser.add_argument("--steps", type=int, default=None)
+    parser.add_argument("--generations", type=int, default=None)
+    parser.add_argument("--sim-workers", type=int, default=None)
+    parser.add_argument("--output-dir", default=None)
+    parser.add_argument("--resume-from-checkpoint", default=None)
+    parser.add_argument("--use-vllm", action="store_true", default=None)
     parser.add_argument(
         "--dry-run",
         action="store_true",
@@ -51,42 +56,43 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def grpo_config_kwargs(args: argparse.Namespace) -> dict:
+def grpo_config_kwargs(config: GrpoConfig) -> dict:
+    t, r = config.train, config.runtime
     return {
-        "output_dir": args.output_dir,
-        "learning_rate": 5e-6,
-        "weight_decay": 0.01,
-        "warmup_ratio": 0.1,
-        "lr_scheduler_type": "cosine",
-        "optim": "adamw_8bit",
+        "output_dir": r.output_dir,
+        "learning_rate": t.learning_rate,
+        "weight_decay": t.weight_decay,
+        "warmup_ratio": t.warmup_ratio,
+        "lr_scheduler_type": t.lr_scheduler_type,
+        "optim": t.optim,
         "logging_steps": 1,
-        "per_device_train_batch_size": 1,
-        "gradient_accumulation_steps": 4,
-        "generation_batch_size": args.generations,
-        "num_generations": args.generations,
-        "max_prompt_length": 768,
-        "max_completion_length": 256,
-        "max_steps": args.steps,
-        "save_steps": max(1, min(25, args.steps)),
-        "max_grad_norm": 0.1,
+        "per_device_train_batch_size": t.per_device_train_batch_size,
+        "gradient_accumulation_steps": t.gradient_accumulation_steps,
+        "generation_batch_size": t.generations,
+        "num_generations": t.generations,
+        "max_prompt_length": t.max_prompt_length,
+        "max_completion_length": t.max_completion_length,
+        "max_steps": t.steps,
+        "save_steps": max(1, min(25, t.steps)),
+        "max_grad_norm": t.max_grad_norm,
         "report_to": "none",
         **mixed_precision_config(),
-        "temperature": 1.0,
-        "beta": 0.01,
-        "loss_type": "dr_grpo",
-        "reward_weights": [0.2, 0.2, 1.0],
-        "use_vllm": args.use_vllm,
+        "temperature": t.temperature,
+        "beta": config.reward.beta,
+        "loss_type": t.loss_type,
+        "reward_weights": list(config.reward.weights),
+        "use_vllm": r.use_vllm,
         "remove_unused_columns": False,
     }
 
 
-def _dry_run(args: argparse.Namespace) -> None:
-    freq_range = (args.goal_freq_min_ghz * 1e9, args.goal_freq_max_ghz * 1e9)
-    goal = sample_goal(args.start_seed, freq_range=freq_range)
-    task = generate_task(seed=args.start_seed, iteration=0, goal=goal)
+def _dry_run(cfg: GrpoConfig) -> None:
+    freq_range = (cfg.data.goal_freq_min_ghz * 1e9, cfg.data.goal_freq_max_ghz * 1e9)
+    goal = sample_goal(cfg.data.start_seed, freq_range=freq_range)
+    task = generate_task(seed=cfg.data.start_seed, iteration=0, goal=goal)
     reward = make_simulation_reward(
         max_workers=1,
-        log_path=Path(args.output_dir) / "rewards.jsonl",
+        log_path=Path(cfg.runtime.output_dir) / "rewards.jsonl",
     )
     completion = (
         "<reasoning>Probe the dominant radius with a conservative step.</reasoning>"
@@ -105,42 +111,41 @@ def _dry_run(args: argparse.Namespace) -> None:
 
 def main(argv: list[str] | None = None) -> None:
     args = build_parser().parse_args(argv)
+    cfg = resolve_grpo_config(args)
+    print("config:", json.dumps(config_to_dict(cfg), sort_keys=True))
     info = verify_runtime(require_cuda=not args.dry_run)
     print("preflight:", json.dumps(info, sort_keys=True))
     if args.dry_run:
-        _dry_run(args)
+        _dry_run(cfg)
         return
 
-    output_dir = Path(args.output_dir)
+    output_dir = Path(cfg.runtime.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     dataset = build_grpo_dataset(
-        count=args.tasks,
-        start_seed=args.start_seed,
-        max_iteration=args.max_iteration,
-        freq_range=(args.goal_freq_min_ghz * 1e9, args.goal_freq_max_ghz * 1e9),
+        count=cfg.data.tasks,
+        start_seed=cfg.data.start_seed,
+        max_iteration=cfg.data.max_iteration,
+        freq_range=(cfg.data.goal_freq_min_ghz * 1e9, cfg.data.goal_freq_max_ghz * 1e9),
     )
     print(f"prepared {len(dataset)} real-Qucs task states")
 
     model, tokenizer = load_policy(
-        ModelConfig(
-            model_name=args.model_name,
-            fast_inference=args.use_vllm,
-        )
+        to_model_config(cfg.model, fast_inference=cfg.runtime.use_vllm)
     )
     from trl import GRPOConfig, GRPOTrainer
 
     simulation_reward = make_simulation_reward(
-        max_workers=args.sim_workers,
+        max_workers=cfg.runtime.sim_workers,
         log_path=output_dir / "rewards.jsonl",
     )
     trainer = GRPOTrainer(
         model=model,
         processing_class=tokenizer,
         reward_funcs=[format_reward, valid_intent_reward, simulation_reward],
-        args=GRPOConfig(**grpo_config_kwargs(args)),
+        args=GRPOConfig(**grpo_config_kwargs(cfg)),
         train_dataset=dataset,
     )
-    trainer.train(resume_from_checkpoint=args.resume_from_checkpoint or None)
+    trainer.train(resume_from_checkpoint=cfg.runtime.resume_from_checkpoint or None)
     final_dir = output_dir / "final_lora"
     model.save_pretrained(final_dir)
     tokenizer.save_pretrained(final_dir)
@@ -149,4 +154,3 @@ def main(argv: list[str] | None = None) -> None:
 
 if __name__ == "__main__":
     main()
-

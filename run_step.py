@@ -26,27 +26,70 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 
-from cost import TARGET_DEPTH_DB, TARGET_NOTCH_HZ, TARGET_S21_MAG, evaluate, s21_db
+from cost import TARGET_DEPTH_DB, TARGET_NOTCH_HZ, evaluate, s21_db
 from decision_log import append_record, format_agent_completion
 from intent import BOUNDS, INITIAL_GUESS, VARIABLES, apply_intent
 from qucs_sim import simulate
 from report_html import write_report
 from state import RunState
 
+# GoalSpec lives under training/; keep import local-friendly for the CLI script.
+_ROOT = Path(__file__).resolve().parent
+if str(_ROOT) not in sys.path:
+    sys.path.insert(0, str(_ROOT))
+from training.goals import GoalSpec  # noqa: E402
+
 RUNS_ROOT = Path(__file__).resolve().parent / "runs"
 TARGET_BAND_HZ = (4e9, 6e9)
 
 
-def format_report(entry: dict) -> str:
+def _legacy_goal_dict() -> dict:
+    return {
+        "target_freq_hz": TARGET_NOTCH_HZ,
+        "band_hz": [TARGET_BAND_HZ[0], TARGET_BAND_HZ[1]],
+        "target_depth_db": TARGET_DEPTH_DB,
+    }
+
+
+def _goal_from_state(state: RunState) -> GoalSpec:
+    """Resolve this run's GoalSpec; missing goal falls back to legacy constants."""
+    raw = state.goal
+    if not raw:
+        return GoalSpec(
+            target_freq_hz=TARGET_NOTCH_HZ,
+            band_hz=TARGET_BAND_HZ,
+            target_depth_db=TARGET_DEPTH_DB,
+        )
+    band = raw["band_hz"]
+    return GoalSpec(
+        target_freq_hz=float(raw["target_freq_hz"]),
+        band_hz=(float(band[0]), float(band[1])),
+        target_depth_db=float(raw.get("target_depth_db", TARGET_DEPTH_DB)),
+    )
+
+
+def _evaluate_for_run(res, goal: GoalSpec) -> dict:
+    return asdict(evaluate(res, goal.band_hz, target_hz=goal.target_freq_hz))
+
+
+def format_report(entry: dict, goal: GoalSpec | None = None) -> str:
     """Render one history entry as the plain-text block the CLI prints."""
     p, c = entry["params"], entry["cost"]
     target_mag = c.get("target_s21_mag", c["total_cost"])
-    target_hz = c.get("target_freq_hz", TARGET_NOTCH_HZ)
+    if goal is None:
+        target_hz = c.get("target_freq_hz", TARGET_NOTCH_HZ)
+        depth_db = TARGET_DEPTH_DB
+        band = TARGET_BAND_HZ
+    else:
+        target_hz = c.get("target_freq_hz", goal.target_freq_hz)
+        depth_db = goal.target_depth_db
+        band = goal.band_hz
+    goal_mag = 10 ** (depth_db / 20.0)
     lines = [
         f"--- iteration {entry['iteration']} ---",
         "params: " + ", ".join(f"{k}={p[k]:.3f}" for k in VARIABLES),
         f"total_cost |S21| @ {target_hz/1e9:.2f} GHz = {target_mag:.6f} "
-        f"({s21_db(target_mag):.2f} dB)  [goal {TARGET_DEPTH_DB:.0f} dB / {TARGET_S21_MAG:.3e}]",
+        f"({s21_db(target_mag):.2f} dB)  [goal {depth_db:.0f} dB / {goal_mag:.3e}]",
         f"deepest notch |S21|       = {c['best_s21_mag']:.6f} "
         f"({s21_db(c['best_s21_mag']):.2f} dB) @ {c['best_freq_hz']/1e9:.3f} GHz",
     ]
@@ -55,13 +98,13 @@ def format_report(entry: dict) -> str:
                      f"@ {c['worst_freq_hz']/1e9:.3f} GHz")
     lines += [
         f"mean |S21| in stopband             = {c['mean_cost']:.4f}",
-        f"low_edge  ({TARGET_BAND_HZ[0]/1e9:.1f} GHz)  |S21| = {c['low_edge_cost']:.4f}",
-        f"band mid  ({(sum(TARGET_BAND_HZ)/2)/1e9:.1f} GHz)  |S21| = {c['center_cost']:.4f}",
-        f"high_edge ({TARGET_BAND_HZ[1]/1e9:.1f} GHz)  |S21| = {c['high_edge_cost']:.4f}",
+        f"low_edge  ({band[0]/1e9:.1f} GHz)  |S21| = {c['low_edge_cost']:.4f}",
+        f"band mid  ({(sum(band)/2)/1e9:.1f} GHz)  |S21| = {c['center_cost']:.4f}",
+        f"high_edge ({band[1]/1e9:.1f} GHz)  |S21| = {c['high_edge_cost']:.4f}",
     ]
     if "passband_low_mean" in c:
-        lines.append(f"passband |S21| mean (<{TARGET_BAND_HZ[0]/1e9:.1f} GHz) = {c['passband_low_mean']:.4f}")
-        lines.append(f"passband |S21| mean (>{TARGET_BAND_HZ[1]/1e9:.1f} GHz) = {c['passband_high_mean']:.4f}")
+        lines.append(f"passband |S21| mean (<{band[0]/1e9:.1f} GHz) = {c['passband_low_mean']:.4f}")
+        lines.append(f"passband |S21| mean (>{band[1]/1e9:.1f} GHz) = {c['passband_high_mean']:.4f}")
     if "zin_norm_at_center" in c:
         lines.append(f"|Zin|/Z0 at stopband mid (aux) = {c['zin_norm_at_center']:.4f}")
     if entry.get("intent"):
@@ -71,7 +114,7 @@ def format_report(entry: dict) -> str:
     return "\n".join(lines)
 
 
-def format_observation(entry: dict) -> str:
+def format_observation(entry: dict, goal: GoalSpec | None = None) -> str:
     """
     Render the exact evidence block handed to the strategy layer before it
     decides the next intent: the latest measurement plus the bounds it must
@@ -82,11 +125,11 @@ def format_observation(entry: dict) -> str:
         f"  {v:<6} = {p[v]:>8.3f}   bounds [{BOUNDS[v][0]}, {BOUNDS[v][1]}]"
         for v in VARIABLES
     )
-    return f"{format_report(entry)}\n\nfree variables and bounds:\n{bounds}"
+    return f"{format_report(entry, goal=goal)}\n\nfree variables and bounds:\n{bounds}"
 
 
-def _print_report(entry: dict) -> None:
-    print(format_report(entry))
+def _print_report(entry: dict, goal: GoalSpec | None = None) -> None:
+    print(format_report(entry, goal=goal))
 
 
 def _read_thinking(args) -> str:
@@ -103,9 +146,17 @@ def cmd_init(args):
         print(f"run '{args.run}' already initialized at iteration {state.iteration}; "
               f"use 'report' to inspect or pick a new --run name", file=sys.stderr)
         sys.exit(1)
-    params = dict(INITIAL_GUESS)
+
+    goal_json = getattr(args, "goal_json", "")
+    if isinstance(goal_json, str) and goal_json.strip():
+        state.set_run_meta(goal=json.loads(goal_json))
+    elif state.goal is None:
+        state.set_run_meta(goal=_legacy_goal_dict())
+
+    goal = _goal_from_state(state)
+    params = dict(state.initial_params) if state.initial_params else dict(INITIAL_GUESS)
     res = simulate(params, workdir=run_dir / "iter_000")
-    cost = asdict(evaluate(res, TARGET_BAND_HZ, target_hz=TARGET_NOTCH_HZ))
+    cost = _evaluate_for_run(res, goal)
     it = state.record(
         params,
         cost,
@@ -131,7 +182,7 @@ def cmd_init(args):
                 "db_after": s21_db(cost["total_cost"]),
             },
         )
-    _print_report(state.history[it])
+    _print_report(state.history[it], goal=goal)
 
 
 def cmd_step(args):
@@ -145,15 +196,16 @@ def cmd_step(args):
     if unknown:
         print(f"unknown variable(s) in intent: {unknown}; valid: {VARIABLES}", file=sys.stderr)
         sys.exit(1)
+    goal = _goal_from_state(state)
     prev_entry = state.history[-1]
     observation = {
         "from_iteration": prev_entry["iteration"],
-        "report_text": format_observation(prev_entry),
+        "report_text": format_observation(prev_entry, goal=goal),
     }
     new_iteration = state.iteration + 1
     new_params = apply_intent(state.params, intent, iteration=new_iteration)
     res = simulate(new_params, workdir=run_dir / f"iter_{new_iteration:03d}")
-    cost = asdict(evaluate(res, TARGET_BAND_HZ, target_hz=TARGET_NOTCH_HZ))
+    cost = _evaluate_for_run(res, goal)
     thinking = _read_thinking(args)
     it = state.record(
         new_params,
@@ -178,7 +230,7 @@ def cmd_step(args):
             "db_after": s21_db(cost["total_cost"]),
         },
     )
-    _print_report(state.history[it])
+    _print_report(state.history[it], goal=goal)
 
 
 def cmd_report(args):
@@ -187,12 +239,13 @@ def cmd_report(args):
     if state.iteration < 0:
         print(f"run '{args.run}' has no history yet", file=sys.stderr)
         sys.exit(1)
+    goal = _goal_from_state(state)
     for entry in state.history:
-        _print_report(entry)
+        _print_report(entry, goal=goal)
         print()
     best = state.best()
     print("=== BEST SO FAR ===")
-    _print_report(best)
+    _print_report(best, goal=goal)
 
 
 def cmd_best(args):
@@ -202,7 +255,7 @@ def cmd_best(args):
     if best is None:
         print(f"run '{args.run}' has no history yet", file=sys.stderr)
         sys.exit(1)
-    _print_report(best)
+    _print_report(best, goal=_goal_from_state(state))
 
 
 def cmd_observe(args):
@@ -212,7 +265,7 @@ def cmd_observe(args):
     if state.iteration < 0:
         print(f"run '{args.run}' has no history yet", file=sys.stderr)
         sys.exit(1)
-    print(format_observation(state.history[-1]))
+    print(format_observation(state.history[-1], goal=_goal_from_state(state)))
 
 
 def cmd_conclude(args):
@@ -253,6 +306,12 @@ def main():
     p_init = sub.add_parser("init")
     p_init.add_argument("--run", default="default")
     p_init.add_argument("--note", default="")
+    p_init.add_argument(
+        "--goal-json",
+        default="",
+        help="JSON GoalSpec dict (target_freq_hz, band_hz, target_depth_db); "
+             "omitted: keep existing state.goal or fall back to legacy 5.5 GHz / -70 dB",
+    )
     add_thinking_args(p_init)
     p_init.set_defaults(func=cmd_init)
 

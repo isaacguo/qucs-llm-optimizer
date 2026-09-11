@@ -1,23 +1,54 @@
-"""Optional one-epoch Unsloth SFT warm-up from the recorded llm1 trajectory."""
+"""Optional one-epoch Unsloth SFT warm-up from corpus index (or legacy state)."""
 from __future__ import annotations
 
 import argparse
 import json
+import warnings
 from pathlib import Path
 
-from training.data import load_sft_records
+from training.data import load_multiturn_sft_from_index, load_sft_records
 from training.modeling import ModelConfig, load_policy, mixed_precision_config
 from training.preflight import verify_runtime
 
 DEFAULT_MODEL = "unsloth/Qwen3-4B-Instruct-2507-bnb-4bit"
+DEFAULT_INDEX = "corpus/index.jsonl"
+DEFAULT_RUNS_ROOT = "runs"
+DEFAULT_HISTORY_WINDOW = 8
+DEFAULT_MAX_LENGTH = 2048
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--model-name", default=DEFAULT_MODEL)
-    parser.add_argument("--state", default="runs/llm1/state.json")
+    parser.add_argument(
+        "--index",
+        default=DEFAULT_INDEX,
+        help="corpus index JSONL (default path for multiturn cold-start)",
+    )
+    parser.add_argument(
+        "--runs-root",
+        default=DEFAULT_RUNS_ROOT,
+        help="root directory for relative run_dir entries in the index",
+    )
+    parser.add_argument(
+        "--history-window",
+        type=int,
+        default=DEFAULT_HISTORY_WINDOW,
+        help="prior turns included in each exported multiturn prompt",
+    )
+    parser.add_argument(
+        "--state",
+        default=None,
+        help="legacy single-file trajectory; prefer --index (prints a warning)",
+    )
     parser.add_argument("--epochs", type=float, default=1)
     parser.add_argument("--output-dir", default="outputs/sft-qwen3-4b")
+    parser.add_argument(
+        "--max-length",
+        type=int,
+        default=DEFAULT_MAX_LENGTH,
+        help="SFTTrainer max sequence length",
+    )
     parser.add_argument(
         "--dry-run",
         action="store_true",
@@ -26,17 +57,41 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _load_records(args: argparse.Namespace) -> list[dict]:
+    if args.state is not None:
+        warnings.warn(
+            "--state is legacy single-file SFT; prefer --index for multiturn cold-start",
+            stacklevel=2,
+        )
+        records = load_sft_records(Path(args.state))
+        if not records:
+            raise RuntimeError(f"no SFT records found in {args.state}")
+        return records
+
+    records = load_multiturn_sft_from_index(
+        Path(args.index),
+        Path(args.runs_root),
+        history_window=args.history_window,
+    )
+    if not records:
+        raise RuntimeError(
+            f"no SFT records exported from index {args.index} "
+            f"(empty index or no eligible turns under {args.runs_root})"
+        )
+    return records
+
+
 def main(argv: list[str] | None = None) -> None:
     args = build_parser().parse_args(argv)
-    records = load_sft_records(Path(args.state))
-    if not records:
-        raise RuntimeError(f"no SFT records found in {args.state}")
+    records = _load_records(args)
     print(f"loaded {len(records)} optional SFT examples")
     if args.dry_run:
         return
 
     print("preflight:", json.dumps(verify_runtime(), sort_keys=True))
-    model, tokenizer = load_policy(ModelConfig(model_name=args.model_name))
+    model, tokenizer = load_policy(
+        ModelConfig(model_name=args.model_name, max_seq_length=args.max_length)
+    )
     from datasets import Dataset
     from trl import SFTConfig, SFTTrainer
 
@@ -64,7 +119,7 @@ def main(argv: list[str] | None = None) -> None:
         optim="adamw_8bit",
         logging_steps=1,
         save_strategy="epoch",
-        max_length=1024,
+        max_length=args.max_length,
         dataset_text_field="text",
         report_to="none",
         **mixed_precision_config(),
@@ -84,4 +139,3 @@ def main(argv: list[str] | None = None) -> None:
 
 if __name__ == "__main__":
     main()
-
