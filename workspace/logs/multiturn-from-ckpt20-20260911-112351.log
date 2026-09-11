@@ -1,0 +1,832 @@
+=== from-ckpt20 4B instruct start Fri Sep 11 11:23:51 +08 2026 ===
+config=configs/multiturn_qwen3_4b_instruct.yaml
+resume=outputs/multiturn-50step-hard-beta001/checkpoint-20 output=outputs/multiturn-from-ckpt20 start_seed=5286
+Uninstalled 1 package in 4ms
+Installed 1 package in 10ms
+config: {"data": {"goal_config": "configs/goal_distribution.yaml", "goal_freq_max_ghz": null, "goal_freq_min_ghz": null, "min_start_headroom_db": 40.0, "param_spread": 0.35, "start_seed": 5286}, "model": {"lora_rank": 16, "max_seq_length": 2048, "name": "unsloth/Qwen3-4B-Instruct-2507-bnb-4bit"}, "reward": {}, "runtime": {"allow_raw_base": false, "output_dir": "outputs/multiturn-from-ckpt20", "resume_adapter": "outputs/multiturn-50step-hard-beta001/checkpoint-20"}, "train": {"beta": 0.01, "generations": 6, "history_window": 8, "kl_ref": "start", "lr": 5e-06, "max_grad_norm": 0.1, "max_new_tokens": 256, "max_turns": 15, "patience": 5, "patience_eps": 0.2, "save_every": 5, "steps": 50, "tasks_per_step": 2, "temperature": 1.0}}
+preflight: {"cuda": "12.8", "gpu": "NVIDIA RTX 2000 Ada Generation Laptop GPU", "qucs_s": "/mnt/c/Program Files/Qucs-S/bin/qucs-s.exe", "qucsator_rf": "/mnt/c/Program Files/Qucs-S/bin/qucsator_rf.exe"}
+🦥 Unsloth: Will patch your computer to enable 2x faster free finetuning.
+🦥 Unsloth Zoo will now patch everything to make training faster!
+==((====))==  Unsloth 2026.5.2: Fast Qwen3 patching. Transformers: 4.56.2.
+   \\   /|    NVIDIA RTX 2000 Ada Generation Laptop GPU. Num GPUs = 1. Max memory: 7.996 GB. Platform: Linux.
+O^O/ \_/ \    Torch: 2.10.0+cu128. CUDA: 8.9. CUDA Toolkit: 12.8. Triton: 3.6.0
+\        /    Bfloat16 = TRUE. FA [Xformers = 0.0.35. FA2 = False]
+ "-____-"     Free license: http://github.com/unslothai/unsloth
+Unsloth: Fast downloading is enabled - ignore downloading bars which are red colored!
+unsloth/Qwen3-4B-Instruct-2507-bnb-4bit does not have a padding token! Will use pad_token = <|PAD_TOKEN|>.
+Unsloth 2026.5.2 patched 36 layers with 36 QKV layers, 36 O layers and 36 MLP layers.
+[11:24:15] resuming LoRA from outputs/multiturn-50step-hard-beta001/checkpoint-20 start_seed=5286 beta=0.01 kl_ref=start
+[11:24:29]   rollout step 1 task 1/2 gen 1/6 turn 1/15 valid=True db -12.32->-19.25
+[11:24:35]   rollout step 1 task 1/2 gen 1/6 turn 2/15 valid=True db -19.25->-19.91
+[11:24:45]   rollout step 1 task 1/2 gen 1/6 turn 3/15 valid=True db -19.91->-20.54
+[11:24:55]   rollout step 1 task 1/2 gen 1/6 turn 4/15 valid=True db -20.54->-21.12
+[11:25:04]   rollout step 1 task 1/2 gen 1/6 turn 5/15 valid=True db -21.12->-24.27
+[11:25:14]   rollout step 1 task 1/2 gen 1/6 turn 6/15 valid=True db -24.27->-24.92
+[11:25:25]   rollout step 1 task 1/2 gen 1/6 turn 7/15 valid=True db -24.92->-30.04
+[11:25:37]   rollout step 1 task 1/2 gen 1/6 turn 8/15 valid=True db -30.04->-45.68
+[11:25:48]   rollout step 1 task 1/2 gen 1/6 turn 9/15 valid=True db -45.68->-33.15
+[11:25:59]   rollout step 1 task 1/2 gen 1/6 turn 10/15 valid=True db -33.15->-58.28
+[11:26:10]   rollout step 1 task 1/2 gen 1/6 turn 11/15 valid=True db -58.28->-62.67
+[11:26:10] trajectory done: step 1 task 1/2 gen 1/6 turns=11 reason=goal_met reward=36.984  [1/600 trajectories overall]
+[11:26:20]   rollout step 1 task 1/2 gen 2/6 turn 1/15 valid=True db -12.32->-13.10
+[11:26:28]   rollout step 1 task 1/2 gen 2/6 turn 2/15 valid=True db -13.10->-13.97
+[11:26:35]   rollout step 1 task 1/2 gen 2/6 turn 3/15 valid=True db -13.97->-14.98
+[11:26:42]   rollout step 1 task 1/2 gen 2/6 turn 4/15 valid=True db -14.98->-16.17
+[11:26:54]   rollout step 1 task 1/2 gen 2/6 turn 5/15 valid=True db -16.17->-17.60
+[11:27:06]   rollout step 1 task 1/2 gen 2/6 turn 6/15 valid=True db -17.60->-18.04
+[11:27:15]   rollout step 1 task 1/2 gen 2/6 turn 7/15 valid=True db -18.04->-18.46
+[11:27:26]   rollout step 1 task 1/2 gen 2/6 turn 8/15 valid=True db -18.46->-20.05
+[11:27:39]   rollout step 1 task 1/2 gen 2/6 turn 9/15 valid=True db -20.05->-22.05
+[11:27:53]   rollout step 1 task 1/2 gen 2/6 turn 10/15 valid=True db -22.05->-22.17
+[11:28:04]   rollout step 1 task 1/2 gen 2/6 turn 11/15 valid=True db -22.17->-24.68
+[11:28:16]   rollout step 1 task 1/2 gen 2/6 turn 12/15 valid=True db -24.68->-28.27
+[11:28:23]   rollout step 1 task 1/2 gen 2/6 turn 13/15 valid=True db -28.27->-34.51
+[11:28:43]   rollout step 1 task 1/2 gen 2/6 turn 14/15 valid=True db -34.51->-35.48
+[11:28:55]   rollout step 1 task 1/2 gen 2/6 turn 15/15 valid=True db -35.48->-57.78
+[11:28:55] trajectory done: step 1 task 1/2 gen 2/6 turns=15 reason=max_turns reward=2.954  [2/600 trajectories overall]
+[11:29:07]   rollout step 1 task 1/2 gen 3/6 turn 1/15 valid=True db -12.32->-13.10
+[11:29:14]   rollout step 1 task 1/2 gen 3/6 turn 2/15 valid=True db -13.10->-13.97
+[11:29:20]   rollout step 1 task 1/2 gen 3/6 turn 3/15 valid=True db -13.97->-14.98
+[11:29:31]   rollout step 1 task 1/2 gen 3/6 turn 4/15 valid=True db -14.98->-16.17
+[11:29:41]   rollout step 1 task 1/2 gen 3/6 turn 5/15 valid=True db -16.17->-16.61
+[11:29:53]   rollout step 1 task 1/2 gen 3/6 turn 6/15 valid=True db -16.61->-17.96
+[11:30:04]   rollout step 1 task 1/2 gen 3/6 turn 7/15 valid=True db -17.96->-19.61
+[11:30:17]   rollout step 1 task 1/2 gen 3/6 turn 8/15 valid=True db -19.61->-20.03
+[11:30:26]   rollout step 1 task 1/2 gen 3/6 turn 9/15 valid=True db -20.03->-22.02
+[11:30:38]   rollout step 1 task 1/2 gen 3/6 turn 10/15 valid=True db -22.02->-24.66
+[11:30:49]   rollout step 1 task 1/2 gen 3/6 turn 11/15 valid=True db -24.66->-28.52
+[11:31:02]   rollout step 1 task 1/2 gen 3/6 turn 12/15 valid=True db -28.52->-35.82
+[11:31:12]   rollout step 1 task 1/2 gen 3/6 turn 13/15 valid=True db -35.82->-37.01
+[11:31:22]   rollout step 1 task 1/2 gen 3/6 turn 14/15 valid=True db -37.01->-45.19
+[11:31:30]   rollout step 1 task 1/2 gen 3/6 turn 15/15 valid=True db -45.19->-32.00
+[11:31:30] trajectory done: step 1 task 1/2 gen 3/6 turns=15 reason=max_turns reward=2.220  [3/600 trajectories overall]
+[11:31:40]   rollout step 1 task 1/2 gen 4/6 turn 1/15 valid=True db -12.32->-13.58
+[11:31:48]   rollout step 1 task 1/2 gen 4/6 turn 2/15 valid=True db -13.58->-14.96
+[11:31:57]   rollout step 1 task 1/2 gen 4/6 turn 3/15 valid=True db -14.96->-16.50
+[11:32:10]   rollout step 1 task 1/2 gen 4/6 turn 4/15 valid=True db -16.50->-17.81
+[11:32:17]   rollout step 1 task 1/2 gen 4/6 turn 5/15 valid=True db -17.81->-19.40
+[11:32:28]   rollout step 1 task 1/2 gen 4/6 turn 6/15 valid=True db -19.40->-21.93
+[11:32:38]   rollout step 1 task 1/2 gen 4/6 turn 7/15 valid=True db -21.93->-24.78
+[11:32:47]   rollout step 1 task 1/2 gen 4/6 turn 8/15 valid=True db -24.78->-29.21
+[11:32:58]   rollout step 1 task 1/2 gen 4/6 turn 9/15 valid=True db -29.21->-39.23
+[11:33:06]   rollout step 1 task 1/2 gen 4/6 turn 10/15 valid=True db -39.23->-37.44
+[11:33:18]   rollout step 1 task 1/2 gen 4/6 turn 11/15 valid=True db -37.44->-28.33
+[11:33:26]   rollout step 1 task 1/2 gen 4/6 turn 12/15 valid=True db -28.33->-36.43
+[11:33:40]   rollout step 1 task 1/2 gen 4/6 turn 13/15 valid=True db -36.43->-46.36
+[11:33:56]   rollout step 1 task 1/2 gen 4/6 turn 14/15 valid=True db -46.36->-33.16
+[11:34:02]   rollout step 1 task 1/2 gen 4/6 turn 15/15 valid=True db -33.16->-23.11
+[11:34:02] trajectory done: step 1 task 1/2 gen 4/6 turns=15 reason=max_turns reward=1.903  [4/600 trajectories overall]
+[11:34:13]   rollout step 1 task 1/2 gen 5/6 turn 1/15 valid=True db -12.32->-13.10
+[11:34:21]   rollout step 1 task 1/2 gen 5/6 turn 2/15 valid=True db -13.10->-13.97
+[11:34:30]   rollout step 1 task 1/2 gen 5/6 turn 3/15 valid=True db -13.97->-14.98
+[11:34:41]   rollout step 1 task 1/2 gen 5/6 turn 4/15 valid=True db -14.98->-16.17
+[11:34:57]   rollout step 1 task 1/2 gen 5/6 turn 5/15 valid=True db -16.17->-15.72
+[11:35:06]   rollout step 1 task 1/2 gen 5/6 turn 6/15 valid=True db -15.72->-16.14
+[11:35:19]   rollout step 1 task 1/2 gen 5/6 turn 7/15 valid=True db -16.14->-17.75
+[11:35:31]   rollout step 1 task 1/2 gen 5/6 turn 8/15 valid=True db -17.75->-19.19
+[11:35:43]   rollout step 1 task 1/2 gen 5/6 turn 9/15 valid=True db -19.19->-20.95
+[11:35:55]   rollout step 1 task 1/2 gen 5/6 turn 10/15 valid=True db -20.95->-21.36
+[11:36:05]   rollout step 1 task 1/2 gen 5/6 turn 11/15 valid=True db -21.36->-23.49
+[11:36:14]   rollout step 1 task 1/2 gen 5/6 turn 12/15 valid=True db -23.49->-26.37
+[11:36:25]   rollout step 1 task 1/2 gen 5/6 turn 13/15 valid=True db -26.37->-31.44
+[11:36:36]   rollout step 1 task 1/2 gen 5/6 turn 14/15 valid=True db -31.44->-41.89
+[11:36:46]   rollout step 1 task 1/2 gen 5/6 turn 15/15 valid=True db -41.89->-39.40
+[11:36:46] trajectory done: step 1 task 1/2 gen 5/6 turns=15 reason=max_turns reward=2.120  [5/600 trajectories overall]
+[11:36:58]   rollout step 1 task 1/2 gen 6/6 turn 1/15 valid=True db -12.32->-19.25
+[11:37:09]   rollout step 1 task 1/2 gen 6/6 turn 2/15 valid=True db -19.25->-22.86
+[11:37:20]   rollout step 1 task 1/2 gen 6/6 turn 3/15 valid=True db -22.86->-30.02
+[11:37:29]   rollout step 1 task 1/2 gen 6/6 turn 4/15 valid=True db -30.02->-38.05
+[11:37:38]   rollout step 1 task 1/2 gen 6/6 turn 5/15 valid=True db -38.05->-36.25
+[11:37:48]   rollout step 1 task 1/2 gen 6/6 turn 6/15 valid=True db -36.25->-24.88
+[11:37:55]   rollout step 1 task 1/2 gen 6/6 turn 7/15 valid=True db -24.88->-24.70
+[11:38:02]   rollout step 1 task 1/2 gen 6/6 turn 8/15 valid=True db -24.70->-19.92
+[11:38:09]   rollout step 1 task 1/2 gen 6/6 turn 9/15 valid=True db -19.92->-24.44
+[11:38:09] trajectory done: step 1 task 1/2 gen 6/6 turns=9 reason=patience reward=1.540  [6/600 trajectories overall]
+[11:38:19]   rollout step 1 task 2/2 gen 1/6 turn 1/15 valid=True db -9.24->-10.02
+[11:38:28]   rollout step 1 task 2/2 gen 1/6 turn 2/15 valid=True db -10.02->-10.91
+[11:38:38]   rollout step 1 task 2/2 gen 1/6 turn 3/15 valid=True db -10.91->-22.08
+[11:38:48]   rollout step 1 task 2/2 gen 1/6 turn 4/15 valid=True db -22.08->-33.05
+[11:38:59]   rollout step 1 task 2/2 gen 1/6 turn 5/15 valid=True db -33.05->-34.63
+[11:39:09]   rollout step 1 task 2/2 gen 1/6 turn 6/15 valid=True db -34.63->-36.29
+[11:39:24]   rollout step 1 task 2/2 gen 1/6 turn 7/15 valid=True db -36.29->-10.78
+[11:39:32]   rollout step 1 task 2/2 gen 1/6 turn 8/15 valid=True db -10.78->-13.18
+[11:39:43]   rollout step 1 task 2/2 gen 1/6 turn 9/15 valid=True db -13.18->-10.93
+[11:39:51]   rollout step 1 task 2/2 gen 1/6 turn 10/15 valid=True db -10.93->-3.92
+[11:39:58]   rollout step 1 task 2/2 gen 1/6 turn 11/15 valid=True db -3.92->-4.03
+[11:39:58] trajectory done: step 1 task 2/2 gen 1/6 turns=11 reason=patience reward=0.865  [7/600 trajectories overall]
+[11:40:08]   rollout step 1 task 2/2 gen 2/6 turn 1/15 valid=True db -9.24->-16.32
+[11:40:14]   rollout step 1 task 2/2 gen 2/6 turn 2/15 valid=True db -16.32->-20.06
+[11:40:22]   rollout step 1 task 2/2 gen 2/6 turn 3/15 valid=True db -20.06->-27.61
+[11:40:32]   rollout step 1 task 2/2 gen 2/6 turn 4/15 valid=True db -27.61->-33.80
+[11:40:42]   rollout step 1 task 2/2 gen 2/6 turn 5/15 valid=True db -33.80->-21.24
+[11:40:51]   rollout step 1 task 2/2 gen 2/6 turn 6/15 valid=True db -21.24->-31.51
+[11:41:04]   rollout step 1 task 2/2 gen 2/6 turn 7/15 valid=True db -31.51->-30.99
+[11:41:14]   rollout step 1 task 2/2 gen 2/6 turn 8/15 valid=True db -30.99->-31.47
+[11:41:28]   rollout step 1 task 2/2 gen 2/6 turn 9/15 valid=True db -31.47->-31.02
+[11:41:28] trajectory done: step 1 task 2/2 gen 2/6 turns=9 reason=patience reward=1.848  [8/600 trajectories overall]
+[11:41:40]   rollout step 1 task 2/2 gen 3/6 turn 1/15 valid=True db -9.24->-10.02
+[11:41:46]   rollout step 1 task 2/2 gen 3/6 turn 2/15 valid=True db -10.02->-10.91
+[11:41:55]   rollout step 1 task 2/2 gen 3/6 turn 3/15 valid=True db -10.91->-11.94
+[11:42:07]   rollout step 1 task 2/2 gen 3/6 turn 4/15 valid=True db -11.94->-13.15
+[11:42:19]   rollout step 1 task 2/2 gen 3/6 turn 5/15 valid=True db -13.15->-14.62
+[11:42:30]   rollout step 1 task 2/2 gen 3/6 turn 6/15 valid=True db -14.62->-16.45
+[11:42:38]   rollout step 1 task 2/2 gen 3/6 turn 7/15 valid=True db -16.45->-18.87
+[11:42:46]   rollout step 1 task 2/2 gen 3/6 turn 8/15 valid=True db -18.87->-22.35
+[11:42:57]   rollout step 1 task 2/2 gen 3/6 turn 9/15 valid=True db -22.35->-28.50
+[11:43:10]   rollout step 1 task 2/2 gen 3/6 turn 10/15 valid=True db -28.50->-54.21
+[11:43:21]   rollout step 1 task 2/2 gen 3/6 turn 11/15 valid=True db -54.21->-48.46
+[11:43:29]   rollout step 1 task 2/2 gen 3/6 turn 12/15 valid=True db -48.46->-27.93
+[11:43:36]   rollout step 1 task 2/2 gen 3/6 turn 13/15 valid=True db -27.93->-22.31
+[11:43:45]   rollout step 1 task 2/2 gen 3/6 turn 14/15 valid=True db -22.31->-27.27
+[11:43:54]   rollout step 1 task 2/2 gen 3/6 turn 15/15 valid=True db -27.27->-22.58
+[11:43:55] trajectory done: step 1 task 2/2 gen 3/6 turns=15 reason=patience reward=1.980  [9/600 trajectories overall]
+[11:44:04]   rollout step 1 task 2/2 gen 4/6 turn 1/15 valid=True db -9.24->-16.32
+[11:44:11]   rollout step 1 task 2/2 gen 4/6 turn 2/15 valid=True db -16.32->-16.91
+[11:44:22]   rollout step 1 task 2/2 gen 4/6 turn 3/15 valid=True db -16.91->-21.08
+[11:44:32]   rollout step 1 task 2/2 gen 4/6 turn 4/15 valid=True db -21.08->-29.02
+[11:44:44]   rollout step 1 task 2/2 gen 4/6 turn 5/15 valid=True db -29.02->-36.90
+[11:44:53]   rollout step 1 task 2/2 gen 4/6 turn 6/15 valid=True db -36.90->-23.52
+[11:45:01]   rollout step 1 task 2/2 gen 4/6 turn 7/15 valid=True db -23.52->-18.31
+[11:45:10]   rollout step 1 task 2/2 gen 4/6 turn 8/15 valid=True db -18.31->-23.02
+[11:45:20]   rollout step 1 task 2/2 gen 4/6 turn 9/15 valid=True db -23.02->-18.71
+[11:45:30]   rollout step 1 task 2/2 gen 4/6 turn 10/15 valid=True db -18.71->-15.90
+[11:45:30] trajectory done: step 1 task 2/2 gen 4/6 turns=10 reason=patience reward=1.239  [10/600 trajectories overall]
+[11:45:41]   rollout step 1 task 2/2 gen 5/6 turn 1/15 valid=True db -9.24->-9.69
+[11:45:48]   rollout step 1 task 2/2 gen 5/6 turn 2/15 valid=True db -9.69->-10.10
+[11:45:55]   rollout step 1 task 2/2 gen 5/6 turn 3/15 valid=True db -10.10->-10.47
+[11:46:05]   rollout step 1 task 2/2 gen 5/6 turn 4/15 valid=True db -10.47->-11.14
+[11:46:17]   rollout step 1 task 2/2 gen 5/6 turn 5/15 valid=True db -11.14->-11.08
+[11:46:25]   rollout step 1 task 2/2 gen 5/6 turn 6/15 valid=True db -11.08->-11.13
+[11:46:34]   rollout step 1 task 2/2 gen 5/6 turn 7/15 valid=True db -11.13->-11.75
+[11:46:45]   rollout step 1 task 2/2 gen 5/6 turn 8/15 valid=True db -11.75->-12.40
+[11:46:59]   rollout step 1 task 2/2 gen 5/6 turn 9/15 valid=True db -12.40->-13.11
+[11:47:14]   rollout step 1 task 2/2 gen 5/6 turn 10/15 valid=True db -13.11->-13.87
+[11:47:25]   rollout step 1 task 2/2 gen 5/6 turn 11/15 valid=True db -13.87->-14.69
+[11:47:35]   rollout step 1 task 2/2 gen 5/6 turn 12/15 valid=True db -14.69->-15.59
+[11:47:47]   rollout step 1 task 2/2 gen 5/6 turn 13/15 valid=True db -15.59->-16.58
+[11:47:55]   rollout step 1 task 2/2 gen 5/6 turn 14/15 valid=True db -16.58->-17.68
+[11:48:02]   rollout step 1 task 2/2 gen 5/6 turn 15/15 valid=True db -17.68->-18.92
+[11:48:02] trajectory done: step 1 task 2/2 gen 5/6 turns=15 reason=max_turns reward=0.105  [11/600 trajectories overall]
+[11:48:11]   rollout step 1 task 2/2 gen 6/6 turn 1/15 valid=True db -9.24->-10.02
+[11:48:19]   rollout step 1 task 2/2 gen 6/6 turn 2/15 valid=True db -10.02->-10.91
+[11:48:29]   rollout step 1 task 2/2 gen 6/6 turn 3/15 valid=True db -10.91->-22.08
+[11:48:40]   rollout step 1 task 2/2 gen 6/6 turn 4/15 valid=True db -22.08->-33.05
+[11:48:51]   rollout step 1 task 2/2 gen 6/6 turn 5/15 valid=True db -33.05->-8.61
+[11:48:59]   rollout step 1 task 2/2 gen 6/6 turn 6/15 valid=True db -8.61->-11.07
+[11:49:12]   rollout step 1 task 2/2 gen 6/6 turn 7/15 valid=True db -11.07->-8.77
+[11:49:19]   rollout step 1 task 2/2 gen 6/6 turn 8/15 valid=True db -8.77->-10.89
+[11:49:32]   rollout step 1 task 2/2 gen 6/6 turn 9/15 valid=True db -10.89->-13.25
+[11:49:32] trajectory done: step 1 task 2/2 gen 6/6 turns=9 reason=patience reward=1.107  [12/600 trajectories overall]
+[11:49:32] step_stats={"best_improve_mean": 31.312601289368583, "best_improve_p50": 28.614045605353496, "goal_met_pct": 8.333333333333334, "group_best_mean": 19.481770109700765, "max_turns_pct": 41.666666666666664, "n_resampled_starts": 0, "n_trajectories": 12, "n_turns": 149, "patience_pct": 50.0, "pos_delta_rate": 0.8053691275167785, "reward_mean": 4.571991675385185, "reward_p25": 1.205686574923323, "reward_p50": 1.8751836023189807, "reward_p75": 2.1452854631960308, "stop_pct": 0.0, "valid_turn_rate": 1.0, "wg_range_mean": 18.659007990889542, "wg_std_mean": 6.807609678780247, "zero_adv_frac": 0.0}
+[11:50:04]   gradient pass 20/149 turns backpropagated
+[11:50:46]   gradient pass 40/149 turns backpropagated
+[11:51:42]   gradient pass 60/149 turns backpropagated
+[11:52:18]   gradient pass 80/149 turns backpropagated
+[11:52:58]   gradient pass 100/149 turns backpropagated
+[11:53:29]   gradient pass 120/149 turns backpropagated
+[11:54:06]   gradient pass 140/149 turns backpropagated
+[11:54:23]   gradient pass 149/149 turns backpropagated
+[11:54:23] step 1/50 loss=-3.64851 reward_mean=4.572 reward_std=9.798 turns_mean=12.4 goal_met=1/12 stop=0 patience=6 kl_mean=0.00000
+[11:54:34]   rollout step 2 task 1/2 gen 1/6 turn 1/15 valid=True db -11.64->-12.61
+[11:54:42]   rollout step 2 task 1/2 gen 1/6 turn 2/15 valid=True db -12.61->-13.74
+[11:54:54]   rollout step 2 task 1/2 gen 1/6 turn 3/15 valid=True db -13.74->-15.11
+[11:55:05]   rollout step 2 task 1/2 gen 1/6 turn 4/15 valid=True db -15.11->-15.55
+[11:55:18]   rollout step 2 task 1/2 gen 1/6 turn 5/15 valid=True db -15.55->-15.97
+[11:55:32]   rollout step 2 task 1/2 gen 1/6 turn 6/15 valid=True db -15.97->-16.35
+[11:55:41]   rollout step 2 task 1/2 gen 1/6 turn 7/15 valid=True db -16.35->-17.75
+[11:55:52]   rollout step 2 task 1/2 gen 1/6 turn 8/15 valid=True db -17.75->-19.46
+[11:56:02]   rollout step 2 task 1/2 gen 1/6 turn 9/15 valid=True db -19.46->-21.61
+[11:56:12]   rollout step 2 task 1/2 gen 1/6 turn 10/15 valid=True db -21.61->-24.53
+[11:56:24]   rollout step 2 task 1/2 gen 1/6 turn 11/15 valid=True db -24.53->-29.01
+[11:56:36]   rollout step 2 task 1/2 gen 1/6 turn 12/15 valid=True db -29.01->-38.85
+[11:56:45]   rollout step 2 task 1/2 gen 1/6 turn 13/15 valid=True db -38.85->-37.95
+[11:56:55]   rollout step 2 task 1/2 gen 1/6 turn 14/15 valid=True db -37.95->-28.70
+[11:57:04]   rollout step 2 task 1/2 gen 1/6 turn 15/15 valid=True db -28.70->-28.55
+[11:57:04] trajectory done: step 2 task 1/2 gen 1/6 turns=15 reason=max_turns reward=1.748  [13/600 trajectories overall]
+[11:57:16]   rollout step 2 task 1/2 gen 2/6 turn 1/15 valid=True db -11.64->-13.10
+[11:57:25]   rollout step 2 task 1/2 gen 2/6 turn 2/15 valid=True db -13.10->-14.26
+[11:57:36]   rollout step 2 task 1/2 gen 2/6 turn 3/15 valid=True db -14.26->-15.66
+[11:57:49]   rollout step 2 task 1/2 gen 2/6 turn 4/15 valid=True db -15.66->-16.10
+[11:58:01]   rollout step 2 task 1/2 gen 2/6 turn 5/15 valid=True db -16.10->-17.74
+[11:58:12]   rollout step 2 task 1/2 gen 2/6 turn 6/15 valid=True db -17.74->-18.15
+[11:58:22]   rollout step 2 task 1/2 gen 2/6 turn 7/15 valid=True db -18.15->-20.12
+[11:58:34]   rollout step 2 task 1/2 gen 2/6 turn 8/15 valid=True db -20.12->-22.73
+[11:58:47]   rollout step 2 task 1/2 gen 2/6 turn 9/15 valid=True db -22.73->-26.56
+[11:58:59]   rollout step 2 task 1/2 gen 2/6 turn 10/15 valid=True db -26.56->-33.77
+[11:59:13]   rollout step 2 task 1/2 gen 2/6 turn 11/15 valid=True db -33.77->-42.16
+[11:59:26]   rollout step 2 task 1/2 gen 2/6 turn 12/15 valid=True db -42.16->-40.79
+[11:59:34]   rollout step 2 task 1/2 gen 2/6 turn 13/15 valid=True db -40.79->-29.56
+[11:59:42]   rollout step 2 task 1/2 gen 2/6 turn 14/15 valid=True db -29.56->-39.36
+[12:00:00]   rollout step 2 task 1/2 gen 2/6 turn 15/15 valid=True db -39.36->-30.00
+[12:00:00] trajectory done: step 2 task 1/2 gen 2/6 turns=15 reason=max_turns reward=1.838  [14/600 trajectories overall]
+[12:00:12]   rollout step 2 task 1/2 gen 3/6 turn 1/15 valid=True db -11.64->-10.86
+[12:00:22]   rollout step 2 task 1/2 gen 3/6 turn 2/15 valid=True db -10.86->-11.58
+[12:00:28]   rollout step 2 task 1/2 gen 3/6 turn 3/15 valid=True db -11.58->-12.39
+[12:00:38]   rollout step 2 task 1/2 gen 3/6 turn 4/15 valid=True db -12.39->-13.31
+[12:00:49]   rollout step 2 task 1/2 gen 3/6 turn 5/15 valid=True db -13.31->-14.35
+[12:00:58]   rollout step 2 task 1/2 gen 3/6 turn 6/15 valid=True db -14.35->-15.57
+[12:01:10]   rollout step 2 task 1/2 gen 3/6 turn 7/15 valid=True db -15.57->-17.03
+[12:01:22]   rollout step 2 task 1/2 gen 3/6 turn 8/15 valid=True db -17.03->-18.82
+[12:01:32]   rollout step 2 task 1/2 gen 3/6 turn 9/15 valid=True db -18.82->-21.13
+[12:01:46]   rollout step 2 task 1/2 gen 3/6 turn 10/15 valid=True db -21.13->-24.35
+[12:01:57]   rollout step 2 task 1/2 gen 3/6 turn 11/15 valid=True db -24.35->-29.61
+[12:02:05]   rollout step 2 task 1/2 gen 3/6 turn 12/15 valid=True db -29.61->-45.48
+[12:02:19]   rollout step 2 task 1/2 gen 3/6 turn 13/15 valid=True db -45.48->-32.92
+[12:02:31]   rollout step 2 task 1/2 gen 3/6 turn 14/15 valid=True db -32.92->-49.28
+[12:02:42]   rollout step 2 task 1/2 gen 3/6 turn 15/15 valid=True db -49.28->-31.68
+[12:02:42] trajectory done: step 2 task 1/2 gen 3/6 turns=15 reason=max_turns reward=1.954  [15/600 trajectories overall]
+[12:02:54]   rollout step 2 task 1/2 gen 4/6 turn 1/15 valid=True db -11.64->-21.91
+[12:03:00]   rollout step 2 task 1/2 gen 4/6 turn 2/15 valid=True db -21.91->-22.65
+[12:03:10]   rollout step 2 task 1/2 gen 4/6 turn 3/15 valid=True db -22.65->-31.08
+[12:03:20]   rollout step 2 task 1/2 gen 4/6 turn 4/15 valid=True db -31.08->-32.19
+[12:03:33]   rollout step 2 task 1/2 gen 4/6 turn 5/15 valid=True db -32.19->-32.08
+[12:03:43]   rollout step 2 task 1/2 gen 4/6 turn 6/15 valid=True db -32.08->-32.18
+[12:03:56]   rollout step 2 task 1/2 gen 4/6 turn 7/15 valid=True db -32.18->-32.28
+[12:04:07]   rollout step 2 task 1/2 gen 4/6 turn 8/15 valid=True db -32.28->-39.47
+[12:04:22]   rollout step 2 task 1/2 gen 4/6 turn 9/15 valid=True db -39.47->-26.63
+[12:04:34]   rollout step 2 task 1/2 gen 4/6 turn 10/15 valid=True db -26.63->-37.70
+[12:04:50]   rollout step 2 task 1/2 gen 4/6 turn 11/15 valid=True db -37.70->-27.10
+[12:04:59]   rollout step 2 task 1/2 gen 4/6 turn 12/15 valid=True db -27.10->-35.73
+[12:05:12]   rollout step 2 task 1/2 gen 4/6 turn 13/15 valid=True db -35.73->-35.16
+[12:05:12] trajectory done: step 2 task 1/2 gen 4/6 turns=13 reason=patience reward=1.883  [16/600 trajectories overall]
+[12:05:23]   rollout step 2 task 1/2 gen 5/6 turn 1/15 valid=True db -11.64->-12.61
+[12:05:32]   rollout step 2 task 1/2 gen 5/6 turn 2/15 valid=True db -12.61->-13.74
+[12:05:41]   rollout step 2 task 1/2 gen 5/6 turn 3/15 valid=True db -13.74->-15.11
+[12:05:55]   rollout step 2 task 1/2 gen 5/6 turn 4/15 valid=True db -15.11->-15.55
+[12:06:09]   rollout step 2 task 1/2 gen 5/6 turn 5/15 valid=True db -15.55->-17.15
+[12:06:21]   rollout step 2 task 1/2 gen 5/6 turn 6/15 valid=True db -17.15->-19.18
+[12:06:32]   rollout step 2 task 1/2 gen 5/6 turn 7/15 valid=True db -19.18->-21.92
+[12:06:43]   rollout step 2 task 1/2 gen 5/6 turn 8/15 valid=True db -21.92->-26.12
+[12:06:54]   rollout step 2 task 1/2 gen 5/6 turn 9/15 valid=True db -26.12->-34.91
+[12:07:05]   rollout step 2 task 1/2 gen 5/6 turn 10/15 valid=True db -34.91->-36.94
+[12:07:14]   rollout step 2 task 1/2 gen 5/6 turn 11/15 valid=True db -36.94->-36.15
+[12:07:22]   rollout step 2 task 1/2 gen 5/6 turn 12/15 valid=True db -36.15->-26.88
+[12:07:33]   rollout step 2 task 1/2 gen 5/6 turn 13/15 valid=True db -26.88->-35.10
+[12:07:48]   rollout step 2 task 1/2 gen 5/6 turn 14/15 valid=True db -35.10->-27.28
+[12:07:55]   rollout step 2 task 1/2 gen 5/6 turn 15/15 valid=True db -27.28->-34.28
+[12:07:55] trajectory done: step 2 task 1/2 gen 5/6 turns=15 reason=patience reward=1.883  [17/600 trajectories overall]
+[12:08:07]   rollout step 2 task 1/2 gen 6/6 turn 1/15 valid=True db -11.64->-21.91
+[12:08:15]   rollout step 2 task 1/2 gen 6/6 turn 2/15 valid=True db -21.91->-10.75
+[12:08:22]   rollout step 2 task 1/2 gen 6/6 turn 3/15 valid=True db -10.75->-11.01
+[12:08:29]   rollout step 2 task 1/2 gen 6/6 turn 4/15 valid=True db -11.01->-11.24
+[12:08:41]   rollout step 2 task 1/2 gen 6/6 turn 5/15 valid=True db -11.24->-8.87
+[12:08:48]   rollout step 2 task 1/2 gen 6/6 turn 6/15 valid=True db -8.87->-11.07
+[12:08:48] trajectory done: step 2 task 1/2 gen 6/6 turns=6 reason=patience reward=0.018  [18/600 trajectories overall]
+[12:08:59]   rollout step 2 task 2/2 gen 1/6 turn 1/15 valid=True db -6.31->-15.72
+[12:09:07]   rollout step 2 task 2/2 gen 1/6 turn 2/15 valid=True db -15.72->-16.37
+[12:09:16]   rollout step 2 task 2/2 gen 1/6 turn 3/15 valid=True db -16.37->-16.97
+[12:09:28]   rollout step 2 task 2/2 gen 1/6 turn 4/15 valid=True db -16.97->-26.35
+[12:09:44]   rollout step 2 task 2/2 gen 1/6 turn 5/15 valid=True db -26.35->-9.95
+[12:09:53]   rollout step 2 task 2/2 gen 1/6 turn 6/15 valid=True db -9.95->-15.56
+[12:10:05]   rollout step 2 task 2/2 gen 1/6 turn 7/15 valid=True db -15.56->-10.45
+[12:10:14]   rollout step 2 task 2/2 gen 1/6 turn 8/15 valid=True db -10.45->-10.60
+[12:10:27]   rollout step 2 task 2/2 gen 1/6 turn 9/15 valid=True db -10.60->-10.29
+[12:10:27] trajectory done: step 2 task 2/2 gen 1/6 turns=9 reason=patience reward=0.964  [19/600 trajectories overall]
+[12:10:37]   rollout step 2 task 2/2 gen 2/6 turn 1/15 valid=True db -6.31->-7.50
+[12:10:45]   rollout step 2 task 2/2 gen 2/6 turn 2/15 valid=True db -7.50->-8.86
+[12:10:57]   rollout step 2 task 2/2 gen 2/6 turn 3/15 valid=True db -8.86->-10.10
+[12:11:09]   rollout step 2 task 2/2 gen 2/6 turn 4/15 valid=True db -10.10->-11.69
+[12:11:18]   rollout step 2 task 2/2 gen 2/6 turn 5/15 valid=True db -11.69->-13.91
+[12:11:27]   rollout step 2 task 2/2 gen 2/6 turn 6/15 valid=True db -13.91->-17.34
+[12:11:42]   rollout step 2 task 2/2 gen 2/6 turn 7/15 valid=True db -17.34->-24.18
+[12:11:51]   rollout step 2 task 2/2 gen 2/6 turn 8/15 valid=True db -24.18->-33.47
+[12:12:07]   rollout step 2 task 2/2 gen 2/6 turn 9/15 valid=True db -33.47->-18.92
+[12:12:15]   rollout step 2 task 2/2 gen 2/6 turn 10/15 valid=True db -18.92->-9.99
+[12:12:23]   rollout step 2 task 2/2 gen 2/6 turn 11/15 valid=True db -9.99->-13.62
+[12:12:36]   rollout step 2 task 2/2 gen 2/6 turn 12/15 valid=True db -13.62->-18.21
+[12:12:48]   rollout step 2 task 2/2 gen 2/6 turn 13/15 valid=True db -18.21->-10.24
+[12:12:48] trajectory done: step 2 task 2/2 gen 2/6 turns=13 reason=patience reward=1.138  [20/600 trajectories overall]
+[12:12:59]   rollout step 2 task 2/2 gen 3/6 turn 1/15 valid=True db -6.31->-15.72
+[12:13:10]   rollout step 2 task 2/2 gen 3/6 turn 2/15 valid=True db -15.72->-16.21
+[12:13:18]   rollout step 2 task 2/2 gen 3/6 turn 3/15 valid=True db -16.21->-26.28
+[12:13:30]   rollout step 2 task 2/2 gen 3/6 turn 4/15 valid=True db -26.28->-21.44
+[12:13:38]   rollout step 2 task 2/2 gen 3/6 turn 5/15 valid=True db -21.44->-29.14
+[12:13:54]   rollout step 2 task 2/2 gen 3/6 turn 6/15 valid=True db -29.14->-30.40
+[12:14:05]   rollout step 2 task 2/2 gen 3/6 turn 7/15 valid=True db -30.40->-31.69
+[12:14:17]   rollout step 2 task 2/2 gen 3/6 turn 8/15 valid=True db -31.69->-33.03
+[12:14:29]   rollout step 2 task 2/2 gen 3/6 turn 9/15 valid=True db -33.03->-34.43
+[12:14:42]   rollout step 2 task 2/2 gen 3/6 turn 10/15 valid=True db -34.43->-34.28
+[12:14:51]   rollout step 2 task 2/2 gen 3/6 turn 11/15 valid=True db -34.28->-34.42
+[12:15:03]   rollout step 2 task 2/2 gen 3/6 turn 12/15 valid=True db -34.42->-27.37
+[12:15:12]   rollout step 2 task 2/2 gen 3/6 turn 13/15 valid=True db -27.37->-37.97
+[12:15:22]   rollout step 2 task 2/2 gen 3/6 turn 14/15 valid=True db -37.97->-39.56
+[12:15:40]   rollout step 2 task 2/2 gen 3/6 turn 15/15 valid=True db -39.56->-41.30
+[12:15:40] trajectory done: step 2 task 2/2 gen 3/6 turns=15 reason=max_turns reward=1.900  [21/600 trajectories overall]
+[12:15:50]   rollout step 2 task 2/2 gen 4/6 turn 1/15 valid=True db -6.31->-15.72
+[12:15:56]   rollout step 2 task 2/2 gen 4/6 turn 2/15 valid=True db -15.72->-16.37
+[12:16:04]   rollout step 2 task 2/2 gen 4/6 turn 3/15 valid=True db -16.37->-16.97
+[12:16:15]   rollout step 2 task 2/2 gen 4/6 turn 4/15 valid=True db -16.97->-17.53
+[12:16:28]   rollout step 2 task 2/2 gen 4/6 turn 5/15 valid=True db -17.53->-26.11
+[12:16:40]   rollout step 2 task 2/2 gen 4/6 turn 6/15 valid=True db -26.11->-26.62
+[12:16:48]   rollout step 2 task 2/2 gen 4/6 turn 7/15 valid=True db -26.62->-16.14
+[12:16:54]   rollout step 2 task 2/2 gen 4/6 turn 8/15 valid=True db -16.14->-11.15
+[12:17:02]   rollout step 2 task 2/2 gen 4/6 turn 9/15 valid=True db -11.15->-11.28
+[12:17:15]   rollout step 2 task 2/2 gen 4/6 turn 10/15 valid=True db -11.28->-11.41
+[12:17:31]   rollout step 2 task 2/2 gen 4/6 turn 11/15 valid=True db -11.41->-11.52
+[12:17:31] trajectory done: step 2 task 2/2 gen 4/6 turns=11 reason=patience reward=1.001  [22/600 trajectories overall]
+[12:17:43]   rollout step 2 task 2/2 gen 5/6 turn 1/15 valid=True db -6.31->-5.67
+[12:17:51]   rollout step 2 task 2/2 gen 5/6 turn 2/15 valid=True db -5.67->-6.60
+[12:17:57]   rollout step 2 task 2/2 gen 5/6 turn 3/15 valid=True db -6.60->-9.01
+[12:18:07]   rollout step 2 task 2/2 gen 5/6 turn 4/15 valid=True db -9.01->-10.20
+[12:18:16]   rollout step 2 task 2/2 gen 5/6 turn 5/15 valid=True db -10.20->-11.73
+[12:18:25]   rollout step 2 task 2/2 gen 5/6 turn 6/15 valid=True db -11.73->-13.81
+[12:18:40]   rollout step 2 task 2/2 gen 5/6 turn 7/15 valid=True db -13.81->-14.18
+[12:18:50]   rollout step 2 task 2/2 gen 5/6 turn 8/15 valid=True db -14.18->-17.05
+[12:19:06]   rollout step 2 task 2/2 gen 5/6 turn 9/15 valid=True db -17.05->-21.90
+[12:19:18]   rollout step 2 task 2/2 gen 5/6 turn 10/15 valid=True db -21.90->-36.55
+[12:19:26]   rollout step 2 task 2/2 gen 5/6 turn 11/15 valid=True db -36.55->-25.05
+[12:19:37]   rollout step 2 task 2/2 gen 5/6 turn 12/15 valid=True db -25.05->-24.89
+[12:19:44]   rollout step 2 task 2/2 gen 5/6 turn 13/15 valid=True db -24.89->-25.04
+[12:19:53]   rollout step 2 task 2/2 gen 5/6 turn 14/15 valid=True db -25.04->-25.18
+[12:20:05]   rollout step 2 task 2/2 gen 5/6 turn 15/15 valid=True db -25.18->-18.69
+[12:20:05] trajectory done: step 2 task 2/2 gen 5/6 turns=15 reason=patience reward=1.426  [23/600 trajectories overall]
+[12:20:14]   rollout step 2 task 2/2 gen 6/6 turn 1/15 valid=True db -6.31->-15.72
+[12:20:22]   rollout step 2 task 2/2 gen 6/6 turn 2/15 valid=True db -15.72->-28.59
+[12:20:33]   rollout step 2 task 2/2 gen 6/6 turn 3/15 valid=True db -28.59->-19.72
+[12:20:43]   rollout step 2 task 2/2 gen 6/6 turn 4/15 valid=True db -19.72->-34.79
+[12:20:55]   rollout step 2 task 2/2 gen 6/6 turn 5/15 valid=True db -34.79->-19.93
+[12:21:05]   rollout step 2 task 2/2 gen 6/6 turn 6/15 valid=True db -19.93->-33.68
+[12:21:15]   rollout step 2 task 2/2 gen 6/6 turn 7/15 valid=True db -33.68->-23.08
+[12:21:28]   rollout step 2 task 2/2 gen 6/6 turn 8/15 valid=True db -23.08->-15.30
+[12:21:37]   rollout step 2 task 2/2 gen 6/6 turn 9/15 valid=True db -15.30->-10.97
+[12:21:37] trajectory done: step 2 task 2/2 gen 6/6 turns=9 reason=patience reward=1.160  [24/600 trajectories overall]
+[12:21:37] step_stats={"best_improve_mean": 26.661866493569406, "best_improve_p50": 27.5138293056536, "goal_met_pct": 0.0, "group_best_mean": 1.9270045879023328, "max_turns_pct": 33.333333333333336, "n_resampled_starts": 0, "n_trajectories": 12, "n_turns": 151, "patience_pct": 66.66666666666667, "pos_delta_rate": 0.7483443708609272, "reward_mean": 1.409444142124727, "reward_p25": 1.1036164194641107, "reward_p50": 1.587288655677343, "reward_p75": 1.8827046963152618, "stop_pct": 0.0, "valid_turn_rate": 1.0, "wg_range_mean": 1.435844774291684, "wg_std_mean": 0.505123490933803, "zero_adv_frac": 0.0}
+[12:22:14]   gradient pass 20/151 turns backpropagated
+[12:22:59]   gradient pass 40/151 turns backpropagated
+[12:23:45]   gradient pass 60/151 turns backpropagated
+[12:24:21]   gradient pass 80/151 turns backpropagated
+[12:25:04]   gradient pass 100/151 turns backpropagated
+[12:25:56]   gradient pass 120/151 turns backpropagated
+[12:26:38]   gradient pass 140/151 turns backpropagated
+[12:27:00]   gradient pass 151/151 turns backpropagated
+[12:27:00] step 2/50 loss=6.28451 reward_mean=1.409 reward_std=0.557 turns_mean=12.6 goal_met=0/12 stop=0 patience=8 kl_mean=-0.06890
+[12:27:01]   resampled start task 1/2 times=1 seed 5290->5291 initial_db=-24.62
+[12:27:14]   rollout step 3 task 1/2 gen 1/6 turn 1/15 valid=True db -24.62->-11.55
+[12:27:24]   rollout step 3 task 1/2 gen 1/6 turn 2/15 valid=True db -11.55->-13.44
+[12:27:31]   rollout step 3 task 1/2 gen 1/6 turn 3/15 valid=True db -13.44->-13.70
+[12:27:44]   rollout step 3 task 1/2 gen 1/6 turn 4/15 valid=True db -13.70->-12.08
+[12:27:49]   rollout step 3 task 1/2 gen 1/6 turn 5/15 valid=True db -12.08->-10.89
+[12:27:49] trajectory done: step 3 task 1/2 gen 1/6 turns=5 reason=patience reward=-1.573  [25/600 trajectories overall]
+[12:27:58]   rollout step 3 task 1/2 gen 2/6 turn 1/15 valid=True db -24.62->-11.55
+[12:28:07]   rollout step 3 task 1/2 gen 2/6 turn 2/15 valid=True db -11.55->-23.26
+[12:28:15]   rollout step 3 task 1/2 gen 2/6 turn 3/15 valid=True db -23.26->-23.34
+[12:28:21]   rollout step 3 task 1/2 gen 2/6 turn 4/15 valid=True db -23.34->-23.40
+[12:28:34]   rollout step 3 task 1/2 gen 2/6 turn 5/15 valid=True db -23.40->-23.45
+[12:28:34] trajectory done: step 3 task 1/2 gen 2/6 turns=5 reason=patience reward=-1.080  [26/600 trajectories overall]
+[12:28:45]   rollout step 3 task 1/2 gen 3/6 turn 1/15 valid=True db -24.62->-21.07
+[12:28:54]   rollout step 3 task 1/2 gen 3/6 turn 2/15 valid=True db -21.07->-24.33
+[12:29:03]   rollout step 3 task 1/2 gen 3/6 turn 3/15 valid=True db -24.33->-28.42
+[12:29:15]   rollout step 3 task 1/2 gen 3/6 turn 4/15 valid=True db -28.42->-34.46
+[12:29:30]   rollout step 3 task 1/2 gen 3/6 turn 5/15 valid=True db -34.46->-28.75
+[12:29:39]   rollout step 3 task 1/2 gen 3/6 turn 6/15 valid=True db -28.75->-25.27
+[12:29:47]   rollout step 3 task 1/2 gen 3/6 turn 7/15 valid=True db -25.27->-22.75
+[12:29:55]   rollout step 3 task 1/2 gen 3/6 turn 8/15 valid=True db -22.75->-20.78
+[12:30:05]   rollout step 3 task 1/2 gen 3/6 turn 9/15 valid=True db -20.78->-19.15
+[12:30:05] trajectory done: step 3 task 1/2 gen 3/6 turns=9 reason=patience reward=-0.385  [27/600 trajectories overall]
+[12:30:15]   rollout step 3 task 1/2 gen 4/6 turn 1/15 valid=True db -24.62->-11.55
+[12:30:22]   rollout step 3 task 1/2 gen 4/6 turn 2/15 valid=True db -11.55->-23.26
+[12:30:31]   rollout step 3 task 1/2 gen 4/6 turn 3/15 valid=True db -23.26->-31.20
+[12:30:43]   rollout step 3 task 1/2 gen 4/6 turn 4/15 valid=True db -31.20->-27.81
+[12:30:50]   rollout step 3 task 1/2 gen 4/6 turn 5/15 valid=True db -27.81->-30.90
+[12:31:01]   rollout step 3 task 1/2 gen 4/6 turn 6/15 valid=True db -30.90->-31.70
+[12:31:12]   rollout step 3 task 1/2 gen 4/6 turn 7/15 valid=True db -31.70->-32.48
+[12:31:22]   rollout step 3 task 1/2 gen 4/6 turn 8/15 valid=True db -32.48->-33.23
+[12:31:35]   rollout step 3 task 1/2 gen 4/6 turn 9/15 valid=True db -33.23->-37.87
+[12:31:50]   rollout step 3 task 1/2 gen 4/6 turn 10/15 valid=True db -37.87->-48.22
+[12:32:02]   rollout step 3 task 1/2 gen 4/6 turn 11/15 valid=True db -48.22->-46.25
+[12:32:11]   rollout step 3 task 1/2 gen 4/6 turn 12/15 valid=True db -46.25->-49.66
+[12:32:21]   rollout step 3 task 1/2 gen 4/6 turn 13/15 valid=True db -49.66->-52.86
+[12:32:31]   rollout step 3 task 1/2 gen 4/6 turn 14/15 valid=True db -52.86->-57.34
+[12:32:45]   rollout step 3 task 1/2 gen 4/6 turn 15/15 valid=True db -57.34->-65.56
+[12:32:45] trajectory done: step 3 task 1/2 gen 4/6 turns=15 reason=max_turns reward=2.410  [28/600 trajectories overall]
+[12:32:58]   rollout step 3 task 1/2 gen 5/6 turn 1/15 valid=True db -24.62->-11.55
+[12:33:10]   rollout step 3 task 1/2 gen 5/6 turn 2/15 valid=True db -11.55->-23.26
+[12:33:22]   rollout step 3 task 1/2 gen 5/6 turn 3/15 valid=True db -23.26->-26.93
+[12:33:34]   rollout step 3 task 1/2 gen 5/6 turn 4/15 valid=True db -26.93->-31.93
+[12:33:45]   rollout step 3 task 1/2 gen 5/6 turn 5/15 valid=True db -31.93->-41.19
+[12:33:54]   rollout step 3 task 1/2 gen 5/6 turn 6/15 valid=True db -41.19->-45.29
+[12:34:05]   rollout step 3 task 1/2 gen 5/6 turn 7/15 valid=True db -45.29->-35.08
+[12:34:13]   rollout step 3 task 1/2 gen 5/6 turn 8/15 valid=True db -35.08->-26.38
+[12:34:20]   rollout step 3 task 1/2 gen 5/6 turn 9/15 valid=True db -26.38->-23.95
+[12:34:27]   rollout step 3 task 1/2 gen 5/6 turn 10/15 valid=True db -23.95->-26.22
+[12:34:44]   rollout step 3 task 1/2 gen 5/6 turn 11/15 valid=True db -26.22->-24.10
+[12:34:44] trajectory done: step 3 task 1/2 gen 5/6 turns=11 reason=patience reward=0.683  [29/600 trajectories overall]
+[12:34:54]   rollout step 3 task 1/2 gen 6/6 turn 1/15 valid=True db -24.62->-21.07
+[12:35:03]   rollout step 3 task 1/2 gen 6/6 turn 2/15 valid=True db -21.07->-24.33
+[12:35:11]   rollout step 3 task 1/2 gen 6/6 turn 3/15 valid=True db -24.33->-28.42
+[12:35:21]   rollout step 3 task 1/2 gen 6/6 turn 4/15 valid=True db -28.42->-34.46
+[12:35:28]   rollout step 3 task 1/2 gen 6/6 turn 5/15 valid=True db -34.46->-50.82
+[12:35:39]   rollout step 3 task 1/2 gen 6/6 turn 6/15 valid=True db -50.82->-47.01
+[12:35:47]   rollout step 3 task 1/2 gen 6/6 turn 7/15 valid=True db -47.01->-42.02
+[12:35:55]   rollout step 3 task 1/2 gen 6/6 turn 8/15 valid=True db -42.02->-48.96
+[12:36:04]   rollout step 3 task 1/2 gen 6/6 turn 9/15 valid=True db -48.96->-36.47
+[12:36:11]   rollout step 3 task 1/2 gen 6/6 turn 10/15 valid=True db -36.47->-47.25
+[12:36:11] trajectory done: step 3 task 1/2 gen 6/6 turns=10 reason=patience reward=1.657  [30/600 trajectories overall]
+[12:36:24]   rollout step 3 task 2/2 gen 1/6 turn 1/15 valid=True db -7.37->-9.71
+[12:36:34]   rollout step 3 task 2/2 gen 1/6 turn 2/15 valid=True db -9.71->-10.07
+[12:36:44]   rollout step 3 task 2/2 gen 1/6 turn 3/15 valid=True db -10.07->-11.06
+[12:36:56]   rollout step 3 task 2/2 gen 1/6 turn 4/15 valid=True db -11.06->-12.13
+[12:37:12]   rollout step 3 task 2/2 gen 1/6 turn 5/15 valid=True db -12.13->-13.31
+[12:37:23]   rollout step 3 task 2/2 gen 1/6 turn 6/15 valid=True db -13.31->-14.63
+[12:37:34]   rollout step 3 task 2/2 gen 1/6 turn 7/15 valid=True db -14.63->-16.14
+[12:37:46]   rollout step 3 task 2/2 gen 1/6 turn 8/15 valid=True db -16.14->-17.92
+[12:37:57]   rollout step 3 task 2/2 gen 1/6 turn 9/15 valid=True db -17.92->-20.13
+[12:38:05]   rollout step 3 task 2/2 gen 1/6 turn 10/15 valid=True db -20.13->-22.71
+[12:38:15]   rollout step 3 task 2/2 gen 1/6 turn 11/15 valid=True db -22.71->-26.92
+[12:38:26]   rollout step 3 task 2/2 gen 1/6 turn 12/15 valid=True db -26.92->-35.25
+[12:38:36]   rollout step 3 task 2/2 gen 1/6 turn 13/15 valid=True db -35.25->-40.76
+[12:38:46]   rollout step 3 task 2/2 gen 1/6 turn 14/15 valid=True db -40.76->-28.72
+[12:38:55]   rollout step 3 task 2/2 gen 1/6 turn 15/15 valid=True db -28.72->-37.93
+[12:38:55] trajectory done: step 3 task 2/2 gen 1/6 turns=15 reason=max_turns reward=1.904  [31/600 trajectories overall]
+[12:39:06]   rollout step 3 task 2/2 gen 2/6 turn 1/15 valid=True db -7.37->-9.71
+[12:39:14]   rollout step 3 task 2/2 gen 2/6 turn 2/15 valid=True db -9.71->-10.07
+[12:39:24]   rollout step 3 task 2/2 gen 2/6 turn 3/15 valid=True db -10.07->-10.26
+[12:39:35]   rollout step 3 task 2/2 gen 2/6 turn 4/15 valid=True db -10.26->-10.56
+[12:39:45]   rollout step 3 task 2/2 gen 2/6 turn 5/15 valid=True db -10.56->-10.44
+[12:39:52]   rollout step 3 task 2/2 gen 2/6 turn 6/15 valid=True db -10.44->-10.70
+[12:40:02]   rollout step 3 task 2/2 gen 2/6 turn 7/15 valid=True db -10.70->-10.93
+[12:40:14]   rollout step 3 task 2/2 gen 2/6 turn 8/15 valid=True db -10.93->-11.40
+[12:40:25]   rollout step 3 task 2/2 gen 2/6 turn 9/15 valid=True db -11.40->-11.52
+[12:40:37]   rollout step 3 task 2/2 gen 2/6 turn 10/15 valid=True db -11.52->-11.62
+[12:40:49]   rollout step 3 task 2/2 gen 2/6 turn 11/15 valid=True db -11.62->-11.72
+[12:40:59]   rollout step 3 task 2/2 gen 2/6 turn 12/15 valid=True db -11.72->-11.81
+[12:41:10]   rollout step 3 task 2/2 gen 2/6 turn 13/15 valid=True db -11.81->-12.19
+[12:41:23]   rollout step 3 task 2/2 gen 2/6 turn 14/15 valid=True db -12.19->-12.27
+[12:41:32]   rollout step 3 task 2/2 gen 2/6 turn 15/15 valid=True db -12.27->-12.40
+[12:41:32] trajectory done: step 3 task 2/2 gen 2/6 turns=15 reason=max_turns reward=-0.497  [32/600 trajectories overall]
+[12:41:44]   rollout step 3 task 2/2 gen 3/6 turn 1/15 valid=True db -7.37->-8.06
+[12:41:53]   rollout step 3 task 2/2 gen 3/6 turn 2/15 valid=True db -8.06->-8.44
+[12:41:59]   rollout step 3 task 2/2 gen 3/6 turn 3/15 valid=True db -8.44->-8.83
+[12:42:08]   rollout step 3 task 2/2 gen 3/6 turn 4/15 valid=True db -8.83->-9.24
+[12:42:19]   rollout step 3 task 2/2 gen 3/6 turn 5/15 valid=True db -9.24->-9.67
+[12:42:28]   rollout step 3 task 2/2 gen 3/6 turn 6/15 valid=True db -9.67->-10.12
+[12:42:43]   rollout step 3 task 2/2 gen 3/6 turn 7/15 valid=True db -10.12->-10.37
+[12:42:59]   rollout step 3 task 2/2 gen 3/6 turn 8/15 valid=True db -10.37->-10.59
+[12:43:12]   rollout step 3 task 2/2 gen 3/6 turn 9/15 valid=True db -10.59->-13.43
+[12:43:31]   rollout step 3 task 2/2 gen 3/6 turn 10/15 valid=True db -13.43->-14.27
+[12:43:47]   rollout step 3 task 2/2 gen 3/6 turn 11/15 valid=True db -14.27->-15.20
+[12:44:03]   rollout step 3 task 2/2 gen 3/6 turn 12/15 valid=True db -15.20->-16.26
+[12:44:14]   rollout step 3 task 2/2 gen 3/6 turn 13/15 valid=True db -16.26->-17.48
+[12:44:25]   rollout step 3 task 2/2 gen 3/6 turn 14/15 valid=True db -17.48->-18.91
+[12:44:37]   rollout step 3 task 2/2 gen 3/6 turn 15/15 valid=True db -18.91->-20.63
+[12:44:37] trajectory done: step 3 task 2/2 gen 3/6 turns=15 reason=max_turns reward=0.622  [33/600 trajectories overall]
+[12:44:49]   rollout step 3 task 2/2 gen 4/6 turn 1/15 valid=True db -7.37->-7.73
+[12:44:56]   rollout step 3 task 2/2 gen 4/6 turn 2/15 valid=True db -7.73->-8.10
+[12:45:05]   rollout step 3 task 2/2 gen 4/6 turn 3/15 valid=True db -8.10->-10.69
+[12:45:17]   rollout step 3 task 2/2 gen 4/6 turn 4/15 valid=True db -10.69->-11.48
+[12:45:27]   rollout step 3 task 2/2 gen 4/6 turn 5/15 valid=True db -11.48->-12.40
+[12:45:37]   rollout step 3 task 2/2 gen 4/6 turn 6/15 valid=True db -12.40->-13.49
+[12:45:51]   rollout step 3 task 2/2 gen 4/6 turn 7/15 valid=True db -13.49->-13.79
+[12:46:02]   rollout step 3 task 2/2 gen 4/6 turn 8/15 valid=True db -13.79->-30.11
+[12:46:14]   rollout step 3 task 2/2 gen 4/6 turn 9/15 valid=True db -30.11->-36.19
+[12:46:24]   rollout step 3 task 2/2 gen 4/6 turn 10/15 valid=True db -36.19->-23.76
+[12:46:32]   rollout step 3 task 2/2 gen 4/6 turn 11/15 valid=True db -23.76->-34.52
+[12:46:43]   rollout step 3 task 2/2 gen 4/6 turn 12/15 valid=True db -34.52->-10.92
+[12:46:55]   rollout step 3 task 2/2 gen 4/6 turn 13/15 valid=True db -10.92->-12.98
+[12:47:08]   rollout step 3 task 2/2 gen 4/6 turn 14/15 valid=True db -12.98->-13.08
+[12:47:08] trajectory done: step 3 task 2/2 gen 4/6 turns=14 reason=patience reward=1.204  [34/600 trajectories overall]
+[12:47:21]   rollout step 3 task 2/2 gen 5/6 turn 1/15 valid=True db -7.37->-9.71
+[12:47:29]   rollout step 3 task 2/2 gen 5/6 turn 2/15 valid=True db -9.71->-10.41
+[12:47:39]   rollout step 3 task 2/2 gen 5/6 turn 3/15 valid=True db -10.41->-10.75
+[12:47:51]   rollout step 3 task 2/2 gen 5/6 turn 4/15 valid=True db -10.75->-11.07
+[12:48:01]   rollout step 3 task 2/2 gen 5/6 turn 5/15 valid=True db -11.07->-11.77
+[12:48:10]   rollout step 3 task 2/2 gen 5/6 turn 6/15 valid=True db -11.77->-12.56
+[12:48:20]   rollout step 3 task 2/2 gen 5/6 turn 7/15 valid=True db -12.56->-13.45
+[12:48:32]   rollout step 3 task 2/2 gen 5/6 turn 8/15 valid=True db -13.45->-13.71
+[12:48:42]   rollout step 3 task 2/2 gen 5/6 turn 9/15 valid=True db -13.71->-13.96
+[12:48:55]   rollout step 3 task 2/2 gen 5/6 turn 10/15 valid=True db -13.96->-15.09
+[12:49:09]   rollout step 3 task 2/2 gen 5/6 turn 11/15 valid=True db -15.09->-16.12
+[12:49:21]   rollout step 3 task 2/2 gen 5/6 turn 12/15 valid=True db -16.12->-17.53
+[12:49:33]   rollout step 3 task 2/2 gen 5/6 turn 13/15 valid=True db -17.53->-19.15
+[12:49:42]   rollout step 3 task 2/2 gen 5/6 turn 14/15 valid=True db -19.15->-20.85
+[12:49:52]   rollout step 3 task 2/2 gen 5/6 turn 15/15 valid=True db -20.85->-22.98
+[12:49:52] trajectory done: step 3 task 2/2 gen 5/6 turns=15 reason=max_turns reward=0.957  [35/600 trajectories overall]
+[12:50:04]   rollout step 3 task 2/2 gen 6/6 turn 1/15 valid=True db -7.37->-8.06
+[12:50:13]   rollout step 3 task 2/2 gen 6/6 turn 2/15 valid=True db -8.06->-8.75
+[12:50:23]   rollout step 3 task 2/2 gen 6/6 turn 3/15 valid=True db -8.75->-9.45
+[12:50:32]   rollout step 3 task 2/2 gen 6/6 turn 4/15 valid=True db -9.45->-9.87
+[12:50:44]   rollout step 3 task 2/2 gen 6/6 turn 5/15 valid=True db -9.87->-10.32
+[12:50:51]   rollout step 3 task 2/2 gen 6/6 turn 6/15 valid=True db -10.32->-10.79
+[12:51:01]   rollout step 3 task 2/2 gen 6/6 turn 7/15 valid=True db -10.79->-11.30
+[12:51:08]   rollout step 3 task 2/2 gen 6/6 turn 8/15 valid=True db -11.30->-11.83
+[12:51:20]   rollout step 3 task 2/2 gen 6/6 turn 9/15 valid=True db -11.83->-12.05
+[12:51:34]   rollout step 3 task 2/2 gen 6/6 turn 10/15 valid=True db -12.05->-12.25
+[12:51:43]   rollout step 3 task 2/2 gen 6/6 turn 11/15 valid=True db -12.25->-12.75
+[12:51:51]   rollout step 3 task 2/2 gen 6/6 turn 12/15 valid=True db -12.75->-13.28
+[12:52:01]   rollout step 3 task 2/2 gen 6/6 turn 13/15 valid=True db -13.28->-13.83
+[12:52:09]   rollout step 3 task 2/2 gen 6/6 turn 14/15 valid=True db -13.83->-14.42
+[12:52:18]   rollout step 3 task 2/2 gen 6/6 turn 15/15 valid=True db -14.42->-15.05
+[12:52:18] trajectory done: step 3 task 2/2 gen 6/6 turns=15 reason=max_turns reward=-0.233  [36/600 trajectories overall]
+[12:52:18] step_stats={"best_improve_mean": 16.785290954931465, "best_improve_p50": 14.430661813584258, "goal_met_pct": 0.0, "group_best_mean": 2.156760797491252, "max_turns_pct": 50.0, "n_resampled_starts": 1, "n_trajectories": 12, "n_turns": 144, "patience_pct": 50.0, "pos_delta_rate": 0.8194444444444444, "reward_mean": 0.47231463782590727, "reward_p25": -0.41296822170712755, "reward_p50": 0.6521590604470768, "reward_p75": 1.317253797777369, "stop_pct": 0.0, "valid_turn_rate": 1.0, "wg_range_mean": 3.191889276740026, "wg_std_mean": 1.1282212428202665, "zero_adv_frac": 0.0}
+[12:52:48]   gradient pass 20/144 turns backpropagated
+[12:53:26]   gradient pass 40/144 turns backpropagated
+[12:54:04]   gradient pass 60/144 turns backpropagated
+[12:54:51]   gradient pass 80/144 turns backpropagated
+[12:55:40]   gradient pass 100/144 turns backpropagated
+[12:56:17]   gradient pass 120/144 turns backpropagated
+[12:56:59]   gradient pass 140/144 turns backpropagated
+[12:57:09]   gradient pass 144/144 turns backpropagated
+[12:57:09] step 3/50 loss=4.27465 reward_mean=0.472 reward_std=1.184 turns_mean=12.0 goal_met=0/12 stop=0 patience=6 kl_mean=-0.01585
+[12:57:19]   rollout step 4 task 1/2 gen 1/6 turn 1/15 valid=True db -1.60->-2.17
+[12:57:30]   rollout step 4 task 1/2 gen 1/6 turn 2/15 valid=True db -2.17->-2.75
+[12:57:45]   rollout step 4 task 1/2 gen 1/6 turn 3/15 valid=True db -2.75->-3.34
+[12:57:54]   rollout step 4 task 1/2 gen 1/6 turn 4/15 valid=True db -3.34->-3.74
+[12:58:08]   rollout step 4 task 1/2 gen 1/6 turn 5/15 valid=True db -3.74->-4.13
+[12:58:16]   rollout step 4 task 1/2 gen 1/6 turn 6/15 valid=True db -4.13->-4.49
+[12:58:25]   rollout step 4 task 1/2 gen 1/6 turn 7/15 valid=True db -4.49->-4.84
+[12:58:35]   rollout step 4 task 1/2 gen 1/6 turn 8/15 valid=True db -4.84->-5.19
+[12:58:47]   rollout step 4 task 1/2 gen 1/6 turn 9/15 valid=True db -5.19->-5.53
+[12:58:57]   rollout step 4 task 1/2 gen 1/6 turn 10/15 valid=True db -5.53->-5.88
+[12:59:07]   rollout step 4 task 1/2 gen 1/6 turn 11/15 valid=True db -5.88->-8.05
+[12:59:19]   rollout step 4 task 1/2 gen 1/6 turn 12/15 valid=True db -8.05->-8.25
+[12:59:32]   rollout step 4 task 1/2 gen 1/6 turn 13/15 valid=True db -8.25->-8.80
+[12:59:42]   rollout step 4 task 1/2 gen 1/6 turn 14/15 valid=True db -8.80->-9.39
+[12:59:53]   rollout step 4 task 1/2 gen 1/6 turn 15/15 valid=True db -9.39->-10.03
+[12:59:53] trajectory done: step 4 task 1/2 gen 1/6 turns=15 reason=max_turns reward=-0.157  [37/600 trajectories overall]
+[13:00:02]   rollout step 4 task 1/2 gen 2/6 turn 1/15 valid=True db -1.60->-2.17
+[13:00:10]   rollout step 4 task 1/2 gen 2/6 turn 2/15 valid=True db -2.17->-4.31
+[13:00:17]   rollout step 4 task 1/2 gen 2/6 turn 3/15 valid=True db -4.31->-7.47
+[13:00:30]   rollout step 4 task 1/2 gen 2/6 turn 4/15 valid=True db -7.47->-8.57
+[13:00:38]   rollout step 4 task 1/2 gen 2/6 turn 5/15 valid=True db -8.57->-10.00
+[13:00:46]   rollout step 4 task 1/2 gen 2/6 turn 6/15 valid=True db -10.00->-10.39
+[13:00:59]   rollout step 4 task 1/2 gen 2/6 turn 7/15 valid=True db -10.39->-10.75
+[13:01:12]   rollout step 4 task 1/2 gen 2/6 turn 8/15 valid=True db -10.75->-12.48
+[13:01:26]   rollout step 4 task 1/2 gen 2/6 turn 9/15 valid=True db -12.48->-14.87
+[13:01:44]   rollout step 4 task 1/2 gen 2/6 turn 10/15 valid=True db -14.87->-18.56
+[13:01:55]   rollout step 4 task 1/2 gen 2/6 turn 11/15 valid=True db -18.56->-26.05
+[13:02:07]   rollout step 4 task 1/2 gen 2/6 turn 12/15 valid=True db -26.05->-26.79
+[13:02:17]   rollout step 4 task 1/2 gen 2/6 turn 13/15 valid=True db -26.79->-27.50
+[13:02:26]   rollout step 4 task 1/2 gen 2/6 turn 14/15 valid=True db -27.50->-34.76
+[13:02:36]   rollout step 4 task 1/2 gen 2/6 turn 15/15 valid=True db -34.76->-33.87
+[13:02:36] trajectory done: step 4 task 1/2 gen 2/6 turns=15 reason=max_turns reward=1.917  [38/600 trajectories overall]
+[13:02:47]   rollout step 4 task 1/2 gen 3/6 turn 1/15 valid=True db -1.60->-2.17
+[13:02:53]   rollout step 4 task 1/2 gen 3/6 turn 2/15 valid=True db -2.17->-2.75
+[13:03:02]   rollout step 4 task 1/2 gen 3/6 turn 3/15 valid=True db -2.75->-3.17
+[13:03:12]   rollout step 4 task 1/2 gen 3/6 turn 4/15 valid=True db -3.17->-3.55
+[13:03:23]   rollout step 4 task 1/2 gen 3/6 turn 5/15 valid=True db -3.55->-3.91
+[13:03:31]   rollout step 4 task 1/2 gen 3/6 turn 6/15 valid=True db -3.91->-4.26
+[13:03:42]   rollout step 4 task 1/2 gen 3/6 turn 7/15 valid=True db -4.26->-4.59
+[13:03:51]   rollout step 4 task 1/2 gen 3/6 turn 8/15 valid=True db -4.59->-4.92
+[13:04:00]   rollout step 4 task 1/2 gen 3/6 turn 9/15 valid=True db -4.92->-5.25
+[13:04:10]   rollout step 4 task 1/2 gen 3/6 turn 10/15 valid=True db -5.25->-5.58
+[13:04:18]   rollout step 4 task 1/2 gen 3/6 turn 11/15 valid=True db -5.58->-5.92
+[13:04:31]   rollout step 4 task 1/2 gen 3/6 turn 12/15 valid=True db -5.92->-6.26
+[13:04:40]   rollout step 4 task 1/2 gen 3/6 turn 13/15 valid=True db -6.26->-6.60
+[13:04:48]   rollout step 4 task 1/2 gen 3/6 turn 14/15 valid=True db -6.60->-6.96
+[13:04:56]   rollout step 4 task 1/2 gen 3/6 turn 15/15 valid=True db -6.96->-7.32
+[13:04:56] trajectory done: step 4 task 1/2 gen 3/6 turns=15 reason=max_turns reward=-0.428  [39/600 trajectories overall]
+[13:05:06]   rollout step 4 task 1/2 gen 4/6 turn 1/15 valid=True db -1.60->-2.17
+[13:05:15]   rollout step 4 task 1/2 gen 4/6 turn 2/15 valid=True db -2.17->-2.75
+[13:05:26]   rollout step 4 task 1/2 gen 4/6 turn 3/15 valid=True db -2.75->-3.17
+[13:05:33]   rollout step 4 task 1/2 gen 4/6 turn 4/15 valid=True db -3.17->-3.55
+[13:05:43]   rollout step 4 task 1/2 gen 4/6 turn 5/15 valid=True db -3.55->-3.91
+[13:05:57]   rollout step 4 task 1/2 gen 4/6 turn 6/15 valid=True db -3.91->-4.26
+[13:06:06]   rollout step 4 task 1/2 gen 4/6 turn 7/15 valid=True db -4.26->-4.59
+[13:06:15]   rollout step 4 task 1/2 gen 4/6 turn 8/15 valid=True db -4.59->-4.92
+[13:06:31]   rollout step 4 task 1/2 gen 4/6 turn 9/15 valid=True db -4.92->-5.25
+[13:06:42]   rollout step 4 task 1/2 gen 4/6 turn 10/15 valid=True db -5.25->-5.58
+[13:06:51]   rollout step 4 task 1/2 gen 4/6 turn 11/15 valid=True db -5.58->-5.92
+[13:06:59]   rollout step 4 task 1/2 gen 4/6 turn 12/15 valid=True db -5.92->-6.26
+[13:07:07]   rollout step 4 task 1/2 gen 4/6 turn 13/15 valid=True db -6.26->-6.60
+[13:07:18]   rollout step 4 task 1/2 gen 4/6 turn 14/15 valid=True db -6.60->-6.96
+[13:07:32]   rollout step 4 task 1/2 gen 4/6 turn 15/15 valid=True db -6.96->-7.10
+[13:07:32] trajectory done: step 4 task 1/2 gen 4/6 turns=15 reason=max_turns reward=-0.449  [40/600 trajectories overall]
+[13:07:42]   rollout step 4 task 1/2 gen 5/6 turn 1/15 valid=True db -1.60->-1.69
+[13:07:50]   rollout step 4 task 1/2 gen 5/6 turn 2/15 valid=True db -1.69->-1.77
+[13:07:58]   rollout step 4 task 1/2 gen 5/6 turn 3/15 valid=True db -1.77->-1.84
+[13:08:06]   rollout step 4 task 1/2 gen 5/6 turn 4/15 valid=True db -1.84->-1.91
+[13:08:16]   rollout step 4 task 1/2 gen 5/6 turn 5/15 valid=True db -1.91->-2.36
+[13:08:28]   rollout step 4 task 1/2 gen 5/6 turn 6/15 valid=True db -2.36->-2.76
+[13:08:43]   rollout step 4 task 1/2 gen 5/6 turn 7/15 valid=True db -2.76->-3.12
+[13:08:57]   rollout step 4 task 1/2 gen 5/6 turn 8/15 valid=True db -3.12->-3.44
+[13:09:11]   rollout step 4 task 1/2 gen 5/6 turn 9/15 valid=True db -3.44->-3.74
+[13:09:20]   rollout step 4 task 1/2 gen 5/6 turn 10/15 valid=True db -3.74->-4.02
+[13:09:29]   rollout step 4 task 1/2 gen 5/6 turn 11/15 valid=True db -4.02->-4.27
+[13:09:39]   rollout step 4 task 1/2 gen 5/6 turn 12/15 valid=True db -4.27->-4.52
+[13:09:48]   rollout step 4 task 1/2 gen 5/6 turn 13/15 valid=True db -4.52->-4.75
+[13:09:56]   rollout step 4 task 1/2 gen 5/6 turn 14/15 valid=True db -4.75->-4.97
+[13:10:05]   rollout step 4 task 1/2 gen 5/6 turn 15/15 valid=True db -4.97->-5.18
+[13:10:05] trajectory done: step 4 task 1/2 gen 5/6 turns=15 reason=max_turns reward=-0.642  [41/600 trajectories overall]
+[13:10:15]   rollout step 4 task 1/2 gen 6/6 turn 1/15 valid=True db -1.60->-2.17
+[13:10:23]   rollout step 4 task 1/2 gen 6/6 turn 2/15 valid=True db -2.17->-2.60
+[13:10:32]   rollout step 4 task 1/2 gen 6/6 turn 3/15 valid=True db -2.60->-2.99
+[13:10:39]   rollout step 4 task 1/2 gen 6/6 turn 4/15 valid=True db -2.99->-3.35
+[13:10:50]   rollout step 4 task 1/2 gen 6/6 turn 5/15 valid=True db -3.35->-3.69
+[13:11:00]   rollout step 4 task 1/2 gen 6/6 turn 6/15 valid=True db -3.69->-4.01
+[13:11:12]   rollout step 4 task 1/2 gen 6/6 turn 7/15 valid=True db -4.01->-4.18
+[13:11:24]   rollout step 4 task 1/2 gen 6/6 turn 8/15 valid=True db -4.18->-4.49
+[13:11:38]   rollout step 4 task 1/2 gen 6/6 turn 9/15 valid=True db -4.49->-4.79
+[13:11:51]   rollout step 4 task 1/2 gen 6/6 turn 10/15 valid=True db -4.79->-5.09
+[13:12:04]   rollout step 4 task 1/2 gen 6/6 turn 11/15 valid=True db -5.09->-5.24
+[13:12:14]   rollout step 4 task 1/2 gen 6/6 turn 12/15 valid=True db -5.24->-5.67
+[13:12:21]   rollout step 4 task 1/2 gen 6/6 turn 13/15 valid=True db -5.67->-7.38
+[13:12:33]   rollout step 4 task 1/2 gen 6/6 turn 14/15 valid=True db -7.38->-7.80
+[13:12:45]   rollout step 4 task 1/2 gen 6/6 turn 15/15 valid=True db -7.80->-8.24
+[13:12:45] trajectory done: step 4 task 1/2 gen 6/6 turns=15 reason=max_turns reward=-0.336  [42/600 trajectories overall]
+[13:12:57]   rollout step 4 task 2/2 gen 1/6 turn 1/15 valid=True db -13.99->-16.94
+[13:13:03]   rollout step 4 task 2/2 gen 1/6 turn 2/15 valid=True db -16.94->-17.34
+[13:13:13]   rollout step 4 task 2/2 gen 1/6 turn 3/15 valid=True db -17.34->-18.13
+[13:13:23]   rollout step 4 task 2/2 gen 1/6 turn 4/15 valid=True db -18.13->-18.49
+[13:13:32]   rollout step 4 task 2/2 gen 1/6 turn 5/15 valid=True db -18.49->-19.34
+[13:13:43]   rollout step 4 task 2/2 gen 1/6 turn 6/15 valid=True db -19.34->-20.32
+[13:13:54]   rollout step 4 task 2/2 gen 1/6 turn 7/15 valid=True db -20.32->-20.63
+[13:14:06]   rollout step 4 task 2/2 gen 1/6 turn 8/15 valid=True db -20.63->-21.72
+[13:14:18]   rollout step 4 task 2/2 gen 1/6 turn 9/15 valid=True db -21.72->-23.02
+[13:14:32]   rollout step 4 task 2/2 gen 1/6 turn 10/15 valid=True db -23.02->-24.63
+[13:14:45]   rollout step 4 task 2/2 gen 1/6 turn 11/15 valid=True db -24.63->-26.70
+[13:14:56]   rollout step 4 task 2/2 gen 1/6 turn 12/15 valid=True db -26.70->-29.59
+[13:15:11]   rollout step 4 task 2/2 gen 1/6 turn 13/15 valid=True db -29.59->-29.95
+[13:15:20]   rollout step 4 task 2/2 gen 1/6 turn 14/15 valid=True db -29.95->-34.30
+[13:15:29]   rollout step 4 task 2/2 gen 1/6 turn 15/15 valid=True db -34.30->-44.10
+[13:15:29] trajectory done: step 4 task 2/2 gen 1/6 turns=15 reason=max_turns reward=1.808  [43/600 trajectories overall]
+[13:15:37]   rollout step 4 task 2/2 gen 2/6 turn 1/15 valid=True db -13.99->-16.94
+[13:15:44]   rollout step 4 task 2/2 gen 2/6 turn 2/15 valid=True db -16.94->-18.20
+[13:15:57]   rollout step 4 task 2/2 gen 2/6 turn 3/15 valid=True db -18.20->-18.58
+[13:16:07]   rollout step 4 task 2/2 gen 2/6 turn 4/15 valid=True db -18.58->-18.93
+[13:16:18]   rollout step 4 task 2/2 gen 2/6 turn 5/15 valid=True db -18.93->-19.82
+[13:16:28]   rollout step 4 task 2/2 gen 2/6 turn 6/15 valid=True db -19.82->-21.18
+[13:16:42]   rollout step 4 task 2/2 gen 2/6 turn 7/15 valid=True db -21.18->-22.42
+[13:16:51]   rollout step 4 task 2/2 gen 2/6 turn 8/15 valid=True db -22.42->-24.29
+[13:17:01]   rollout step 4 task 2/2 gen 2/6 turn 9/15 valid=True db -24.29->-26.32
+[13:17:12]   rollout step 4 task 2/2 gen 2/6 turn 10/15 valid=True db -26.32->-29.57
+[13:17:23]   rollout step 4 task 2/2 gen 2/6 turn 11/15 valid=True db -29.57->-34.91
+[13:17:37]   rollout step 4 task 2/2 gen 2/6 turn 12/15 valid=True db -34.91->-49.74
+[13:17:49]   rollout step 4 task 2/2 gen 2/6 turn 13/15 valid=True db -49.74->-38.13
+[13:17:56]   rollout step 4 task 2/2 gen 2/6 turn 14/15 valid=True db -38.13->-37.75
+[13:18:02]   rollout step 4 task 2/2 gen 2/6 turn 15/15 valid=True db -37.75->-38.10
+[13:18:02] trajectory done: step 4 task 2/2 gen 2/6 turns=15 reason=max_turns reward=2.080  [44/600 trajectories overall]
+[13:18:13]   rollout step 4 task 2/2 gen 3/6 turn 1/15 valid=True db -13.99->-16.94
+[13:18:20]   rollout step 4 task 2/2 gen 3/6 turn 2/15 valid=True db -16.94->-18.20
+[13:18:34]   rollout step 4 task 2/2 gen 3/6 turn 3/15 valid=True db -18.20->-18.58
+[13:18:47]   rollout step 4 task 2/2 gen 3/6 turn 4/15 valid=True db -18.58->-18.27
+[13:18:54]   rollout step 4 task 2/2 gen 3/6 turn 5/15 valid=True db -18.27->-18.59
+[13:19:06]   rollout step 4 task 2/2 gen 3/6 turn 6/15 valid=True db -18.59->-18.55
+[13:19:14]   rollout step 4 task 2/2 gen 3/6 turn 7/15 valid=True db -18.55->-19.29
+[13:19:29]   rollout step 4 task 2/2 gen 3/6 turn 8/15 valid=True db -19.29->-20.41
+[13:19:38]   rollout step 4 task 2/2 gen 3/6 turn 9/15 valid=True db -20.41->-21.38
+[13:19:51]   rollout step 4 task 2/2 gen 3/6 turn 10/15 valid=True db -21.38->-22.79
+[13:20:01]   rollout step 4 task 2/2 gen 3/6 turn 11/15 valid=True db -22.79->-24.45
+[13:20:11]   rollout step 4 task 2/2 gen 3/6 turn 12/15 valid=True db -24.45->-26.19
+[13:20:21]   rollout step 4 task 2/2 gen 3/6 turn 13/15 valid=True db -26.19->-28.46
+[13:20:33]   rollout step 4 task 2/2 gen 3/6 turn 14/15 valid=True db -28.46->-31.69
+[13:20:43]   rollout step 4 task 2/2 gen 3/6 turn 15/15 valid=True db -31.69->-37.75
+[13:20:43] trajectory done: step 4 task 2/2 gen 3/6 turns=15 reason=max_turns reward=1.608  [45/600 trajectories overall]
+[13:20:52]   rollout step 4 task 2/2 gen 4/6 turn 1/15 valid=True db -13.99->-14.48
+[13:20:59]   rollout step 4 task 2/2 gen 4/6 turn 2/15 valid=True db -14.48->-14.95
+[13:21:09]   rollout step 4 task 2/2 gen 4/6 turn 3/15 valid=True db -14.95->-15.43
+[13:21:20]   rollout step 4 task 2/2 gen 4/6 turn 4/15 valid=True db -15.43->-15.92
+[13:21:28]   rollout step 4 task 2/2 gen 4/6 turn 5/15 valid=True db -15.92->-16.43
+[13:21:37]   rollout step 4 task 2/2 gen 4/6 turn 6/15 valid=True db -16.43->-16.97
+[13:21:47]   rollout step 4 task 2/2 gen 4/6 turn 7/15 valid=True db -16.97->-17.54
+[13:21:59]   rollout step 4 task 2/2 gen 4/6 turn 8/15 valid=True db -17.54->-17.33
+[13:22:05]   rollout step 4 task 2/2 gen 4/6 turn 9/15 valid=True db -17.33->-17.89
+[13:22:16]   rollout step 4 task 2/2 gen 4/6 turn 10/15 valid=True db -17.89->-18.50
+[13:22:27]   rollout step 4 task 2/2 gen 4/6 turn 11/15 valid=True db -18.50->-19.16
+[13:22:36]   rollout step 4 task 2/2 gen 4/6 turn 12/15 valid=True db -19.16->-19.88
+[13:22:45]   rollout step 4 task 2/2 gen 4/6 turn 13/15 valid=True db -19.88->-20.67
+[13:22:56]   rollout step 4 task 2/2 gen 4/6 turn 14/15 valid=True db -20.67->-21.56
+[13:23:06]   rollout step 4 task 2/2 gen 4/6 turn 15/15 valid=True db -21.56->-22.56
+[13:23:06] trajectory done: step 4 task 2/2 gen 4/6 turns=15 reason=max_turns reward=-0.143  [46/600 trajectories overall]
+[13:23:19]   rollout step 4 task 2/2 gen 5/6 turn 1/15 valid=True db -13.99->-14.85
+[13:23:28]   rollout step 4 task 2/2 gen 5/6 turn 2/15 valid=True db -14.85->-15.69
+[13:23:36]   rollout step 4 task 2/2 gen 5/6 turn 3/15 valid=True db -15.69->-16.19
+[13:23:48]   rollout step 4 task 2/2 gen 5/6 turn 4/15 valid=True db -16.19->-16.70
+[13:23:59]   rollout step 4 task 2/2 gen 5/6 turn 5/15 valid=True db -16.70->-17.24
+[13:24:07]   rollout step 4 task 2/2 gen 5/6 turn 6/15 valid=True db -17.24->-17.52
+[13:24:17]   rollout step 4 task 2/2 gen 5/6 turn 7/15 valid=True db -17.52->-18.05
+[13:24:30]   rollout step 4 task 2/2 gen 5/6 turn 8/15 valid=True db -18.05->-18.60
+[13:24:39]   rollout step 4 task 2/2 gen 5/6 turn 9/15 valid=True db -18.60->-19.19
+[13:24:48]   rollout step 4 task 2/2 gen 5/6 turn 10/15 valid=True db -19.19->-19.83
+[13:25:01]   rollout step 4 task 2/2 gen 5/6 turn 11/15 valid=True db -19.83->-20.51
+[13:25:10]   rollout step 4 task 2/2 gen 5/6 turn 12/15 valid=True db -20.51->-21.27
+[13:25:17]   rollout step 4 task 2/2 gen 5/6 turn 13/15 valid=True db -21.27->-22.09
+[13:25:33]   rollout step 4 task 2/2 gen 5/6 turn 14/15 valid=True db -22.09->-23.02
+[13:25:41]   rollout step 4 task 2/2 gen 5/6 turn 15/15 valid=True db -23.02->-24.06
+[13:25:41] trajectory done: step 4 task 2/2 gen 5/6 turns=15 reason=max_turns reward=0.007  [47/600 trajectories overall]
+[13:25:53]   rollout step 4 task 2/2 gen 6/6 turn 1/15 valid=True db -13.99->-16.94
+[13:25:59]   rollout step 4 task 2/2 gen 6/6 turn 2/15 valid=True db -16.94->-18.20
+[13:26:08]   rollout step 4 task 2/2 gen 6/6 turn 3/15 valid=True db -18.20->-18.58
+[13:26:18]   rollout step 4 task 2/2 gen 6/6 turn 4/15 valid=True db -18.58->-18.93
+[13:26:28]   rollout step 4 task 2/2 gen 6/6 turn 5/15 valid=True db -18.93->-19.82
+[13:26:39]   rollout step 4 task 2/2 gen 6/6 turn 6/15 valid=True db -19.82->-20.84
+[13:26:48]   rollout step 4 task 2/2 gen 6/6 turn 7/15 valid=True db -20.84->-22.06
+[13:27:01]   rollout step 4 task 2/2 gen 6/6 turn 8/15 valid=True db -22.06->-23.90
+[13:27:12]   rollout step 4 task 2/2 gen 6/6 turn 9/15 valid=True db -23.90->-25.88
+[13:27:22]   rollout step 4 task 2/2 gen 6/6 turn 10/15 valid=True db -25.88->-28.62
+[13:27:42]   rollout step 4 task 2/2 gen 6/6 turn 11/15 valid=True db -28.62->-32.99
+[13:28:00]   rollout step 4 task 2/2 gen 6/6 turn 12/15 valid=True db -32.99->-43.32
+[13:28:13]   rollout step 4 task 2/2 gen 6/6 turn 13/15 valid=True db -43.32->-40.18
+[13:28:25]   rollout step 4 task 2/2 gen 6/6 turn 14/15 valid=True db -40.18->-31.09
+[13:28:35]   rollout step 4 task 2/2 gen 6/6 turn 15/15 valid=True db -31.09->-26.67
+[13:28:35] trajectory done: step 4 task 2/2 gen 6/6 turns=15 reason=max_turns reward=1.346  [48/600 trajectories overall]
+[13:28:35] step_stats={"best_improve_mean": 16.717433637906492, "best_improve_p50": 9.31685324351887, "goal_met_pct": 0.0, "group_best_mean": 1.998466935571861, "max_turns_pct": 100.0, "n_resampled_starts": 0, "n_trajectories": 12, "n_turns": 180, "patience_pct": 0.0, "pos_delta_rate": 0.95, "reward_mean": 0.5508466603475521, "reward_p25": -0.35892927244790485, "reward_p50": -0.0683146756481131, "reward_p75": 1.6580303768172266, "stop_pct": 0.0, "valid_turn_rate": 1.0, "wg_range_mean": 2.3908156153474747, "wg_std_mean": 0.8721319010835139, "zero_adv_frac": 0.0}
+[13:29:11]   gradient pass 20/180 turns backpropagated
+[13:29:52]   gradient pass 40/180 turns backpropagated
+[13:30:38]   gradient pass 60/180 turns backpropagated
+[13:31:17]   gradient pass 80/180 turns backpropagated
+[13:32:05]   gradient pass 100/180 turns backpropagated
+[13:32:56]   gradient pass 120/180 turns backpropagated
+[13:33:38]   gradient pass 140/180 turns backpropagated
+[13:34:23]   gradient pass 160/180 turns backpropagated
+[13:35:15]   gradient pass 180/180 turns backpropagated
+[13:35:15] step 4/50 loss=2.11448 reward_mean=0.551 reward_std=1.040 turns_mean=15.0 goal_met=0/12 stop=0 patience=0 kl_mean=0.02860
+[13:35:29]   rollout step 5 task 1/2 gen 1/6 turn 1/15 valid=True db -17.05->-7.98
+[13:35:37]   rollout step 5 task 1/2 gen 1/6 turn 2/15 valid=True db -7.98->-8.07
+[13:35:49]   rollout step 5 task 1/2 gen 1/6 turn 3/15 valid=True db -8.07->-8.36
+[13:36:02]   rollout step 5 task 1/2 gen 1/6 turn 4/15 valid=True db -8.36->-7.91
+[13:36:11]   rollout step 5 task 1/2 gen 1/6 turn 5/15 valid=True db -7.91->-8.33
+[13:36:11] trajectory done: step 5 task 1/2 gen 1/6 turns=5 reason=patience reward=-1.267  [49/600 trajectories overall]
+[13:36:23]   rollout step 5 task 1/2 gen 2/6 turn 1/15 valid=True db -17.05->-22.91
+[13:36:31]   rollout step 5 task 1/2 gen 2/6 turn 2/15 valid=True db -22.91->-42.70
+[13:36:41]   rollout step 5 task 1/2 gen 2/6 turn 3/15 valid=True db -42.70->-20.26
+[13:36:47]   rollout step 5 task 1/2 gen 2/6 turn 4/15 valid=True db -20.26->-20.31
+[13:36:54]   rollout step 5 task 1/2 gen 2/6 turn 5/15 valid=True db -20.31->-3.43
+[13:37:01]   rollout step 5 task 1/2 gen 2/6 turn 6/15 valid=True db -3.43->-2.07
+[13:37:08]   rollout step 5 task 1/2 gen 2/6 turn 7/15 valid=True db -2.07->-1.20
+[13:37:08] trajectory done: step 5 task 1/2 gen 2/6 turns=7 reason=patience reward=0.558  [50/600 trajectories overall]
+[13:37:17]   rollout step 5 task 1/2 gen 3/6 turn 1/15 valid=True db -17.05->-7.60
+[13:37:27]   rollout step 5 task 1/2 gen 3/6 turn 2/15 valid=True db -7.60->-19.34
+[13:37:34]   rollout step 5 task 1/2 gen 3/6 turn 3/15 valid=True db -19.34->-20.08
+[13:37:44]   rollout step 5 task 1/2 gen 3/6 turn 4/15 valid=True db -20.08->-20.46
+[13:37:56]   rollout step 5 task 1/2 gen 3/6 turn 5/15 valid=True db -20.46->-20.84
+[13:38:07]   rollout step 5 task 1/2 gen 3/6 turn 6/15 valid=True db -20.84->-21.45
+[13:38:18]   rollout step 5 task 1/2 gen 3/6 turn 7/15 valid=True db -21.45->-22.02
+[13:38:31]   rollout step 5 task 1/2 gen 3/6 turn 8/15 valid=True db -22.02->-22.36
+[13:38:42]   rollout step 5 task 1/2 gen 3/6 turn 9/15 valid=True db -22.36->-22.70
+[13:38:55]   rollout step 5 task 1/2 gen 3/6 turn 10/15 valid=True db -22.70->-23.04
+[13:39:08]   rollout step 5 task 1/2 gen 3/6 turn 11/15 valid=True db -23.04->-23.38
+[13:39:17]   rollout step 5 task 1/2 gen 3/6 turn 12/15 valid=True db -23.38->-27.75
+[13:39:28]   rollout step 5 task 1/2 gen 3/6 turn 13/15 valid=True db -27.75->-37.00
+[13:39:38]   rollout step 5 task 1/2 gen 3/6 turn 14/15 valid=True db -37.00->-37.90
+[13:39:50]   rollout step 5 task 1/2 gen 3/6 turn 15/15 valid=True db -37.90->-28.07
+[13:39:50] trajectory done: step 5 task 1/2 gen 3/6 turns=15 reason=max_turns reward=1.519  [51/600 trajectories overall]
+[13:40:02]   rollout step 5 task 1/2 gen 4/6 turn 1/15 valid=True db -17.05->-7.98
+[13:40:08]   rollout step 5 task 1/2 gen 4/6 turn 2/15 valid=True db -7.98->-8.31
+[13:40:18]   rollout step 5 task 1/2 gen 4/6 turn 3/15 valid=True db -8.31->-5.52
+[13:40:24]   rollout step 5 task 1/2 gen 4/6 turn 4/15 valid=True db -5.52->-5.78
+[13:40:33]   rollout step 5 task 1/2 gen 4/6 turn 5/15 valid=True db -5.78->-3.83
+[13:40:33] trajectory done: step 5 task 1/2 gen 4/6 turns=5 reason=patience reward=-1.402  [52/600 trajectories overall]
+[13:40:46]   rollout step 5 task 1/2 gen 5/6 turn 1/15 valid=True db -17.05->-24.02
+[13:40:54]   rollout step 5 task 1/2 gen 5/6 turn 2/15 valid=True db -24.02->-36.15
+[13:41:07]   rollout step 5 task 1/2 gen 5/6 turn 3/15 valid=True db -36.15->-20.38
+[13:41:18]   rollout step 5 task 1/2 gen 5/6 turn 4/15 valid=True db -20.38->-32.46
+[13:41:27]   rollout step 5 task 1/2 gen 5/6 turn 5/15 valid=True db -32.46->-29.70
+[13:41:33]   rollout step 5 task 1/2 gen 5/6 turn 6/15 valid=True db -29.70->-34.17
+[13:41:44]   rollout step 5 task 1/2 gen 5/6 turn 7/15 valid=True db -34.17->-22.41
+[13:41:44] trajectory done: step 5 task 1/2 gen 5/6 turns=7 reason=patience reward=1.196  [53/600 trajectories overall]
+[13:41:53]   rollout step 5 task 1/2 gen 6/6 turn 1/15 valid=True db -17.05->-7.60
+[13:42:00]   rollout step 5 task 1/2 gen 6/6 turn 2/15 valid=True db -7.60->-18.56
+[13:42:10]   rollout step 5 task 1/2 gen 6/6 turn 3/15 valid=True db -18.56->-15.34
+[13:42:16]   rollout step 5 task 1/2 gen 6/6 turn 4/15 valid=True db -15.34->-14.64
+[13:42:24]   rollout step 5 task 1/2 gen 6/6 turn 5/15 valid=True db -14.64->-20.63
+[13:42:30]   rollout step 5 task 1/2 gen 6/6 turn 6/15 valid=True db -20.63->-33.98
+[13:42:38]   rollout step 5 task 1/2 gen 6/6 turn 7/15 valid=True db -33.98->-28.35
+[13:42:46]   rollout step 5 task 1/2 gen 6/6 turn 8/15 valid=True db -28.35->-36.11
+[13:42:55]   rollout step 5 task 1/2 gen 6/6 turn 9/15 valid=True db -36.11->-22.75
+[13:43:03]   rollout step 5 task 1/2 gen 6/6 turn 10/15 valid=True db -22.75->-17.53
+[13:43:13]   rollout step 5 task 1/2 gen 6/6 turn 11/15 valid=True db -17.53->-22.29
+[13:43:25]   rollout step 5 task 1/2 gen 6/6 turn 12/15 valid=True db -22.29->-17.80
+[13:43:33]   rollout step 5 task 1/2 gen 6/6 turn 13/15 valid=True db -17.80->-14.79
+[13:43:33] trajectory done: step 5 task 1/2 gen 6/6 turns=13 reason=patience reward=0.866  [54/600 trajectories overall]
+[13:43:44]   rollout step 5 task 2/2 gen 1/6 turn 1/15 valid=True db -11.68->-9.02
+[13:43:52]   rollout step 5 task 2/2 gen 1/6 turn 2/15 valid=True db -9.02->-11.48
+[13:44:01]   rollout step 5 task 2/2 gen 1/6 turn 3/15 valid=True db -11.48->-14.10
+[13:44:09]   rollout step 5 task 2/2 gen 1/6 turn 4/15 valid=True db -14.10->-16.97
+[13:44:20]   rollout step 5 task 2/2 gen 1/6 turn 5/15 valid=True db -16.97->-20.27
+[13:44:33]   rollout step 5 task 2/2 gen 1/6 turn 6/15 valid=True db -20.27->-20.43
+[13:44:45]   rollout step 5 task 2/2 gen 1/6 turn 7/15 valid=True db -20.43->-17.59
+[13:44:54]   rollout step 5 task 2/2 gen 1/6 turn 8/15 valid=True db -17.59->-15.38
+[13:45:06]   rollout step 5 task 2/2 gen 1/6 turn 9/15 valid=True db -15.38->-17.43
+[13:45:22]   rollout step 5 task 2/2 gen 1/6 turn 10/15 valid=True db -17.43->-19.63
+[13:45:22] trajectory done: step 5 task 2/2 gen 1/6 turns=10 reason=patience reward=0.436  [55/600 trajectories overall]
+[13:45:33]   rollout step 5 task 2/2 gen 2/6 turn 1/15 valid=True db -11.68->-9.02
+[13:45:40]   rollout step 5 task 2/2 gen 2/6 turn 2/15 valid=True db -9.02->-11.48
+[13:45:50]   rollout step 5 task 2/2 gen 2/6 turn 3/15 valid=True db -11.48->-9.18
+[13:45:57]   rollout step 5 task 2/2 gen 2/6 turn 4/15 valid=True db -9.18->-11.31
+[13:46:05]   rollout step 5 task 2/2 gen 2/6 turn 5/15 valid=True db -11.31->-13.53
+[13:46:17]   rollout step 5 task 2/2 gen 2/6 turn 6/15 valid=True db -13.53->-13.80
+[13:46:27]   rollout step 5 task 2/2 gen 2/6 turn 7/15 valid=True db -13.80->-14.04
+[13:46:37]   rollout step 5 task 2/2 gen 2/6 turn 8/15 valid=True db -14.04->-14.25
+[13:46:47]   rollout step 5 task 2/2 gen 2/6 turn 9/15 valid=True db -14.25->-12.61
+[13:46:55]   rollout step 5 task 2/2 gen 2/6 turn 10/15 valid=True db -12.61->-14.13
+[13:47:06]   rollout step 5 task 2/2 gen 2/6 turn 11/15 valid=True db -14.13->-15.67
+[13:47:20]   rollout step 5 task 2/2 gen 2/6 turn 12/15 valid=True db -15.67->-17.24
+[13:47:38]   rollout step 5 task 2/2 gen 2/6 turn 13/15 valid=True db -17.24->-18.87
+[13:47:50]   rollout step 5 task 2/2 gen 2/6 turn 14/15 valid=True db -18.87->-18.96
+[13:47:56]   rollout step 5 task 2/2 gen 2/6 turn 15/15 valid=True db -18.96->-19.04
+[13:47:56] trajectory done: step 5 task 2/2 gen 2/6 turns=15 reason=max_turns reward=0.186  [56/600 trajectories overall]
+[13:48:06]   rollout step 5 task 2/2 gen 3/6 turn 1/15 valid=True db -11.68->-1.63
+[13:48:12]   rollout step 5 task 2/2 gen 3/6 turn 2/15 valid=True db -1.63->-2.84
+[13:48:22]   rollout step 5 task 2/2 gen 3/6 turn 3/15 valid=True db -2.84->-3.13
+[13:48:31]   rollout step 5 task 2/2 gen 3/6 turn 4/15 valid=True db -3.13->-3.40
+[13:48:43]   rollout step 5 task 2/2 gen 3/6 turn 5/15 valid=True db -3.40->-0.12
+[13:48:43] trajectory done: step 5 task 2/2 gen 3/6 turns=5 reason=patience reward=-1.354  [57/600 trajectories overall]
+[13:48:58]   rollout step 5 task 2/2 gen 4/6 turn 1/15 valid=True db -11.68->-9.02
+[13:49:07]   rollout step 5 task 2/2 gen 4/6 turn 2/15 valid=True db -9.02->-11.48
+[13:49:16]   rollout step 5 task 2/2 gen 4/6 turn 3/15 valid=True db -11.48->-14.10
+[13:49:27]   rollout step 5 task 2/2 gen 4/6 turn 4/15 valid=True db -14.10->-16.97
+[13:49:45]   rollout step 5 task 2/2 gen 4/6 turn 5/15 valid=True db -16.97->-17.21
+[13:49:54]   rollout step 5 task 2/2 gen 4/6 turn 6/15 valid=True db -17.21->-17.42
+[13:50:03]   rollout step 5 task 2/2 gen 4/6 turn 7/15 valid=True db -17.42->-17.69
+[13:50:16]   rollout step 5 task 2/2 gen 4/6 turn 8/15 valid=True db -17.69->-15.55
+[13:50:29]   rollout step 5 task 2/2 gen 4/6 turn 9/15 valid=True db -15.55->-17.53

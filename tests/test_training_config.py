@@ -138,6 +138,35 @@ class ExampleRecipeTests(unittest.TestCase):
         self.assertEqual(cfg.train.max_turns, 15)
         self.assertEqual(cfg.model.max_seq_length, 2048)
 
+    def test_multiturn_4b_instruct_recipe_is_stable_and_resumable_via_cli(self):
+        data = load_yaml(ROOT / "configs/multiturn_qwen3_4b_instruct.yaml")
+        cfg = from_mapping(MultiturnConfig, data)
+        self.assertEqual(cfg.model.name, "unsloth/Qwen3-4B-Instruct-2507-bnb-4bit")
+        self.assertEqual(cfg.model.max_seq_length, 2048)
+        self.assertEqual(cfg.train.steps, 50)
+        self.assertEqual(cfg.train.generations, 6)
+        self.assertAlmostEqual(cfg.train.beta, 0.01)
+        self.assertAlmostEqual(cfg.data.min_start_headroom_db, 40.0)
+        self.assertEqual(cfg.runtime.resume_adapter, "")
+        self.assertFalse(cfg.runtime.allow_raw_base)
+        args = build_multiturn_parser().parse_args(
+            [
+                "--config",
+                str(ROOT / "configs/multiturn_qwen3_4b_instruct.yaml"),
+                "--resume-adapter",
+                "outputs/run/checkpoint-20",
+                "--output-dir",
+                "outputs/from-ckpt20",
+                "--start-seed",
+                "5286",
+            ]
+        )
+        merged = resolve_multiturn_config(args)
+        self.assertEqual(merged.runtime.resume_adapter, "outputs/run/checkpoint-20")
+        self.assertEqual(merged.runtime.output_dir, "outputs/from-ckpt20")
+        self.assertEqual(merged.data.start_seed, 5286)
+        self.assertEqual(merged.train.generations, 6)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,0 +1,102 @@
+Unsloth 2026.5.2 patched 28 layers with 28 QKV layers, 28 O layers and 28 MLP layers.
+preflight: {"cuda": "12.8", "gpu": "NVIDIA RTX 2000 Ada Generation Laptop GPU", "qucs_s": "/mnt/c/Program Files/Qucs-S/bin/qucs-s.exe", "qucsator_rf": "/mnt/c/Program Files/Qucs-S/bin/qucsator_rf.exe"}
+🦥 Unsloth: Will patch your computer to enable 2x faster free finetuning.
+🦥 Unsloth Zoo will now patch everything to make training faster!
+==((====))==  Unsloth 2026.5.2: Fast Qwen3 patching. Transformers: 4.56.2.
+   \\   /|    NVIDIA RTX 2000 Ada Generation Laptop GPU. Num GPUs = 1. Max memory: 7.996 GB. Platform: Linux.
+O^O/ \_/ \    Torch: 2.10.0+cu128. CUDA: 8.9. CUDA Toolkit: 12.8. Triton: 3.6.0
+\        /    Bfloat16 = TRUE. FA [Xformers = 0.0.35. FA2 = False]
+ "-____-"     Free license: http://github.com/unslothai/unsloth
+Unsloth: Fast downloading is enabled - ignore downloading bars which are red colored!
+unsloth/Qwen3-1.7B-bnb-4bit does not have a padding token! Will use pad_token = <|PAD_TOKEN|>.
+[15:28:19]   rollout step 1 task 1/2 gen 1/4 turn 1/8 valid=True db -10.79->-10.79
+[15:28:19] trajectory done: step 1 task 1/2 gen 1/4 turns=1 reason=stop reward=0.000  [1/40 trajectories overall]
+[15:28:24]   rollout step 1 task 1/2 gen 2/4 turn 1/8 valid=True db -10.79->-10.79
+[15:28:24] trajectory done: step 1 task 1/2 gen 2/4 turns=1 reason=stop reward=0.000  [2/40 trajectories overall]
+[15:28:28]   rollout step 1 task 1/2 gen 3/4 turn 1/8 valid=True db -10.79->-10.79
+[15:28:28] trajectory done: step 1 task 1/2 gen 3/4 turns=1 reason=stop reward=0.000  [3/40 trajectories overall]
+[15:28:33]   rollout step 1 task 1/2 gen 4/4 turn 1/8 valid=True db -10.79->-10.79
+[15:28:33] trajectory done: step 1 task 1/2 gen 4/4 turns=1 reason=stop reward=0.000  [4/40 trajectories overall]
+[15:28:38]   rollout step 1 task 2/2 gen 1/4 turn 1/8 valid=True db -16.77->-16.77
+[15:28:38] trajectory done: step 1 task 2/2 gen 1/4 turns=1 reason=stop reward=0.000  [5/40 trajectories overall]
+[15:28:42]   rollout step 1 task 2/2 gen 2/4 turn 1/8 valid=True db -16.77->-16.77
+[15:28:42] trajectory done: step 1 task 2/2 gen 2/4 turns=1 reason=stop reward=0.000  [6/40 trajectories overall]
+[15:28:46]   rollout step 1 task 2/2 gen 3/4 turn 1/8 valid=True db -16.77->-16.77
+[15:28:46] trajectory done: step 1 task 2/2 gen 3/4 turns=1 reason=stop reward=0.000  [7/40 trajectories overall]
+[15:28:52]   rollout step 1 task 2/2 gen 4/4 turn 1/8 valid=True db -16.77->-16.77
+[15:28:52] trajectory done: step 1 task 2/2 gen 4/4 turns=1 reason=stop reward=0.000  [8/40 trajectories overall]
+[15:28:52] step 1/5 loss=0.00000 reward_mean=0.000 reward_std=0.000 turns_mean=1.0 goal_met=0/8 stop=8 patience=0
+[15:28:53] saved checkpoint to /home/yue1guo2/workspace/qucs-llm-optimizer/outputs/2026-09-09-1527-multiturn-smoke-2task5step/checkpoint-1
+[15:28:58]   rollout step 2 task 1/2 gen 1/4 turn 1/8 valid=True db -26.59->-26.59
+[15:28:58] trajectory done: step 2 task 1/2 gen 1/4 turns=1 reason=stop reward=0.000  [9/40 trajectories overall]
+[15:29:04]   rollout step 2 task 1/2 gen 2/4 turn 1/8 valid=True db -26.59->-26.59
+[15:29:04] trajectory done: step 2 task 1/2 gen 2/4 turns=1 reason=stop reward=0.000  [10/40 trajectories overall]
+[15:29:10]   rollout step 2 task 1/2 gen 3/4 turn 1/8 valid=True db -26.59->-26.59
+[15:29:10] trajectory done: step 2 task 1/2 gen 3/4 turns=1 reason=stop reward=0.000  [11/40 trajectories overall]
+[15:29:14]   rollout step 2 task 1/2 gen 4/4 turn 1/8 valid=True db -26.59->-26.59
+[15:29:14] trajectory done: step 2 task 1/2 gen 4/4 turns=1 reason=stop reward=0.000  [12/40 trajectories overall]
+[15:29:17]   rollout step 2 task 2/2 gen 1/4 turn 1/8 valid=True db -8.43->-8.43
+[15:29:17] trajectory done: step 2 task 2/2 gen 1/4 turns=1 reason=stop reward=0.000  [13/40 trajectories overall]
+[15:29:21]   rollout step 2 task 2/2 gen 2/4 turn 1/8 valid=True db -8.43->-8.43
+[15:29:21] trajectory done: step 2 task 2/2 gen 2/4 turns=1 reason=stop reward=0.000  [14/40 trajectories overall]
+[15:29:24]   rollout step 2 task 2/2 gen 3/4 turn 1/8 valid=True db -8.43->-8.43
+[15:29:24] trajectory done: step 2 task 2/2 gen 3/4 turns=1 reason=stop reward=0.000  [15/40 trajectories overall]
+[15:29:27]   rollout step 2 task 2/2 gen 4/4 turn 1/8 valid=True db -8.43->-8.43
+[15:29:27] trajectory done: step 2 task 2/2 gen 4/4 turns=1 reason=stop reward=0.000  [16/40 trajectories overall]
+[15:29:27] step 2/5 loss=0.00000 reward_mean=0.000 reward_std=0.000 turns_mean=1.0 goal_met=0/8 stop=8 patience=0
+[15:29:28] saved checkpoint to /home/yue1guo2/workspace/qucs-llm-optimizer/outputs/2026-09-09-1527-multiturn-smoke-2task5step/checkpoint-2
+[15:29:31]   rollout step 3 task 1/2 gen 1/4 turn 1/8 valid=True db -16.92->-16.92
+[15:29:31] trajectory done: step 3 task 1/2 gen 1/4 turns=1 reason=stop reward=0.000  [17/40 trajectories overall]
+[15:29:35]   rollout step 3 task 1/2 gen 2/4 turn 1/8 valid=True db -16.92->-16.92
+[15:29:35] trajectory done: step 3 task 1/2 gen 2/4 turns=1 reason=stop reward=0.000  [18/40 trajectories overall]
+[15:29:40]   rollout step 3 task 1/2 gen 3/4 turn 1/8 valid=True db -16.92->-16.92
+[15:29:40] trajectory done: step 3 task 1/2 gen 3/4 turns=1 reason=stop reward=0.000  [19/40 trajectories overall]
+[15:29:44]   rollout step 3 task 1/2 gen 4/4 turn 1/8 valid=True db -16.92->-16.92
+[15:29:44] trajectory done: step 3 task 1/2 gen 4/4 turns=1 reason=stop reward=0.000  [20/40 trajectories overall]
+[15:29:48]   rollout step 3 task 2/2 gen 1/4 turn 1/8 valid=True db -11.44->-11.44
+[15:29:48] trajectory done: step 3 task 2/2 gen 1/4 turns=1 reason=stop reward=0.000  [21/40 trajectories overall]
+[15:29:54]   rollout step 3 task 2/2 gen 2/4 turn 1/8 valid=True db -11.44->-11.44
+[15:29:54] trajectory done: step 3 task 2/2 gen 2/4 turns=1 reason=stop reward=0.000  [22/40 trajectories overall]
+[15:29:57]   rollout step 3 task 2/2 gen 3/4 turn 1/8 valid=True db -11.44->-11.44
+[15:29:57] trajectory done: step 3 task 2/2 gen 3/4 turns=1 reason=stop reward=0.000  [23/40 trajectories overall]
+[15:30:00]   rollout step 3 task 2/2 gen 4/4 turn 1/8 valid=True db -11.44->-11.44
+[15:30:00] trajectory done: step 3 task 2/2 gen 4/4 turns=1 reason=stop reward=0.000  [24/40 trajectories overall]
+[15:30:00] step 3/5 loss=0.00000 reward_mean=0.000 reward_std=0.000 turns_mean=1.0 goal_met=0/8 stop=8 patience=0
+[15:30:01] saved checkpoint to /home/yue1guo2/workspace/qucs-llm-optimizer/outputs/2026-09-09-1527-multiturn-smoke-2task5step/checkpoint-3
+[15:30:06]   rollout step 4 task 1/2 gen 1/4 turn 1/8 valid=True db -14.51->-14.51
+[15:30:06] trajectory done: step 4 task 1/2 gen 1/4 turns=1 reason=stop reward=0.000  [25/40 trajectories overall]
+[15:30:11]   rollout step 4 task 1/2 gen 2/4 turn 1/8 valid=True db -14.51->-14.51
+[15:30:11] trajectory done: step 4 task 1/2 gen 2/4 turns=1 reason=stop reward=0.000  [26/40 trajectories overall]
+[15:30:15]   rollout step 4 task 1/2 gen 3/4 turn 1/8 valid=True db -14.51->-14.51
+[15:30:15] trajectory done: step 4 task 1/2 gen 3/4 turns=1 reason=stop reward=0.000  [27/40 trajectories overall]
+[15:30:19]   rollout step 4 task 1/2 gen 4/4 turn 1/8 valid=True db -14.51->-14.51
+[15:30:19] trajectory done: step 4 task 1/2 gen 4/4 turns=1 reason=stop reward=0.000  [28/40 trajectories overall]
+[15:30:22]   rollout step 4 task 2/2 gen 1/4 turn 1/8 valid=True db -7.73->-7.73
+[15:30:22] trajectory done: step 4 task 2/2 gen 1/4 turns=1 reason=stop reward=0.000  [29/40 trajectories overall]
+[15:30:26]   rollout step 4 task 2/2 gen 2/4 turn 1/8 valid=True db -7.73->-7.73
+[15:30:26] trajectory done: step 4 task 2/2 gen 2/4 turns=1 reason=stop reward=0.000  [30/40 trajectories overall]
+[15:30:31]   rollout step 4 task 2/2 gen 3/4 turn 1/8 valid=True db -7.73->-7.73
+[15:30:31] trajectory done: step 4 task 2/2 gen 3/4 turns=1 reason=stop reward=0.000  [31/40 trajectories overall]
+[15:30:33]   rollout step 4 task 2/2 gen 4/4 turn 1/8 valid=True db -7.73->-7.73
+[15:30:33] trajectory done: step 4 task 2/2 gen 4/4 turns=1 reason=stop reward=0.000  [32/40 trajectories overall]
+[15:30:33] step 4/5 loss=0.00000 reward_mean=0.000 reward_std=0.000 turns_mean=1.0 goal_met=0/8 stop=8 patience=0
+[15:30:34] saved checkpoint to /home/yue1guo2/workspace/qucs-llm-optimizer/outputs/2026-09-09-1527-multiturn-smoke-2task5step/checkpoint-4
+[15:30:39]   rollout step 5 task 1/2 gen 1/4 turn 1/8 valid=True db -11.51->-11.51
+[15:30:39] trajectory done: step 5 task 1/2 gen 1/4 turns=1 reason=stop reward=0.000  [33/40 trajectories overall]
+[15:30:43]   rollout step 5 task 1/2 gen 2/4 turn 1/8 valid=True db -11.51->-11.51
+[15:30:43] trajectory done: step 5 task 1/2 gen 2/4 turns=1 reason=stop reward=0.000  [34/40 trajectories overall]
+[15:30:49]   rollout step 5 task 1/2 gen 3/4 turn 1/8 valid=True db -11.51->-11.51
+[15:30:49] trajectory done: step 5 task 1/2 gen 3/4 turns=1 reason=stop reward=0.000  [35/40 trajectories overall]
+[15:30:52]   rollout step 5 task 1/2 gen 4/4 turn 1/8 valid=True db -11.51->-11.51
+[15:30:52] trajectory done: step 5 task 1/2 gen 4/4 turns=1 reason=stop reward=0.000  [36/40 trajectories overall]
+[15:30:57]   rollout step 5 task 2/2 gen 1/4 turn 1/8 valid=True db -20.54->-20.54
+[15:30:57] trajectory done: step 5 task 2/2 gen 1/4 turns=1 reason=stop reward=0.000  [37/40 trajectories overall]
+[15:31:01]   rollout step 5 task 2/2 gen 2/4 turn 1/8 valid=True db -20.54->-20.54
+[15:31:01] trajectory done: step 5 task 2/2 gen 2/4 turns=1 reason=stop reward=0.000  [38/40 trajectories overall]
+[15:31:06]   rollout step 5 task 2/2 gen 3/4 turn 1/8 valid=True db -20.54->-20.54
+[15:31:06] trajectory done: step 5 task 2/2 gen 3/4 turns=1 reason=stop reward=0.000  [39/40 trajectories overall]
+[15:31:10]   rollout step 5 task 2/2 gen 4/4 turn 1/8 valid=True db -20.54->-20.54
+[15:31:10] trajectory done: step 5 task 2/2 gen 4/4 turns=1 reason=stop reward=0.000  [40/40 trajectories overall]
+[15:31:10] step 5/5 loss=0.00000 reward_mean=0.000 reward_std=0.000 turns_mean=1.0 goal_met=0/8 stop=8 patience=0
+[15:31:11] saved checkpoint to /home/yue1guo2/workspace/qucs-llm-optimizer/outputs/2026-09-09-1527-multiturn-smoke-2task5step/checkpoint-5
+[15:31:12] saved final LoRA adapter to /home/yue1guo2/workspace/qucs-llm-optimizer/outputs/2026-09-09-1527-multiturn-smoke-2task5step/final_lora

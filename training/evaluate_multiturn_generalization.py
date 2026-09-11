@@ -25,6 +25,7 @@ import json
 import statistics
 from collections import defaultdict
 from pathlib import Path
+from types import SimpleNamespace
 
 import random
 
@@ -108,7 +109,19 @@ def main(argv: list[str] | None = None) -> None:
     if args.adapter:
         model.load_adapter(args.adapter, adapter_name="default")
 
-    generate_fn = _make_generate_fn(model, tokenizer, args)
+    # ``_make_generate_fn`` expects a ``MultiturnConfig``-shaped object with a
+    # nested ``.train`` (max_new_tokens/temperature), not this script's flat
+    # argparse Namespace -- wrap the two fields it actually reads.
+    generate_fn = _make_generate_fn(
+        model,
+        tokenizer,
+        SimpleNamespace(
+            train=SimpleNamespace(
+                max_new_tokens=args.max_new_tokens,
+                temperature=args.temperature,
+            )
+        ),
+    )
 
     if args.num_random_goals > 0:
         freq_range = (args.goal_freq_min_ghz * 1e9, args.goal_freq_max_ghz * 1e9)

@@ -1,0 +1,255 @@
+Unsloth 2026.5.2 patched 28 layers with 28 QKV layers, 28 O layers and 28 MLP layers.
+preflight: {"cuda": "12.8", "gpu": "NVIDIA RTX 2000 Ada Generation Laptop GPU", "qucs_s": "/mnt/c/Program Files/Qucs-S/bin/qucs-s.exe", "qucsator_rf": "/mnt/c/Program Files/Qucs-S/bin/qucsator_rf.exe"}
+🦥 Unsloth: Will patch your computer to enable 2x faster free finetuning.
+🦥 Unsloth Zoo will now patch everything to make training faster!
+==((====))==  Unsloth 2026.5.2: Fast Qwen3 patching. Transformers: 4.56.2.
+   \\   /|    NVIDIA RTX 2000 Ada Generation Laptop GPU. Num GPUs = 1. Max memory: 7.996 GB. Platform: Linux.
+O^O/ \_/ \    Torch: 2.10.0+cu128. CUDA: 8.9. CUDA Toolkit: 12.8. Triton: 3.6.0
+\        /    Bfloat16 = TRUE. FA [Xformers = 0.0.35. FA2 = False]
+ "-____-"     Free license: http://github.com/unslothai/unsloth
+Unsloth: Fast downloading is enabled - ignore downloading bars which are red colored!
+unsloth/Qwen3-1.7B-bnb-4bit does not have a padding token! Will use pad_token = <|PAD_TOKEN|>.
+[15:37:44]   rollout step 1 task 1/2 gen 1/4 turn 1/8 valid=True db -10.79->-10.90
+[15:37:50]   rollout step 1 task 1/2 gen 1/4 turn 2/8 valid=True db -10.90->-8.78
+[15:37:55]   rollout step 1 task 1/2 gen 1/4 turn 3/8 valid=True db -8.78->-12.92
+[15:38:01]   rollout step 1 task 1/2 gen 1/4 turn 4/8 valid=True db -12.92->-9.15
+[15:38:06]   rollout step 1 task 1/2 gen 1/4 turn 5/8 valid=True db -9.15->-12.69
+[15:38:12]   rollout step 1 task 1/2 gen 1/4 turn 6/8 valid=True db -12.69->-12.78
+[15:38:12] trajectory done: step 1 task 1/2 gen 1/4 turns=6 reason=patience reward=2.090  [1/40 trajectories overall]
+[15:38:19]   rollout step 1 task 1/2 gen 2/4 turn 1/8 valid=True db -10.79->-8.71
+[15:38:26]   rollout step 1 task 1/2 gen 2/4 turn 2/8 valid=True db -8.71->-8.71
+[15:38:34]   rollout step 1 task 1/2 gen 2/4 turn 3/8 valid=True db -8.71->-8.95
+[15:38:34] trajectory done: step 1 task 1/2 gen 2/4 turns=3 reason=patience reward=-0.551  [2/40 trajectories overall]
+[15:38:40]   rollout step 1 task 1/2 gen 3/4 turn 1/8 valid=True db -10.79->-10.90
+[15:38:48]   rollout step 1 task 1/2 gen 3/4 turn 2/8 valid=True db -10.90->-9.06
+[15:38:53]   rollout step 1 task 1/2 gen 3/4 turn 3/8 valid=True db -9.06->-13.23
+[15:39:06]   rollout step 1 task 1/2 gen 3/4 turn 4/8 valid=True db -13.23->-13.85
+[15:39:15]   rollout step 1 task 1/2 gen 3/4 turn 5/8 valid=True db -13.85->-10.30
+[15:39:22]   rollout step 1 task 1/2 gen 3/4 turn 6/8 valid=True db -10.30->-9.58
+[15:39:27]   rollout step 1 task 1/2 gen 3/4 turn 7/8 valid=True db -9.58->-12.91
+[15:39:27] trajectory done: step 1 task 1/2 gen 3/4 turns=7 reason=patience reward=2.782  [3/40 trajectories overall]
+[15:39:35]   rollout step 1 task 1/2 gen 4/4 turn 1/8 valid=True db -10.79->-10.90
+[15:39:44]   rollout step 1 task 1/2 gen 4/4 turn 2/8 valid=True db -10.90->-10.98
+[15:39:49]   rollout step 1 task 1/2 gen 4/4 turn 3/8 valid=True db -10.98->-8.83
+[15:39:49] trajectory done: step 1 task 1/2 gen 4/4 turns=3 reason=patience reward=-0.456  [4/40 trajectories overall]
+[15:39:57]   rollout step 1 task 2/2 gen 1/4 turn 1/8 valid=True db -16.77->-22.80
+[15:40:02]   rollout step 1 task 2/2 gen 1/4 turn 2/8 valid=True db -22.80->-6.32
+[15:40:07]   rollout step 1 task 2/2 gen 1/4 turn 3/8 valid=True db -6.32->-0.85
+[15:40:14]   rollout step 1 task 2/2 gen 1/4 turn 4/8 valid=True db -0.85->-6.87
+[15:40:14] trajectory done: step 1 task 2/2 gen 1/4 turns=4 reason=patience reward=1.245  [5/40 trajectories overall]
+[15:40:23]   rollout step 1 task 2/2 gen 2/4 turn 1/8 valid=True db -16.77->-22.76
+[15:40:29]   rollout step 1 task 2/2 gen 2/4 turn 2/8 valid=True db -22.76->-6.04
+[15:40:35]   rollout step 1 task 2/2 gen 2/4 turn 3/8 valid=True db -6.04->-20.64
+[15:40:46]   rollout step 1 task 2/2 gen 2/4 turn 4/8 valid=True db -20.64->-26.88
+[15:40:54]   rollout step 1 task 2/2 gen 2/4 turn 5/8 valid=True db -26.88->-19.39
+[15:40:58]   rollout step 1 task 2/2 gen 2/4 turn 6/8 valid=True db -19.39->-30.04
+[15:40:58] trajectory done: step 1 task 2/2 gen 2/4 turns=6 reason=goal_met reward=13.271  [6/40 trajectories overall]
+[15:41:11]   rollout step 1 task 2/2 gen 3/4 turn 1/8 valid=True db -16.77->-9.82
+[15:41:19]   rollout step 1 task 2/2 gen 3/4 turn 2/8 valid=True db -9.82->-9.82
+[15:41:26]   rollout step 1 task 2/2 gen 3/4 turn 3/8 valid=True db -9.82->-9.68
+[15:41:26] trajectory done: step 1 task 2/2 gen 3/4 turns=3 reason=patience reward=-2.129  [7/40 trajectories overall]
+[15:41:38]   rollout step 1 task 2/2 gen 4/4 turn 1/8 valid=True db -16.77->-16.58
+[15:41:43]   rollout step 1 task 2/2 gen 4/4 turn 2/8 valid=True db -16.58->-16.31
+[15:41:51]   rollout step 1 task 2/2 gen 4/4 turn 3/8 valid=True db -16.31->-16.56
+[15:41:51] trajectory done: step 1 task 2/2 gen 4/4 turns=3 reason=patience reward=-0.064  [8/40 trajectories overall]
+[15:41:59]   gradient pass 20/35 turns backpropagated
+[15:42:04]   gradient pass 35/35 turns backpropagated
+[15:42:05] step 1/5 loss=4.52443 reward_mean=2.023 reward_std=4.501 turns_mean=4.4 goal_met=1/8 stop=0 patience=7
+[15:42:10] saved checkpoint to /home/yue1guo2/workspace/qucs-llm-optimizer/outputs/2026-09-09-1537-multiturn-smoke-2task5step/checkpoint-1
+[15:42:19]   rollout step 2 task 1/2 gen 1/4 turn 1/8 valid=True db -26.59->-17.80
+[15:42:28]   rollout step 2 task 1/2 gen 1/4 turn 2/8 valid=True db -17.80->-28.09
+[15:42:34]   rollout step 2 task 1/2 gen 1/4 turn 3/8 valid=True db -28.09->-19.87
+[15:42:41]   rollout step 2 task 1/2 gen 1/4 turn 4/8 valid=True db -19.87->-16.97
+[15:42:47]   rollout step 2 task 1/2 gen 1/4 turn 5/8 valid=True db -16.97->-19.59
+[15:42:47] trajectory done: step 2 task 1/2 gen 1/4 turns=5 reason=patience reward=-1.053  [9/40 trajectories overall]
+[15:42:53]   rollout step 2 task 1/2 gen 2/4 turn 1/8 valid=True db -26.59->-17.80
+[15:43:00]   rollout step 2 task 1/2 gen 2/4 turn 2/8 valid=True db -17.80->-2.59
+[15:43:05]   rollout step 2 task 1/2 gen 2/4 turn 3/8 valid=True db -2.59->-16.52
+[15:43:05] trajectory done: step 2 task 1/2 gen 2/4 turns=3 reason=patience reward=-3.024  [10/40 trajectories overall]
+[15:43:10]   rollout step 2 task 1/2 gen 3/4 turn 1/8 valid=True db -26.59->-17.98
+[15:43:17]   rollout step 2 task 1/2 gen 3/4 turn 2/8 valid=True db -17.98->-2.88
+[15:43:25]   rollout step 2 task 1/2 gen 3/4 turn 3/8 valid=True db -2.88->-16.72
+[15:43:25] trajectory done: step 2 task 1/2 gen 3/4 turns=3 reason=patience reward=-2.962  [11/40 trajectories overall]
+[15:43:32]   rollout step 2 task 1/2 gen 4/4 turn 1/8 valid=True db -26.59->-28.32
+[15:43:38]   rollout step 2 task 1/2 gen 4/4 turn 2/8 valid=True db -28.32->-29.19
+[15:43:47]   rollout step 2 task 1/2 gen 4/4 turn 3/8 valid=True db -29.19->-21.77
+[15:43:51]   rollout step 2 task 1/2 gen 4/4 turn 4/8 valid=True db -21.77->-30.68
+[15:43:51] trajectory done: step 2 task 1/2 gen 4/4 turns=4 reason=goal_met reward=4.081  [12/40 trajectories overall]
+[15:43:59]   rollout step 2 task 2/2 gen 1/4 turn 1/8 valid=True db -8.43->-8.79
+[15:44:06]   rollout step 2 task 2/2 gen 1/4 turn 2/8 valid=True db -8.79->-10.94
+[15:44:15]   rollout step 2 task 2/2 gen 1/4 turn 3/8 valid=True db -10.94->-10.94
+[15:44:21]   rollout step 2 task 2/2 gen 1/4 turn 4/8 valid=True db -10.94->-10.90
+[15:44:30]   rollout step 2 task 2/2 gen 1/4 turn 5/8 valid=True db -10.90->-15.80
+[15:44:39]   rollout step 2 task 2/2 gen 1/4 turn 6/8 valid=True db -15.80->-13.00
+[15:44:45]   rollout step 2 task 2/2 gen 1/4 turn 7/8 valid=True db -13.00->-13.45
+[15:44:54]   rollout step 2 task 2/2 gen 1/4 turn 8/8 valid=True db -13.45->-24.04
+[15:44:54] trajectory done: step 2 task 2/2 gen 1/4 turns=8 reason=max_turns reward=15.618  [13/40 trajectories overall]
+[15:45:03]   rollout step 2 task 2/2 gen 2/4 turn 1/8 valid=True db -8.43->-8.05
+[15:45:09]   rollout step 2 task 2/2 gen 2/4 turn 2/8 valid=True db -8.05->-8.40
+[15:45:17]   rollout step 2 task 2/2 gen 2/4 turn 3/8 valid=True db -8.40->-6.55
+[15:45:17] trajectory done: step 2 task 2/2 gen 2/4 turns=3 reason=patience reward=-0.561  [14/40 trajectories overall]
+[15:45:23]   rollout step 2 task 2/2 gen 3/4 turn 1/8 valid=False db -8.43->-8.43
+[15:45:30]   rollout step 2 task 2/2 gen 3/4 turn 2/8 valid=True db -8.43->-7.36
+[15:45:38]   rollout step 2 task 2/2 gen 3/4 turn 3/8 valid=True db -7.36->-7.36
+[15:45:38] trajectory done: step 2 task 2/2 gen 3/4 turns=3 reason=patience reward=-0.320  [15/40 trajectories overall]
+[15:45:44]   rollout step 2 task 2/2 gen 4/4 turn 1/8 valid=True db -8.43->-8.76
+[15:45:49]   rollout step 2 task 2/2 gen 4/4 turn 2/8 valid=True db -8.76->-6.90
+[15:45:55]   rollout step 2 task 2/2 gen 4/4 turn 3/8 valid=True db -6.90->-7.30
+[15:46:04]   rollout step 2 task 2/2 gen 4/4 turn 4/8 valid=True db -7.30->-7.65
+[15:46:04] trajectory done: step 2 task 2/2 gen 4/4 turns=4 reason=patience reward=0.001  [16/40 trajectories overall]
+[15:46:11]   gradient pass 20/33 turns backpropagated
+[15:46:16]   gradient pass 33/33 turns backpropagated
+[15:46:16] step 2/5 loss=6.66809 reward_mean=1.472 reward_std=5.730 turns_mean=4.1 goal_met=1/8 stop=0 patience=6
+[15:46:18] saved checkpoint to /home/yue1guo2/workspace/qucs-llm-optimizer/outputs/2026-09-09-1537-multiturn-smoke-2task5step/checkpoint-2
+[15:46:28]   rollout step 3 task 1/2 gen 1/4 turn 1/8 valid=True db -16.92->-16.87
+[15:46:34]   rollout step 3 task 1/2 gen 1/4 turn 2/8 valid=True db -16.87->-17.12
+[15:46:45]   rollout step 3 task 1/2 gen 1/4 turn 3/8 valid=True db -17.12->-19.01
+[15:46:56]   rollout step 3 task 1/2 gen 1/4 turn 4/8 valid=True db -19.01->-20.11
+[15:47:05]   rollout step 3 task 1/2 gen 1/4 turn 5/8 valid=True db -20.11->-20.61
+[15:47:13]   rollout step 3 task 1/2 gen 1/4 turn 6/8 valid=True db -20.61->-16.85
+[15:47:20]   rollout step 3 task 1/2 gen 1/4 turn 7/8 valid=True db -16.85->-17.60
+[15:47:27]   rollout step 3 task 1/2 gen 1/4 turn 8/8 valid=True db -17.60->-15.12
+[15:47:27] trajectory done: step 3 task 1/2 gen 1/4 turns=8 reason=patience reward=2.042  [17/40 trajectories overall]
+[15:47:37]   rollout step 3 task 1/2 gen 2/4 turn 1/8 valid=True db -16.92->-23.12
+[15:47:44]   rollout step 3 task 1/2 gen 2/4 turn 2/8 valid=True db -23.12->-20.38
+[15:47:49]   rollout step 3 task 1/2 gen 2/4 turn 3/8 valid=True db -20.38->-22.93
+[15:47:56]   rollout step 3 task 1/2 gen 2/4 turn 4/8 valid=True db -22.93->-20.56
+[15:47:56] trajectory done: step 3 task 1/2 gen 2/4 turns=4 reason=patience reward=5.427  [18/40 trajectories overall]
+[15:48:05]   rollout step 3 task 1/2 gen 3/4 turn 1/8 valid=True db -16.92->-16.87
+[15:48:13]   rollout step 3 task 1/2 gen 3/4 turn 2/8 valid=True db -16.87->-16.32
+[15:48:20]   rollout step 3 task 1/2 gen 3/4 turn 3/8 valid=True db -16.32->-16.53
+[15:48:20] trajectory done: step 3 task 1/2 gen 3/4 turns=3 reason=patience reward=-0.117  [19/40 trajectories overall]
+[15:48:26]   rollout step 3 task 1/2 gen 4/4 turn 1/8 valid=True db -16.92->-16.87
+[15:48:34]   rollout step 3 task 1/2 gen 4/4 turn 2/8 valid=True db -16.87->-16.32
+[15:48:44]   rollout step 3 task 1/2 gen 4/4 turn 3/8 valid=True db -16.32->-16.83
+[15:48:44] trajectory done: step 3 task 1/2 gen 4/4 turns=3 reason=patience reward=-0.027  [20/40 trajectories overall]
+[15:48:55]   rollout step 3 task 2/2 gen 1/4 turn 1/8 valid=True db -11.44->-12.00
+[15:49:00]   rollout step 3 task 2/2 gen 1/4 turn 2/8 valid=False db -12.00->-12.00
+[15:49:07]   rollout step 3 task 2/2 gen 1/4 turn 3/8 valid=True db -12.00->-9.74
+[15:49:16]   rollout step 3 task 2/2 gen 1/4 turn 4/8 valid=True db -9.74->-10.11
+[15:49:16] trajectory done: step 3 task 2/2 gen 1/4 turns=4 reason=patience reward=-0.004  [21/40 trajectories overall]
+[15:49:23]   rollout step 3 task 2/2 gen 2/4 turn 1/8 valid=True db -11.44->-16.00
+[15:49:30]   rollout step 3 task 2/2 gen 2/4 turn 2/8 valid=True db -16.00->-1.88
+[15:49:37]   rollout step 3 task 2/2 gen 2/4 turn 3/8 valid=True db -1.88->-36.04
+[15:49:37] trajectory done: step 3 task 2/2 gen 2/4 turns=3 reason=goal_met reward=24.599  [22/40 trajectories overall]
+[15:49:43]   rollout step 3 task 2/2 gen 3/4 turn 1/8 valid=True db -11.44->-7.83
+[15:49:49]   rollout step 3 task 2/2 gen 3/4 turn 2/8 valid=True db -7.83->-13.79
+[15:49:55]   rollout step 3 task 2/2 gen 3/4 turn 3/8 valid=False db -13.79->-13.79
+[15:50:01]   rollout step 3 task 2/2 gen 3/4 turn 4/8 valid=True db -13.79->-15.76
+[15:50:08]   rollout step 3 task 2/2 gen 3/4 turn 5/8 valid=True db -15.76->-15.45
+[15:50:14]   rollout step 3 task 2/2 gen 3/4 turn 6/8 valid=False db -15.45->-15.45
+[15:50:22]   rollout step 3 task 2/2 gen 3/4 turn 7/8 valid=True db -15.45->-14.45
+[15:50:22] trajectory done: step 3 task 2/2 gen 3/4 turns=7 reason=patience reward=3.929  [23/40 trajectories overall]
+[15:50:33]   rollout step 3 task 2/2 gen 4/4 turn 1/8 valid=True db -11.44->-10.88
+[15:50:39]   rollout step 3 task 2/2 gen 4/4 turn 2/8 valid=True db -10.88->-11.40
+[15:50:47]   rollout step 3 task 2/2 gen 4/4 turn 3/8 valid=True db -11.40->-10.92
+[15:50:47] trajectory done: step 3 task 2/2 gen 4/4 turns=3 reason=patience reward=-0.156  [24/40 trajectories overall]
+[15:50:54]   gradient pass 20/35 turns backpropagated
+[15:50:59]   gradient pass 35/35 turns backpropagated
+[15:50:59] step 3/5 loss=-0.09978 reward_mean=4.462 reward_std=7.866 turns_mean=4.4 goal_met=1/8 stop=0 patience=7
+[15:51:00] saved checkpoint to /home/yue1guo2/workspace/qucs-llm-optimizer/outputs/2026-09-09-1537-multiturn-smoke-2task5step/checkpoint-3
+[15:51:08]   rollout step 4 task 1/2 gen 1/4 turn 1/8 valid=True db -14.51->-12.33
+[15:51:13]   rollout step 4 task 1/2 gen 1/4 turn 2/8 valid=True db -12.33->-10.95
+[15:51:18]   rollout step 4 task 1/2 gen 1/4 turn 3/8 valid=True db -10.95->-11.82
+[15:51:18] trajectory done: step 4 task 1/2 gen 1/4 turns=3 reason=patience reward=-0.808  [25/40 trajectories overall]
+[15:51:26]   rollout step 4 task 1/2 gen 2/4 turn 1/8 valid=True db -14.51->-14.39
+[15:51:32]   rollout step 4 task 1/2 gen 2/4 turn 2/8 valid=True db -14.39->-20.03
+[15:51:41]   rollout step 4 task 1/2 gen 2/4 turn 3/8 valid=True db -20.03->-19.01
+[15:51:47]   rollout step 4 task 1/2 gen 2/4 turn 4/8 valid=True db -19.01->-19.96
+[15:51:53]   rollout step 4 task 1/2 gen 2/4 turn 5/8 valid=True db -19.96->-19.94
+[15:51:53] trajectory done: step 4 task 1/2 gen 2/4 turns=5 reason=patience reward=5.488  [26/40 trajectories overall]
+[15:52:00]   rollout step 4 task 1/2 gen 3/4 turn 1/8 valid=True db -14.51->-14.39
+[15:52:05]   rollout step 4 task 1/2 gen 3/4 turn 2/8 valid=True db -14.39->-14.51
+[15:52:11]   rollout step 4 task 1/2 gen 3/4 turn 3/8 valid=True db -14.51->-14.40
+[15:52:11] trajectory done: step 4 task 1/2 gen 3/4 turns=3 reason=patience reward=-0.035  [27/40 trajectories overall]
+[15:52:18]   rollout step 4 task 1/2 gen 4/4 turn 1/8 valid=True db -14.51->-16.98
+[15:52:23]   rollout step 4 task 1/2 gen 4/4 turn 2/8 valid=True db -16.98->-18.59
+[15:52:28]   rollout step 4 task 1/2 gen 4/4 turn 3/8 valid=False db -18.59->-18.59
+[15:52:36]   rollout step 4 task 1/2 gen 4/4 turn 4/8 valid=True db -18.59->-23.05
+[15:52:45]   rollout step 4 task 1/2 gen 4/4 turn 5/8 valid=True db -23.05->-39.68
+[15:52:45] trajectory done: step 4 task 1/2 gen 4/4 turns=5 reason=goal_met reward=25.164  [28/40 trajectories overall]
+[15:52:51]   rollout step 4 task 2/2 gen 1/4 turn 1/8 valid=True db -7.73->-11.16
+[15:52:57]   rollout step 4 task 2/2 gen 1/4 turn 2/8 valid=True db -11.16->-23.99
+[15:53:03]   rollout step 4 task 2/2 gen 1/4 turn 3/8 valid=True db -23.99->-14.60
+[15:53:09]   rollout step 4 task 2/2 gen 1/4 turn 4/8 valid=True db -14.60->-14.08
+[15:53:15]   rollout step 4 task 2/2 gen 1/4 turn 5/8 valid=True db -14.08->-14.08
+[15:53:15] trajectory done: step 4 task 2/2 gen 1/4 turns=5 reason=stop reward=13.286  [29/40 trajectories overall]
+[15:53:21]   rollout step 4 task 2/2 gen 2/4 turn 1/8 valid=True db -7.73->-8.03
+[15:53:31]   rollout step 4 task 2/2 gen 2/4 turn 2/8 valid=True db -8.03->-11.35
+[15:53:40]   rollout step 4 task 2/2 gen 2/4 turn 3/8 valid=True db -11.35->-36.62
+[15:53:40] trajectory done: step 4 task 2/2 gen 2/4 turns=3 reason=goal_met reward=28.891  [30/40 trajectories overall]
+[15:53:45]   rollout step 4 task 2/2 gen 3/4 turn 1/8 valid=True db -7.73->-6.50
+[15:53:52]   rollout step 4 task 2/2 gen 3/4 turn 2/8 valid=True db -6.50->-6.85
+[15:54:00]   rollout step 4 task 2/2 gen 3/4 turn 3/8 valid=True db -6.85->-8.75
+[15:54:06]   rollout step 4 task 2/2 gen 3/4 turn 4/8 valid=True db -8.75->-8.50
+[15:54:11]   rollout step 4 task 2/2 gen 3/4 turn 5/8 valid=True db -8.50->-12.22
+[15:54:18]   rollout step 4 task 2/2 gen 3/4 turn 6/8 valid=True db -12.22->-23.90
+[15:54:24]   rollout step 4 task 2/2 gen 3/4 turn 7/8 valid=True db -23.90->-4.52
+[15:54:29]   rollout step 4 task 2/2 gen 3/4 turn 8/8 valid=True db -4.52->-4.52
+[15:54:29] trajectory done: step 4 task 2/2 gen 3/4 turns=8 reason=stop reward=10.351  [31/40 trajectories overall]
+[15:54:36]   rollout step 4 task 2/2 gen 4/4 turn 1/8 valid=True db -7.73->-7.76
+[15:54:42]   rollout step 4 task 2/2 gen 4/4 turn 2/8 valid=True db -7.76->-7.77
+[15:54:50]   rollout step 4 task 2/2 gen 4/4 turn 3/8 valid=True db -7.77->-7.59
+[15:54:50] trajectory done: step 4 task 2/2 gen 4/4 turns=3 reason=patience reward=-0.013  [32/40 trajectories overall]
+[15:54:57]   gradient pass 20/35 turns backpropagated
+[15:55:02]   gradient pass 35/35 turns backpropagated
+[15:55:02] step 4/5 loss=-0.06593 reward_mean=10.290 reward_std=10.812 turns_mean=4.4 goal_met=2/8 stop=2 patience=4
+[15:55:03] saved checkpoint to /home/yue1guo2/workspace/qucs-llm-optimizer/outputs/2026-09-09-1537-multiturn-smoke-2task5step/checkpoint-4
+[15:55:11]   rollout step 5 task 1/2 gen 1/4 turn 1/8 valid=True db -11.51->-11.57
+[15:55:20]   rollout step 5 task 1/2 gen 1/4 turn 2/8 valid=True db -11.57->-0.87
+[15:55:29]   rollout step 5 task 1/2 gen 1/4 turn 3/8 valid=True db -0.87->-0.87
+[15:55:29] trajectory done: step 5 task 1/2 gen 1/4 turns=3 reason=patience reward=-3.151  [33/40 trajectories overall]
+[15:55:34]   rollout step 5 task 1/2 gen 2/4 turn 1/8 valid=False db -11.51->-11.51
+[15:55:41]   rollout step 5 task 1/2 gen 2/4 turn 2/8 valid=True db -11.51->-11.03
+[15:55:46]   rollout step 5 task 1/2 gen 2/4 turn 3/8 valid=True db -11.03->-15.38
+[15:55:57]   rollout step 5 task 1/2 gen 2/4 turn 4/8 valid=True db -15.38->-15.29
+[15:56:04]   rollout step 5 task 1/2 gen 2/4 turn 5/8 valid=True db -15.29->-12.12
+[15:56:15]   rollout step 5 task 1/2 gen 2/4 turn 6/8 valid=True db -12.12->-12.39
+[15:56:15] trajectory done: step 5 task 1/2 gen 2/4 turns=6 reason=patience reward=2.973  [34/40 trajectories overall]
+[15:56:22]   rollout step 5 task 1/2 gen 3/4 turn 1/8 valid=True db -11.51->-12.88
+[15:56:31]   rollout step 5 task 1/2 gen 3/4 turn 2/8 valid=True db -12.88->-14.46
+[15:56:42]   rollout step 5 task 1/2 gen 3/4 turn 3/8 valid=True db -14.46->-14.62
+[15:56:50]   rollout step 5 task 1/2 gen 3/4 turn 4/8 valid=True db -14.62->-1.28
+[15:56:55]   rollout step 5 task 1/2 gen 3/4 turn 5/8 valid=True db -1.28->-12.83
+[15:56:55] trajectory done: step 5 task 1/2 gen 3/4 turns=5 reason=patience reward=2.569  [35/40 trajectories overall]
+[15:57:03]   rollout step 5 task 1/2 gen 4/4 turn 1/8 valid=True db -11.51->-10.83
+[15:57:08]   rollout step 5 task 1/2 gen 4/4 turn 2/8 valid=True db -10.83->-11.61
+[15:57:17]   rollout step 5 task 1/2 gen 4/4 turn 3/8 valid=True db -11.61->-11.64
+[15:57:17] trajectory done: step 5 task 1/2 gen 4/4 turns=3 reason=patience reward=0.128  [36/40 trajectories overall]
+[15:57:25]   rollout step 5 task 2/2 gen 1/4 turn 1/8 valid=True db -20.54->-20.88
+[15:57:30]   rollout step 5 task 2/2 gen 1/4 turn 2/8 valid=False db -20.88->-20.88
+[15:57:35]   rollout step 5 task 2/2 gen 1/4 turn 3/8 valid=True db -20.88->-21.18
+[15:57:44]   rollout step 5 task 2/2 gen 1/4 turn 4/8 valid=True db -21.18->-15.48
+[15:57:50]   rollout step 5 task 2/2 gen 1/4 turn 5/8 valid=True db -15.48->-22.52
+[15:57:56]   rollout step 5 task 2/2 gen 1/4 turn 6/8 valid=True db -22.52->-16.06
+[15:58:02]   rollout step 5 task 2/2 gen 1/4 turn 7/8 valid=True db -16.06->-11.62
+[15:58:08]   rollout step 5 task 2/2 gen 1/4 turn 8/8 valid=True db -11.62->-15.56
+[15:58:08] trajectory done: step 5 task 2/2 gen 1/4 turns=8 reason=patience reward=-0.105  [37/40 trajectories overall]
+[15:58:18]   rollout step 5 task 2/2 gen 2/4 turn 1/8 valid=True db -20.54->-23.12
+[15:58:27]   rollout step 5 task 2/2 gen 2/4 turn 2/8 valid=True db -23.12->-14.21
+[15:58:32]   rollout step 5 task 2/2 gen 2/4 turn 3/8 valid=True db -14.21->-24.77
+[15:58:41]   rollout step 5 task 2/2 gen 2/4 turn 4/8 valid=True db -24.77->-15.44
+[15:58:46]   rollout step 5 task 2/2 gen 2/4 turn 5/8 valid=True db -15.44->-26.61
+[15:58:52]   rollout step 5 task 2/2 gen 2/4 turn 6/8 valid=True db -26.61->-16.59
+[15:58:58]   rollout step 5 task 2/2 gen 2/4 turn 7/8 valid=True db -16.59->-28.69
+[15:59:05]   rollout step 5 task 2/2 gen 2/4 turn 8/8 valid=True db -28.69->-17.66
+[15:59:05] trajectory done: step 5 task 2/2 gen 2/4 turns=8 reason=max_turns reward=4.840  [38/40 trajectories overall]
+[15:59:12]   rollout step 5 task 2/2 gen 3/4 turn 1/8 valid=True db -20.54->-11.30
+[15:59:17]   rollout step 5 task 2/2 gen 3/4 turn 2/8 valid=True db -11.30->-1.11
+[15:59:30]   rollout step 5 task 2/2 gen 3/4 turn 3/8 valid=True db -1.11->-0.49
+[15:59:30] trajectory done: step 5 task 2/2 gen 3/4 turns=3 reason=patience reward=-6.014  [39/40 trajectories overall]
+[15:59:37]   rollout step 5 task 2/2 gen 4/4 turn 1/8 valid=True db -20.54->-21.05
+[15:59:42]   rollout step 5 task 2/2 gen 4/4 turn 2/8 valid=False db -21.05->-21.05
+[15:59:48]   rollout step 5 task 2/2 gen 4/4 turn 3/8 valid=True db -21.05->-26.48
+[15:59:55]   rollout step 5 task 2/2 gen 4/4 turn 4/8 valid=True db -26.48->-14.78
+[15:59:59]   rollout step 5 task 2/2 gen 4/4 turn 5/8 valid=True db -14.78->-28.75
+[16:00:06]   rollout step 5 task 2/2 gen 4/4 turn 6/8 valid=True db -28.75->-29.37
+[16:00:12]   rollout step 5 task 2/2 gen 4/4 turn 7/8 valid=True db -29.37->-16.61
+[16:00:18]   rollout step 5 task 2/2 gen 4/4 turn 8/8 valid=True db -16.61->-32.20
+[16:00:18] trajectory done: step 5 task 2/2 gen 4/4 turns=8 reason=goal_met reward=11.661  [40/40 trajectories overall]
+[16:00:25]   gradient pass 20/44 turns backpropagated
+[16:00:33]   gradient pass 40/44 turns backpropagated
+[16:00:34]   gradient pass 44/44 turns backpropagated
+[16:00:35] step 5/5 loss=1.84540 reward_mean=1.612 reward_std=5.002 turns_mean=5.5 goal_met=1/8 stop=0 patience=6
+[16:00:36] saved checkpoint to /home/yue1guo2/workspace/qucs-llm-optimizer/outputs/2026-09-09-1537-multiturn-smoke-2task5step/checkpoint-5
+[16:00:37] saved final LoRA adapter to /home/yue1guo2/workspace/qucs-llm-optimizer/outputs/2026-09-09-1537-multiturn-smoke-2task5step/final_lora

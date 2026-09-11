@@ -81,6 +81,26 @@ def _load_records(args: argparse.Namespace) -> list[dict]:
     return records
 
 
+def _to_prompt_completion(record: dict) -> dict:
+    """Split a {"messages": [...]} SFT record into trl's prompt-completion format.
+
+    Every exported record is exactly [system, user, assistant] (one rollout-
+    aligned turn; multiturn history lives inside the user text itself, per
+    ``build_multiturn_prompt`` — see corpus.py). Keeping the natural message
+    list (instead of pre-flattening via apply_chat_template into one "text"
+    string) lets SFTTrainer auto-detect a conversational prompt-completion
+    dataset and mask the loss so only the assistant's
+    <reasoning>/<intent> tokens are supervised; the system+user tokens are
+    still visible to the model as context but contribute zero gradient.
+    """
+    messages = record["messages"]
+    if len(messages) < 2 or messages[-1]["role"] != "assistant":
+        raise ValueError(
+            f"expected [..., assistant] messages, got roles={[m['role'] for m in messages]}"
+        )
+    return {"prompt": messages[:-1], "completion": [messages[-1]]}
+
+
 def main(argv: list[str] | None = None) -> None:
     args = build_parser().parse_args(argv)
     records = _load_records(args)
@@ -95,17 +115,7 @@ def main(argv: list[str] | None = None) -> None:
     from datasets import Dataset
     from trl import SFTConfig, SFTTrainer
 
-    texts = [
-        {
-            "text": tokenizer.apply_chat_template(
-                record["messages"],
-                tokenize=False,
-                add_generation_prompt=False,
-            )
-        }
-        for record in records
-    ]
-    dataset = Dataset.from_list(texts)
+    dataset = Dataset.from_list([_to_prompt_completion(record) for record in records])
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     config = SFTConfig(
@@ -120,7 +130,7 @@ def main(argv: list[str] | None = None) -> None:
         logging_steps=1,
         save_strategy="epoch",
         max_length=args.max_length,
-        dataset_text_field="text",
+        completion_only_loss=True,
         report_to="none",
         **mixed_precision_config(),
     )

@@ -1,0 +1,133 @@
+=== 100-random-goal checkpoint-50 eval start Thu Sep 10 11:33:41 +08 2026 ===
+adapter=outputs/2026-09-09-1810-multiturn-nightly-4x4x60/checkpoint-50
+seeds=300000-300099 max_turns=30 episodes_per_goal=1
+output=/home/yue1guo2/workspace/qucs-llm-optimizer/outputs/2026-09-09-1810-multiturn-nightly-4x4x60/eval/rand100_checkpoint50.json
+Unsloth 2026.5.2 patched 28 layers with 28 QKV layers, 28 O layers and 28 MLP layers.
+🦥 Unsloth: Will patch your computer to enable 2x faster free finetuning.
+🦥 Unsloth Zoo will now patch everything to make training faster!
+==((====))==  Unsloth 2026.5.2: Fast Qwen3 patching. Transformers: 4.56.2.
+   \\   /|    NVIDIA RTX 2000 Ada Generation Laptop GPU. Num GPUs = 1. Max memory: 7.996 GB. Platform: Linux.
+O^O/ \_/ \    Torch: 2.10.0+cu128. CUDA: 8.9. CUDA Toolkit: 12.8. Triton: 3.6.0
+\        /    Bfloat16 = TRUE. FA [Xformers = 0.0.35. FA2 = False]
+ "-____-"     Free license: http://github.com/unslothai/unsloth
+Unsloth: Fast downloading is enabled - ignore downloading bars which are red colored!
+unsloth/Qwen3-1.7B-bnb-4bit does not have a padding token! Will use pad_token = <|PAD_TOKEN|>.
+goal=5.65GHz depth=-51.0dB seed=300000 turns=5 reason=patience reward=0.145 initial_db=-10.85 best_db=-11.05
+goal=4.70GHz depth=-26.4dB seed=300001 turns=2 reason=goal_met reward=5.697 initial_db=-34.12 best_db=-39.81
+goal=4.68GHz depth=-54.8dB seed=300002 turns=6 reason=patience reward=3.153 initial_db=-18.88 best_db=-24.66
+goal=5.15GHz depth=-55.3dB seed=300003 turns=3 reason=goal_met reward=35.585 initial_db=-23.93 best_db=-59.51
+goal=5.31GHz depth=-37.1dB seed=300004 turns=4 reason=stop reward=8.871 initial_db=-10.51 best_db=-24.86
+goal=4.73GHz depth=-30.3dB seed=300005 turns=10 reason=stop reward=10.828 initial_db=-11.11 best_db=-24.37
+goal=5.22GHz depth=-52.8dB seed=300006 turns=5 reason=stop reward=9.143 initial_db=-8.53 best_db=-17.79
+goal=4.75GHz depth=-37.2dB seed=300007 turns=3 reason=patience reward=-1.007 initial_db=-12.53 best_db=-12.53
+goal=5.13GHz depth=-19.2dB seed=300008 turns=2 reason=goal_met reward=10.948 initial_db=-13.20 best_db=-24.15
+goal=4.81GHz depth=-30.7dB seed=300009 turns=3 reason=goal_met reward=17.830 initial_db=-18.59 best_db=-36.42
+goal=5.98GHz depth=-41.9dB seed=300010 turns=8 reason=patience reward=6.477 initial_db=-3.94 best_db=-10.77
+goal=5.46GHz depth=-28.5dB seed=300011 turns=3 reason=patience reward=0.000 initial_db=-8.02 best_db=-8.02
+goal=4.47GHz depth=-29.3dB seed=300012 turns=3 reason=patience reward=-1.278 initial_db=-15.89 best_db=-15.89
+goal=4.38GHz depth=-24.4dB seed=300013 turns=3 reason=patience reward=-0.904 initial_db=-19.28 best_db=-19.28
+goal=5.64GHz depth=-50.8dB seed=300014 turns=8 reason=patience reward=18.718 initial_db=-19.10 best_db=-39.29
+goal=5.89GHz depth=-19.6dB seed=300015 turns=7 reason=patience reward=0.720 initial_db=-14.46 best_db=-15.97
+goal=4.73GHz depth=-32.0dB seed=300016 turns=3 reason=patience reward=-1.076 initial_db=-10.61 best_db=-10.61
+goal=5.21GHz depth=-34.9dB seed=300017 turns=6 reason=stop reward=2.467 initial_db=-6.44 best_db=-8.93
+goal=5.09GHz depth=-24.8dB seed=300018 turns=4 reason=patience reward=1.139 initial_db=-14.96 best_db=-16.47
+goal=4.35GHz depth=-24.3dB seed=300019 turns=7 reason=stop reward=5.167 initial_db=-13.92 best_db=-19.18
+goal=5.22GHz depth=-37.8dB seed=300020 turns=3 reason=patience reward=-2.318 initial_db=-15.94 best_db=-15.94
+goal=5.72GHz depth=-32.0dB seed=300021 turns=10 reason=patience reward=15.172 initial_db=-4.51 best_db=-26.87
+goal=4.34GHz depth=-17.1dB seed=300022 turns=1 reason=goal_met reward=1.198 initial_db=-30.75 best_db=-31.95
+goal=4.31GHz depth=-38.5dB seed=300023 turns=6 reason=patience reward=7.669 initial_db=-15.30 best_db=-32.02
+goal=5.47GHz depth=-26.5dB seed=300024 turns=4 reason=patience reward=0.525 initial_db=-10.92 best_db=-11.48
+goal=4.76GHz depth=-52.9dB seed=300025 turns=9 reason=patience reward=7.485 initial_db=-13.41 best_db=-21.37
+goal=4.72GHz depth=-30.0dB seed=300026 turns=4 reason=patience reward=1.755 initial_db=-11.97 best_db=-19.16
+goal=5.27GHz depth=-38.1dB seed=300027 turns=4 reason=goal_met reward=29.164 initial_db=-11.31 best_db=-40.47
+goal=5.34GHz depth=-37.6dB seed=300028 turns=3 reason=patience reward=-0.612 initial_db=-14.14 best_db=-14.14
+goal=4.42GHz depth=-59.3dB seed=300029 turns=4 reason=patience reward=3.448 initial_db=-19.68 best_db=-23.13
+goal=4.72GHz depth=-46.4dB seed=300030 turns=5 reason=patience reward=-0.203 initial_db=-9.70 best_db=-10.80
+goal=4.52GHz depth=-52.0dB seed=300031 turns=4 reason=stop reward=7.098 initial_db=-9.39 best_db=-17.48
+goal=4.75GHz depth=-39.0dB seed=300032 turns=4 reason=patience reward=0.250 initial_db=-14.88 best_db=-16.02
+goal=4.68GHz depth=-55.6dB seed=300033 turns=8 reason=patience reward=2.545 initial_db=-6.74 best_db=-9.85
+goal=5.68GHz depth=-17.1dB seed=300034 turns=2 reason=goal_met reward=15.023 initial_db=-12.06 best_db=-27.09
+goal=5.07GHz depth=-58.2dB seed=300035 turns=6 reason=patience reward=-1.064 initial_db=-21.40 best_db=-24.67
+goal=4.79GHz depth=-58.9dB seed=300036 turns=13 reason=patience reward=31.577 initial_db=-13.18 best_db=-46.44
+goal=5.71GHz depth=-19.1dB seed=300037 turns=3 reason=patience reward=-0.023 initial_db=-13.25 best_db=-13.34
+goal=5.34GHz depth=-57.3dB seed=300038 turns=6 reason=patience reward=-0.310 initial_db=-10.14 best_db=-10.71
+goal=6.00GHz depth=-19.9dB seed=300039 turns=1 reason=goal_met reward=15.584 initial_db=-10.56 best_db=-26.14
+goal=5.75GHz depth=-21.9dB seed=300040 turns=6 reason=patience reward=7.816 initial_db=-7.57 best_db=-17.85
+goal=4.44GHz depth=-53.2dB seed=300041 turns=3 reason=patience reward=-5.820 initial_db=-21.61 best_db=-21.61
+goal=5.63GHz depth=-43.4dB seed=300042 turns=3 reason=patience reward=-0.004 initial_db=-8.02 best_db=-8.02
+goal=4.04GHz depth=-55.1dB seed=300043 turns=3 reason=patience reward=-6.558 initial_db=-21.95 best_db=-21.95
+goal=4.53GHz depth=-17.1dB seed=300044 turns=2 reason=goal_met reward=8.820 initial_db=-10.68 best_db=-19.50
+goal=5.49GHz depth=-35.9dB seed=300045 turns=4 reason=patience reward=4.199 initial_db=-14.46 best_db=-18.69
+goal=4.07GHz depth=-15.2dB seed=300046 turns=1 reason=goal_met reward=0.409 initial_db=-20.66 best_db=-21.07
+goal=5.86GHz depth=-49.4dB seed=300047 turns=4 reason=patience reward=5.196 initial_db=-12.28 best_db=-19.64
+goal=5.32GHz depth=-51.2dB seed=300048 turns=3 reason=patience reward=-4.971 initial_db=-18.21 best_db=-18.21
+goal=4.54GHz depth=-38.6dB seed=300049 turns=4 reason=patience reward=6.144 initial_db=-18.11 best_db=-34.47
+goal=5.52GHz depth=-21.6dB seed=300050 turns=5 reason=stop reward=1.843 initial_db=-14.77 best_db=-16.65
+goal=4.66GHz depth=-15.5dB seed=300051 turns=1 reason=goal_met reward=0.273 initial_db=-17.96 best_db=-18.23
+goal=5.27GHz depth=-29.3dB seed=300052 turns=7 reason=patience reward=3.265 initial_db=-13.42 best_db=-20.57
+goal=5.48GHz depth=-58.3dB seed=300053 turns=4 reason=stop reward=11.303 initial_db=-15.35 best_db=-28.51
+goal=5.56GHz depth=-58.0dB seed=300054 turns=3 reason=patience reward=-0.084 initial_db=-4.47 best_db=-4.63
+goal=4.44GHz depth=-27.3dB seed=300055 turns=3 reason=patience reward=-6.616 initial_db=-31.27 best_db=-31.27
+goal=5.85GHz depth=-47.6dB seed=300056 turns=5 reason=patience reward=6.870 initial_db=-12.17 best_db=-23.73
+goal=5.14GHz depth=-50.1dB seed=300057 turns=7 reason=patience reward=0.970 initial_db=-14.54 best_db=-16.88
+goal=4.88GHz depth=-21.2dB seed=300058 turns=4 reason=patience reward=1.183 initial_db=-9.64 best_db=-11.08
+goal=5.26GHz depth=-27.3dB seed=300059 turns=3 reason=patience reward=-0.035 initial_db=-23.11 best_db=-23.11
+goal=4.45GHz depth=-55.9dB seed=300060 turns=5 reason=patience reward=0.629 initial_db=-9.91 best_db=-10.60
+goal=4.79GHz depth=-49.2dB seed=300061 turns=3 reason=patience reward=0.145 initial_db=-13.77 best_db=-13.92
+goal=5.29GHz depth=-33.8dB seed=300062 turns=9 reason=patience reward=8.447 initial_db=-12.42 best_db=-24.26
+goal=5.64GHz depth=-42.1dB seed=300063 turns=7 reason=patience reward=1.780 initial_db=-14.58 best_db=-16.45
+goal=4.47GHz depth=-19.2dB seed=300064 turns=3 reason=patience reward=-5.656 initial_db=-20.07 best_db=-20.07
+goal=5.08GHz depth=-51.6dB seed=300065 turns=4 reason=patience reward=-2.787 initial_db=-28.14 best_db=-29.16
+goal=5.47GHz depth=-41.0dB seed=300066 turns=4 reason=patience reward=1.028 initial_db=-14.31 best_db=-20.89
+goal=5.93GHz depth=-40.1dB seed=300067 turns=3 reason=patience reward=-0.066 initial_db=-8.47 best_db=-8.47
+goal=4.44GHz depth=-17.5dB seed=300068 turns=3 reason=patience reward=-0.122 initial_db=-16.67 best_db=-16.67
+goal=5.56GHz depth=-49.6dB seed=300069 turns=4 reason=patience reward=2.207 initial_db=-8.77 best_db=-11.63
+goal=4.38GHz depth=-15.9dB seed=300070 turns=4 reason=patience reward=-0.283 initial_db=-15.49 best_db=-15.70
+goal=5.70GHz depth=-30.2dB seed=300071 turns=13 reason=goal_met reward=28.249 initial_db=-9.52 best_db=-37.77
+goal=5.90GHz depth=-41.3dB seed=300072 turns=11 reason=patience reward=9.526 initial_db=-6.05 best_db=-19.31
+goal=4.74GHz depth=-15.5dB seed=300073 turns=3 reason=patience reward=-0.527 initial_db=-8.62 best_db=-8.62
+goal=5.91GHz depth=-56.4dB seed=300074 turns=9 reason=stop reward=11.837 initial_db=-9.24 best_db=-23.05
+goal=4.91GHz depth=-39.7dB seed=300075 turns=9 reason=patience reward=9.942 initial_db=-15.12 best_db=-25.59
+goal=5.12GHz depth=-59.8dB seed=300076 turns=3 reason=patience reward=-7.902 initial_db=-34.75 best_db=-34.75
+goal=4.05GHz depth=-20.6dB seed=300077 turns=3 reason=patience reward=-1.522 initial_db=-21.85 best_db=-21.85
+goal=5.17GHz depth=-46.9dB seed=300078 turns=4 reason=patience reward=6.369 initial_db=-11.35 best_db=-18.26
+goal=4.84GHz depth=-45.8dB seed=300079 turns=10 reason=patience reward=10.735 initial_db=-13.71 best_db=-26.02
+goal=4.47GHz depth=-56.2dB seed=300080 turns=4 reason=patience reward=-0.121 initial_db=-19.99 best_db=-20.49
+goal=4.50GHz depth=-23.8dB seed=300081 turns=8 reason=patience reward=1.119 initial_db=-15.56 best_db=-16.77
+goal=5.23GHz depth=-18.6dB seed=300082 turns=8 reason=goal_met reward=12.063 initial_db=-7.74 best_db=-19.81
+goal=4.48GHz depth=-48.5dB seed=300083 turns=3 reason=patience reward=-2.744 initial_db=-24.57 best_db=-24.57
+goal=4.45GHz depth=-26.8dB seed=300084 turns=5 reason=patience reward=8.811 initial_db=-12.42 best_db=-26.04
+goal=5.25GHz depth=-48.4dB seed=300085 turns=3 reason=patience reward=-3.996 initial_db=-15.63 best_db=-15.63
+goal=5.53GHz depth=-20.9dB seed=300086 turns=2 reason=goal_met reward=1.261 initial_db=-22.48 best_db=-23.74
+goal=5.19GHz depth=-30.7dB seed=300087 turns=8 reason=patience reward=2.692 initial_db=-8.75 best_db=-12.61
+goal=5.54GHz depth=-50.3dB seed=300088 turns=4 reason=patience reward=3.616 initial_db=-11.32 best_db=-15.13
+goal=5.85GHz depth=-51.4dB seed=300089 turns=4 reason=patience reward=11.542 initial_db=-24.00 best_db=-44.35
+goal=5.18GHz depth=-38.4dB seed=300090 turns=6 reason=patience reward=-0.125 initial_db=-17.50 best_db=-18.06
+goal=5.54GHz depth=-49.7dB seed=300091 turns=3 reason=patience reward=-0.783 initial_db=-12.85 best_db=-12.85
+goal=5.24GHz depth=-51.8dB seed=300092 turns=4 reason=stop reward=9.227 initial_db=-14.88 best_db=-30.29
+goal=5.24GHz depth=-21.1dB seed=300093 turns=1 reason=goal_met reward=4.249 initial_db=-17.22 best_db=-21.47
+goal=4.10GHz depth=-41.6dB seed=300094 turns=7 reason=patience reward=1.254 initial_db=-22.31 best_db=-24.08
+goal=5.08GHz depth=-15.1dB seed=300095 turns=4 reason=goal_met reward=14.957 initial_db=-5.71 best_db=-20.67
+goal=5.59GHz depth=-58.3dB seed=300096 turns=12 reason=stop reward=21.820 initial_db=-10.11 best_db=-39.86
+goal=4.71GHz depth=-37.4dB seed=300097 turns=6 reason=patience reward=19.204 initial_db=-10.47 best_db=-35.11
+goal=5.94GHz depth=-53.3dB seed=300098 turns=3 reason=patience reward=-0.131 initial_db=-17.64 best_db=-17.64
+goal=5.47GHz depth=-55.2dB seed=300099 turns=5 reason=patience reward=2.472 initial_db=-10.72 best_db=-13.58
+{
+  "summary": {
+    "adapter": "outputs/2026-09-09-1810-multiturn-nightly-4x4x60/checkpoint-50",
+    "episodes_per_goal": 1,
+    "goal_met_rate": 0.16,
+    "goals_tested": 100,
+    "mean_best_improvement_db": 6.670955675651869,
+    "mean_num_turns": 4.84,
+    "mean_reward": 4.791997211730281,
+    "std_reward": 8.07071468879723,
+    "terminated_reason_counts": {
+      "goal_met": 16,
+      "patience": 73,
+      "stop": 11
+    },
+    "total_trajectories": 100
+  }
+}
+=== 100-random-goal checkpoint-50 eval done Thu Sep 10 12:30:31 +08 2026 ===
