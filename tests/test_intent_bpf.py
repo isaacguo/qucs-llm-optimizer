@@ -20,15 +20,17 @@ class IntentBpfTests(unittest.TestCase):
 
     def test_increase_clamps_to_bound(self):
         params = dict(INITIAL_GUESS)
-        params["L1"] = 1990.0
+        hi = BOUNDS["L1"][1]
+        params["L1"] = hi - 10.0
         out = apply_intent(
             params,
             {"L1": "increase_strong"},
             iteration=0,
             variables=VARIABLES,
             bounds=BOUNDS,
+            step_mode="range",
         )
-        self.assertEqual(out["L1"], 2000.0)
+        self.assertEqual(out["L1"], hi)
 
     def test_unknown_intent_key_raises(self):
         with self.assertRaises(ValueError):

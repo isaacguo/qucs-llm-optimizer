@@ -1,7 +1,8 @@
 # Training hyperparameter YAML config
 
 **Date:** 2026-09-10  
-**Status:** Approved (user confirmed approach + design sections)
+**Status:** Approved (user confirmed approach + design sections)  
+**Archived note (2026-09-12):** Single-step `GrpoConfig` path removed; multiturn + SFT only.
 
 ## Goal
 

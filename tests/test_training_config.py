@@ -6,14 +6,11 @@ import unittest
 from pathlib import Path
 
 from training.config import (
-    GrpoConfig,
     MultiturnConfig,
     from_mapping,
     load_yaml,
-    resolve_grpo_config,
     resolve_multiturn_config,
 )
-from training.grpo import build_parser, grpo_config_kwargs
 from training.multiturn_train import build_parser as build_multiturn_parser
 
 
@@ -28,58 +25,6 @@ class LoadYamlTests(unittest.TestCase):
     def test_missing_path_raises(self):
         with self.assertRaises(FileNotFoundError):
             load_yaml("/no/such/config.yaml")
-
-
-class GrpoFromMappingTests(unittest.TestCase):
-    def test_empty_mapping_uses_current_defaults(self):
-        cfg = from_mapping(GrpoConfig, {})
-        self.assertEqual(cfg.model.name, "unsloth/Qwen3-1.7B-bnb-4bit")
-        self.assertEqual(cfg.train.steps, 100)
-        self.assertEqual(cfg.train.generations, 8)
-        self.assertEqual(cfg.train.learning_rate, 5e-6)
-        self.assertEqual(cfg.reward.beta, 0.01)
-        self.assertEqual(cfg.reward.weights, [0.2, 0.2, 1.0])
-        self.assertEqual(cfg.data.tasks, 32)
-        self.assertEqual(cfg.runtime.output_dir, "outputs/grpo-qwen3-1.7b")
-
-    def test_partial_yaml_overrides_nested_fields(self):
-        cfg = from_mapping(
-            GrpoConfig,
-            {"model": {"name": "unsloth/Qwen3-4B"}, "train": {"learning_rate": 1e-5}},
-        )
-        self.assertEqual(cfg.model.name, "unsloth/Qwen3-4B")
-        self.assertEqual(cfg.train.learning_rate, 1e-5)
-        self.assertEqual(cfg.train.steps, 100)
-
-    def test_unknown_key_fails(self):
-        with self.assertRaises(ValueError) as ctx:
-            from_mapping(GrpoConfig, {"train": {"learnning_rate": 1e-5}})
-        self.assertIn("learnning_rate", str(ctx.exception))
-
-
-class GrpoMergeTests(unittest.TestCase):
-    def test_cli_overrides_yaml(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            path = Path(tmp) / "g.yaml"
-            path.write_text(
-                "train:\n  steps: 50\n  learning_rate: 1.0e-5\n",
-                encoding="utf-8",
-            )
-            args = build_parser().parse_args(["--config", str(path), "--steps", "3"])
-            cfg = resolve_grpo_config(args)
-        self.assertEqual(cfg.train.steps, 3)
-        self.assertEqual(cfg.train.learning_rate, 1e-5)
-
-    def test_no_config_matches_legacy_defaults(self):
-        args = build_parser().parse_args([])
-        cfg = resolve_grpo_config(args)
-        self.assertEqual(cfg.model.name, "unsloth/Qwen3-1.7B-bnb-4bit")
-        self.assertEqual(cfg.train.generations, 8)
-        kwargs = grpo_config_kwargs(cfg)
-        self.assertEqual(kwargs["learning_rate"], 5e-6)
-        self.assertEqual(kwargs["beta"], 0.01)
-        self.assertEqual(kwargs["reward_weights"], [0.2, 0.2, 1.0])
-        self.assertEqual(kwargs["num_generations"], 8)
 
 
 class MultiturnConfigTests(unittest.TestCase):
@@ -98,9 +43,10 @@ class MultiturnConfigTests(unittest.TestCase):
         self.assertEqual(cfg.model.name, "unsloth/Qwen3-4B")
         self.assertEqual(cfg.model.max_seq_length, 2048)
 
-    def test_partial_model_yaml_keeps_grpo_max_seq_length(self):
-        cfg = from_mapping(GrpoConfig, {"model": {"name": "x"}})
-        self.assertEqual(cfg.model.max_seq_length, 1024)
+    def test_unknown_key_fails(self):
+        with self.assertRaises(ValueError) as ctx:
+            from_mapping(MultiturnConfig, {"train": {"learnning_rate": 1e-5}})
+        self.assertIn("learnning_rate", str(ctx.exception))
 
     def test_resolve_cli_overrides_yaml(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -126,12 +72,6 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class ExampleRecipeTests(unittest.TestCase):
-    def test_grpo_example_loads(self):
-        data = load_yaml(ROOT / "configs/grpo_qwen3_1_7b.yaml")
-        cfg = from_mapping(GrpoConfig, data)
-        self.assertEqual(cfg.model.name, "unsloth/Qwen3-1.7B-bnb-4bit")
-        self.assertEqual(cfg.train.steps, 100)
-
     def test_multiturn_example_loads(self):
         data = load_yaml(ROOT / "configs/multiturn_qwen3_1_7b.yaml")
         cfg = from_mapping(MultiturnConfig, data)

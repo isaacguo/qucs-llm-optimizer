@@ -6,7 +6,7 @@
 
 **Architecture:** Shared `GoalDistributionConfig` feeds `assign-run`, hard-success gating, and multiturn GRPO sampling. Corpus index is the only SFT entrypoint. Export rebuilds each turn with `build_multiturn_prompt`. `qucs-sft` trains the LoRA; multiturn cold-start requires `resume_adapter`.
 
-**Tech Stack:** Python 3.12, existing `unittest`, PyYAML, `training/rollout.py`, Unsloth/TRL SFT (train extra), root `run_step.py` + `src/state.py` / `src/cost.py`.
+**Tech Stack:** Python 3.12, existing `unittest`, PyYAML, `training/rollout.py`, HF/PEFT/TRL SFT (train extra), root `run_step.py` + `src/state.py` / `src/cost.py`.
 
 ## Global Constraints
 

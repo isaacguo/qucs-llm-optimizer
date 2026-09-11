@@ -1,17 +1,10 @@
 """Custom on-policy multi-turn GRPO-style trainer.
 
-Why this file exists instead of reusing ``trl.GRPOTrainer`` directly: TRL's
-``GRPOTrainer._generate_and_score_completions`` always calls its own internal
-``_generate`` to produce completions for a batch of prompts - it has no way
-to accept externally pre-generated completions. Our multi-turn rollout
-*requires* pre-generated completions, because turn N's prompt depends on the
-real simulated outcome of turn N-1's completion; TRL cannot regenerate a
-turn in isolation and get a consistent trajectory.
+Owns Qucs-shaped trajectory advantages end-to-end. ``training.trl_rollout`` can
+pack the same trajectories for TRL ``rollout_func``; this module remains the
+default trainer until that path is wired as the primary loop.
 
-So this module implements the same on-policy update rule GRPO uses -
-generate a fresh batch with the *current* weights, score it, take one
-gradient step, throw the batch away - by hand:
-
+Update rule (on-policy GRPO-style):
 1. For each of ``tasks_per_step`` goals, draw one shared initial circuit and
    roll out ``generations`` independent trajectories from that same start
    (``training.rollout.run_trajectory``).
@@ -89,8 +82,8 @@ def build_parser() -> argparse.ArgumentParser:
         "--max-seq-length",
         type=int,
         default=None,
-        help="model context window; multi-turn history can exceed the 1024 "
-        "default used by Stage A, so this trainer defaults higher",
+        help="model context window; multi-turn history needs more than a short "
+        "single-prompt window, so this trainer defaults higher",
     )
     parser.add_argument("--tasks-per-step", type=int, default=None)
     parser.add_argument("--generations", type=int, default=None, help="trajectories per goal (GRPO group size)")
@@ -159,7 +152,7 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help=(
             "KL coefficient in turn_loss = (-A * logp + beta * (logp - logp_ref)) "
-            "/ N; 0 disables the extra ref forward. Stage-A GRPO uses 0.01"
+            "/ N; 0 disables the extra ref forward"
         ),
     )
     parser.add_argument(
@@ -313,12 +306,9 @@ def _turn_logprob_sum(model, tokenizer, prompt_messages, completion_text, device
     prompt_len = prompt_ids.shape[1]
     pred_logits = logits[:, prompt_len - 1 : -1, :]
     target_ids = full_ids[:, prompt_len:]
-    # Defensive guard: some backends (e.g. unsloth) silently truncate the
-    # forward pass when full_ids exceeds the model's configured
-    # max_seq_length, returning fewer logit positions than input tokens.
-    # Rather than let torch.gather crash the whole run, align to the
-    # shorter length (keep the *last* N completion tokens, since a left
-    # truncation drops the oldest context first) and skip the turn's
+    # Defensive guard: if the forward pass returns fewer logit positions than
+    # input tokens (e.g. silent truncation past max_seq_length), align to the
+    # shorter length (keep the *last* N completion tokens) and skip the turn's
     # gradient contribution if nothing usable is left.
     n_pred, n_target = pred_logits.shape[1], target_ids.shape[1]
     if n_pred != n_target:

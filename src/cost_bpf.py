@@ -25,6 +25,7 @@ class CostReport:
     has_stopband_samples: bool
     f_low_hz: float
     f_high_hz: float
+    s21_peak_freq_hz: float  # freq of max |S21| over the full sweep
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -60,6 +61,7 @@ def evaluate(res: SimResult, goal: BpfGoalSpec, *, lam: float = 1.0) -> CostRepo
     stop_term = max(stop_mags)
     pb_dbs = [s21_db(m) for m in pb_mags]
     s11_pb_dbs = [s21_db(s11_mags[i]) for i in pb_idx]
+    peak_i = max(range(len(s21_mags)), key=lambda i: s21_mags[i])
 
     return CostReport(
         total_cost=pass_term + lam * stop_term,
@@ -71,4 +73,5 @@ def evaluate(res: SimResult, goal: BpfGoalSpec, *, lam: float = 1.0) -> CostRepo
         has_stopband_samples=True,
         f_low_hz=goal.f_low_hz,
         f_high_hz=goal.f_high_hz,
+        s21_peak_freq_hz=float(res.freq_hz[peak_i]),
     )

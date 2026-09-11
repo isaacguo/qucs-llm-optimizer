@@ -3,7 +3,8 @@ from __future__ import annotations
 from pathlib import Path
 
 VARIABLES = ("L1", "C1", "L2", "C2", "L3", "C3", "L4", "C4", "L5", "C5")
-BOUNDS = {v: ((1.0, 2000.0) if v.startswith("L") else (0.1, 500.0)) for v in VARIABLES}
+# Wide enough for narrow VHF BPFs (e.g. CF=125 MHz, BW=5 MHz → L3~3 µH, C2~1 nF).
+BOUNDS = {v: ((0.5, 10000.0) if v.startswith("L") else (0.05, 5000.0)) for v in VARIABLES}
 INITIAL_GUESS = {
     "L1": 163.9296, "C1": 6.8675,
     "L2": 6.5577, "C2": 171.6751,

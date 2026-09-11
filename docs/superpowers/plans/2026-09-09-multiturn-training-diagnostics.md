@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- Do not add one-step warm-up wiring or offline summarize scripts.
+- Do not add offline summarize scripts.
 - Do not add destroy-without-stop penalty.
 - Keep `train.log` free of full prompt/completion dumps.
 - Agent writes `runs/<run>/completions.jsonl`; multiturn writes under `--output-dir`.

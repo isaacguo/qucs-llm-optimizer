@@ -146,69 +146,29 @@ A run-level `conclude` note renders at the bottom as "why the run stopped".
 Runs recorded before this existed (`runs/demo`) still render; the missing
 fields degrade to placeholders.
 
-## Unsloth training
+## Training (multi-turn GRPO + SFT)
 
 The optional `training/` package replaces the human strategy layer with a
-Qwen3-1.7B intent policy trained by Unsloth GRPO. Unsloth owns 4-bit model
-loading, LoRA, generation, group-relative advantages and weight updates.
-This repository supplies the executable environment and verifiable reward:
+Qwen3-1.7B intent policy. Supported paths are:
 
-```
-observation -> Qwen3 completion -> strict intent JSON -> apply_intent
-            -> qucsator_rf (no layout export) -> delta dB reward
-```
+1. **SFT cold-start** from corpus teacher trajectories (`qucs-sft`)
+2. **Multi-turn GRPO** over real Qucs rollouts (`qucs-multiturn`)
 
-The default model is `unsloth/Qwen3-1.7B-bnb-4bit`, with rank-16 LoRA and
-vLLM disabled for the tested 8 GB GPU profile. Training never replaces the
-Qucs reward with a mock or learned judge. Layout export is skipped only
-during reward evaluation; the electrical simulation is the same one used by
-`run_step.py`.
+Single-step GRPO is not supported. Model loading uses HF + PEFT +
+bitsandbytes QLoRA. The default hub id is `unsloth/Qwen3-1.7B-bnb-4bit`
+(Hugging Face weights only). Training never replaces the Qucs reward with a
+mock or learned judge.
 
-Install and verify the real reward path:
+Install:
 
 ```bash
 uv sync --extra train
-uv run qucs-grpo --dry-run
 ```
 
-The dry run does not load a model or update weights. It executes one
-baseline simulation and one candidate intent through real Qucs, then prints
-the measured dB improvement.
-
-Probe the untrained policy before deciding whether optional SFT is useful:
+Verify the multi-turn environment without loading a model:
 
 ```bash
-mkdir -p outputs/logs
-uv run qucs-probe 2>&1 | tee outputs/logs/probe.log
-```
-
-`qucs-probe` samples four intents for each of two randomized circuit states,
-executes all candidates in Qucs, and writes format rate, valid-intent rate,
-and within-group reward standard deviation to
-`outputs/probe-qwen3-1.7b/summary.json`.
-
-Start GRPO:
-
-```bash
-uv run qucs-grpo 2>&1 | tee outputs/logs/grpo.log
-```
-
-The default run builds 32 randomized real-Qucs states, samples eight
-completions per prompt group, and trains for 100 optimizer steps. The three
-reward components are weighted `0.2 / 0.2 / 1.0`:
-
-1. exact `<reasoning>...<intent>...</intent>` output shape;
-2. a valid non-empty intent changing no more than two variables;
-3. clipped real-Qucs improvement
-   `old_s21_db - new_s21_db` in `[-20, 20]`.
-
-Every simulated completion is written to `outputs/.../rewards.jsonl`.
-Checkpoints and final LoRA adapters stay under the ignored `outputs/`
-directory. Resume with:
-
-```bash
-uv run qucs-grpo \
-  --resume-from-checkpoint outputs/grpo-qwen3-1.7b/checkpoint-25
+uv run qucs-multiturn --dry-run
 ```
 
 ### Google Colab from VS Code
@@ -226,25 +186,25 @@ run the repository bootstrap from a notebook cell:
 
 The bootstrap installs the pinned Python 3.12 environment with `uv`, extracts
 the pinned Qucs-S AppImage without FUSE, exposes `qucs-s` and `qucsator_rf` in
-headless mode, and executes `qucs-grpo --dry-run` against the real simulator.
-The training reward path needs both binaries because every baseline and
-candidate circuit is netlisted by `qucs-s` and simulated by `qucsator_rf`.
-The training path does not need `qucsrflayout`, because reward simulations set
-`export_layout=False`.
+headless mode, and executes `qucs-multiturn --dry-run` against the real
+simulator. The training path does not need `qucsrflayout`, because reward
+simulations set `export_layout=False`.
 
 Start a small smoke run before committing a full Colab session:
 
 ```python
-!source .env.colab && uv run qucs-grpo --tasks 2 --steps 1 --generations 2 \
-    --sim-workers 2 --output-dir outputs/colab-smoke
+!source .env.colab && uv run qucs-multiturn --dry-run \
+    --output-dir outputs/colab-smoke
 ```
 
-Then start the normal run and stream its log:
+Then start multi-turn GRPO (typically after SFT) and stream its log:
 
 ```python
 !mkdir -p outputs/logs
-!source .env.colab && uv run qucs-grpo --output-dir outputs/colab-grpo \
-    2>&1 | tee outputs/logs/colab-grpo.log
+!source .env.colab && uv run qucs-multiturn \
+    --resume-adapter outputs/sft-coldstart/final_lora \
+    --output-dir outputs/colab-multiturn \
+    2>&1 | tee outputs/logs/colab-multiturn.log
 ```
 
 Colab VMs are ephemeral. Store completed adapters elsewhere or use an output
@@ -266,9 +226,6 @@ uv run qucs-sft             # one shallow epoch → outputs/sft-qwen3-1.7b
 
 Legacy single-file mode remains via `--state runs/llm1/state.json` (prints a
 warning). Prefer the index path for multiturn cold-start.
-
-Run `qucs-probe` first. Use SFT only if the base policy cannot reliably
-produce valid intents or its completion groups have no reward variance.
 
 ## Corpus cold-start (agent → SFT → multiturn GRPO)
 
@@ -302,7 +259,7 @@ uv run qucs-sft --index corpus/index.jsonl --dry-run
 uv run qucs-sft --index corpus/index.jsonl --output-dir outputs/sft-coldstart
 
 # 6. Multiturn GRPO cold-start from SFT LoRA
-uv run python -m training.multiturn_train \
+uv run qucs-multiturn \
   --resume-adapter outputs/sft-coldstart/final_lora
 ```
 

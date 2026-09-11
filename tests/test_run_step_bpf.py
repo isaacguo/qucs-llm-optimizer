@@ -170,12 +170,14 @@ class BpfFormatTests(unittest.TestCase):
         self.assertIn("goal not met", text.lower())
 
         obs = run_step.format_observation(entry, bpf_goal=goal, task="butterworth_bpf5")
+        self.assertIn("=== SYSTEM: BPF tuning skills", obs)
+        self.assertIn("Skill A", obs)
         self.assertIn("L3", obs)
         self.assertIn("C3", obs)
         self.assertIn("bounds", obs.lower())
         # sample L and C bound edges from task tables
-        self.assertIn("1.0", obs)  # L lower
-        self.assertIn("2000.0", obs)  # L upper
+        self.assertIn("0.5", obs)  # L lower
+        self.assertIn("10000.0", obs)  # L upper
         # I4: units + sweep window + goal thresholds
         self.assertIn("nH", obs)
         self.assertIn("pF", obs)
@@ -183,6 +185,10 @@ class BpfFormatTests(unittest.TestCase):
         self.assertIn("passband_il_max_db", obs)
         # seed L2 keeps 4-decimal-ish precision in observation
         self.assertIn("6.5577", obs)
+        # peak diagnostic line when present on cost
+        entry["cost"]["s21_peak_freq_hz"] = 150e6
+        obs2 = run_step.format_observation(entry, bpf_goal=goal, task="butterworth_bpf5")
+        self.assertIn("S21 peak frequency", obs2)
 
     def test_format_report_goal_met_true(self):
         from goals_bpf import default_goal

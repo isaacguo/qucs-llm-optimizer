@@ -1,5 +1,9 @@
 # Training Hyperparameter YAML Config Implementation Plan
 
+> **ARCHIVED (2026-09-12):** Single-step `GrpoConfig` / `training/grpo.py` were removed.
+> Current training entrypoints are `qucs-multiturn` and `qucs-sft` only.
+> Keep this file as historical context; do not implement the one-step GRPO sections.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Add optional nested YAML recipes for `grpo` and `multiturn_train` so hyperparameters live in typed dataclasses + files, with CLI overrides, without breaking no-`--config` runs.

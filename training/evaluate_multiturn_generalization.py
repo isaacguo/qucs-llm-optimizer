@@ -1,21 +1,18 @@
 """Check whether a multi-turn-trained policy generalizes on held-out targets.
 
-Training (``multiturn_train.py``) optimizes the policy over *full multi-turn
-rollouts* (predict -> simulate -> decide whether to keep going), so a fair
-generalization check has to run the same kind of rollout, not a single-shot
-intent prediction. ``evaluate_generalization.py`` only tests one Stage-A-style
-step and cannot tell whether the multi-turn behaviour (best-so-far tracking,
-patience, self-stop timing) generalizes to goals the policy never trained on.
+Training (``multiturn_train.py``) optimizes the policy over full multi-turn
+rollouts (predict -> simulate -> decide whether to keep going), so a fair
+generalization check must run the same kind of rollout, not a single-shot
+intent prediction. This script scores full trajectories so best-so-far
+tracking, patience, and self-stop timing are included.
 
-This script runs full ``run_trajectory`` rollouts (the same environment loop
-used during training) against ``training.goals.heldout_goals()``, for both a
-baseline (no adapter -> equivalent to the untrained base model, since a fresh
-LoRA's B matrix is zero-initialized) and a trained adapter, so the two are
-directly comparable.
+It runs ``run_trajectory`` against ``training.goals.heldout_goals()`` for both
+a baseline (no adapter; fresh LoRA B is zero-initialized) and a trained
+adapter, so the two are directly comparable.
 
 Usage:
     uv run python -m training.evaluate_multiturn_generalization \\
-        --adapter outputs/2026-09-09-1810-multiturn-nightly-4x4x60/final_lora \\
+        --adapter outputs/.../final_lora \\
         --episodes-per-goal 3 --target-depth-db -70
 """
 from __future__ import annotations

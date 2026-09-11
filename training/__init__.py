@@ -1,2 +1,1 @@
-"""Unsloth training integration for the Qucs intent policy."""
-
+"""Multi-turn GRPO and SFT training for the Qucs intent policy."""

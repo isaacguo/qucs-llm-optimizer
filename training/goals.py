@@ -1,9 +1,4 @@
-"""Randomized design-goal specs for the butterfly-stub notch task.
-
-Stage A of goal-conditioned GRPO training: only the notch target frequency
-varies. Depth threshold and goal "type" (notch) stay fixed so the policy has
-one axis of variation to generalize over before we add more (Stage B/C).
-"""
+"""Randomized design-goal specs for the butterfly-stub notch task."""
 from __future__ import annotations
 
 import json
@@ -18,9 +13,7 @@ BAND_HALF_WIDTH_HZ = 1.0e9
 DEFAULT_TARGET_DEPTH_DB = -70.0
 
 # Fixed frequencies withheld from the training distribution. Never sampled by
-# sample_goal(); only used by evaluate_generalization.py to check whether the
-# policy generalizes to goals it never saw during training, as opposed to
-# having memorized the training distribution.
+# sample_goal(); used by evaluate_multiturn_generalization.py.
 HELDOUT_FREQS_HZ = (4.2e9, 4.6e9, 5.0e9, 5.4e9, 5.8e9)
 _HELDOUT_EXCLUSION_HZ = 0.05e9  # keep train sampling >= 50 MHz from any held-out point
 

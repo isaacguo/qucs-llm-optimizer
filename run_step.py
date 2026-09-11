@@ -245,6 +245,8 @@ def _format_report_bpf(entry: dict, bpf_goal: BpfGoalSpec | None = None) -> str:
         lines.append(f"passband mean S21 = {c['passband_mean_s21_db']:.2f} dB")
     if "s11_passband_max_db" in c:
         lines.append(f"passband max S11 = {c['s11_passband_max_db']:.2f} dB")
+    if "s21_peak_freq_hz" in c:
+        lines.append(f"S21 peak frequency = {c['s21_peak_freq_hz']/1e6:.2f} MHz")
     if entry.get("intent"):
         lines.append(f"intent used: {entry['intent']}")
     if entry.get("note"):
@@ -258,11 +260,15 @@ def format_observation(
     *,
     task: str | None = None,
     bpf_goal: BpfGoalSpec | None = None,
+    include_skills_system: bool = True,
 ) -> str:
     """
     Render the exact evidence block handed to the strategy layer before it
     decides the next intent: the latest measurement plus the bounds it must
     stay inside. Stored verbatim on the next history entry.
+
+    For butterworth_bpf5, prepend the tuning-skills system prompt so each
+    round sees the same skill card (ablation / teacher context).
     """
     task_name = task or _DEFAULT_TASK
     cfg = get_task(task_name) if _is_bpf(task_name) else None
@@ -280,10 +286,21 @@ def format_observation(
             f"  {v:<6} = {p[v]:>10.4g}   bounds [{bounds[v][0]}, {bounds[v][1]}]"
             for v in variables
         )
-    return (
+    body = (
         f"{format_report(entry, goal=goal, task=task_name, bpf_goal=bpf_goal)}\n\n"
         f"free variables and bounds:\n{bounds_txt}"
     )
+    if _is_bpf(task_name) and include_skills_system:
+        from bpf_tuning_skills import load_skills_system_prompt
+
+        skills = load_skills_system_prompt()
+        return (
+            "=== SYSTEM: BPF tuning skills (read every round) ===\n"
+            f"{skills}\n"
+            "=== END SYSTEM ===\n\n"
+            f"{body}"
+        )
+    return body
 
 
 def _print_report(

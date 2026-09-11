@@ -1,4 +1,4 @@
-"""Tests for GRPO task datasets and optional SFT examples."""
+"""Tests for optional SFT examples (legacy state + corpus index)."""
 from __future__ import annotations
 
 import io
@@ -10,7 +10,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from training.corpus import append_index
-from training.data import build_grpo_records, load_sft_records
+from training.data import load_sft_records
 from training.modeling import ModelConfig
 from training.sft import build_parser, main as sft_main
 
@@ -64,40 +64,6 @@ def _multiturn_fixture_state() -> dict:
             },
         ],
     }
-
-
-class GrpoDataTests(unittest.TestCase):
-    def test_builds_seeded_records_with_reward_columns(self):
-        def fake_task(seed, iteration, freq_range=None, **_kwargs):
-            return {
-                "prompt": [{"role": "user", "content": f"seed {seed}"}],
-                "params_json": "{}",
-                "baseline_cost_json": '{"total_cost": 0.1}',
-                "goal_json": '{"target_freq_hz": 5.5e9, "band_hz": [4e9, 6e9], "target_depth_db": -70.0}',
-                "iteration": iteration,
-                "seed": seed,
-            }
-
-        records = build_grpo_records(
-            count=3,
-            start_seed=10,
-            max_iteration=4,
-            task_factory=fake_task,
-        )
-
-        self.assertEqual([row["seed"] for row in records], [10, 11, 12])
-        self.assertEqual(
-            set(records[0]),
-            {
-                "prompt",
-                "params_json",
-                "baseline_cost_json",
-                "goal_json",
-                "iteration",
-                "seed",
-            },
-        )
-        self.assertTrue(all(0 <= row["iteration"] <= 4 for row in records))
 
 
 class SftDataTests(unittest.TestCase):
@@ -174,7 +140,6 @@ class SftIndexCliTests(unittest.TestCase):
             load_policy.assert_not_called()
             out = buf.getvalue()
             self.assertRegex(out, r"\b2\b")
-            self.assertIn("2", out)
 
     def test_dry_run_empty_index_raises_clear_error(self):
         with tempfile.TemporaryDirectory() as td:

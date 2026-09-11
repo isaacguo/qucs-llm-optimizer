@@ -32,6 +32,8 @@ class CostBpfTests(unittest.TestCase):
         self.assertAlmostEqual(report.stopband_max_s21_db, _db(0.2), places=6)
         self.assertTrue(report.has_passband_samples)
         self.assertTrue(report.has_stopband_samples)
+        # peak |S21| is at 140 MHz (0.95)
+        self.assertEqual(report.s21_peak_freq_hz, 140e6)
 
     def test_empty_passband_raises(self):
         res = SimResult(freq_hz=[10e6, 20e6], s11=[0j, 0j], s21=[0.1j, 0.1j])

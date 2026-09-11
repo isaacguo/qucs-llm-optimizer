@@ -1,24 +1,16 @@
-"""Tests for conservative 8 GB Unsloth model setup."""
+"""Tests for HF + PEFT + bitsandbytes policy loading."""
 from __future__ import annotations
 
 import unittest
+from dataclasses import dataclass
+from typing import Any
 
-from training.modeling import ModelConfig, load_policy, mixed_precision_config
-
-
-class FakeBackend:
-    pretrained_kwargs = None
-    peft_kwargs = None
-
-    @classmethod
-    def from_pretrained(cls, **kwargs):
-        cls.pretrained_kwargs = kwargs
-        return "model", "tokenizer"
-
-    @classmethod
-    def get_peft_model(cls, model, **kwargs):
-        cls.peft_kwargs = kwargs
-        return f"peft:{model}"
+from training.modeling import (
+    ModelConfig,
+    LoadHooks,
+    load_policy,
+    mixed_precision_config,
+)
 
 
 class FakeCuda:
@@ -37,6 +29,38 @@ class FakeTorch:
         self.cuda = FakeCuda(supports_bf16)
 
 
+@dataclass
+class RecordingHooks:
+    calls: dict[str, Any]
+
+    def __post_init__(self):
+        self.calls = {}
+
+    def as_hooks(self) -> LoadHooks:
+        def load_tokenizer(config: ModelConfig):
+            self.calls["tokenizer_config"] = config
+            return "tokenizer"
+
+        def load_model(config: ModelConfig):
+            self.calls["model_config"] = config
+            return "base-model"
+
+        def prepare_model(model, config: ModelConfig):
+            self.calls["prepare"] = (model, config.lora_rank)
+            return f"prepared:{model}"
+
+        def apply_lora(model, config: ModelConfig):
+            self.calls["lora"] = (model, config.lora_rank, config.max_seq_length)
+            return f"peft:{model}"
+
+        return LoadHooks(
+            load_tokenizer=load_tokenizer,
+            load_model=load_model,
+            prepare_model=prepare_model,
+            apply_lora=apply_lora,
+        )
+
+
 class ModelSetupTests(unittest.TestCase):
     def test_mixed_precision_tracks_gpu_bf16_support(self):
         self.assertEqual(
@@ -53,20 +77,16 @@ class ModelSetupTests(unittest.TestCase):
         self.assertEqual(config.model_name, "unsloth/Qwen3-1.7B-bnb-4bit")
         self.assertEqual(config.max_seq_length, 1024)
         self.assertEqual(config.lora_rank, 16)
-        self.assertFalse(config.fast_inference)
+        self.assertTrue(config.load_in_4bit)
 
-    def test_loads_four_bit_model_and_attaches_lora(self):
-        model, tokenizer = load_policy(ModelConfig(), backend=FakeBackend)
-        self.assertEqual(model, "peft:model")
+    def test_load_policy_uses_injected_hf_hooks(self):
+        recorder = RecordingHooks(calls={})
+        model, tokenizer = load_policy(ModelConfig(), hooks=recorder.as_hooks())
         self.assertEqual(tokenizer, "tokenizer")
-        self.assertTrue(FakeBackend.pretrained_kwargs["load_in_4bit"])
-        self.assertFalse(FakeBackend.pretrained_kwargs["fast_inference"])
-        self.assertEqual(FakeBackend.peft_kwargs["r"], 16)
-        self.assertIn("q_proj", FakeBackend.peft_kwargs["target_modules"])
-        self.assertEqual(
-            FakeBackend.peft_kwargs["use_gradient_checkpointing"],
-            "unsloth",
-        )
+        self.assertEqual(model, "peft:prepared:base-model")
+        self.assertEqual(recorder.calls["lora"][1], 16)
+        self.assertEqual(recorder.calls["prepare"][0], "base-model")
+        self.assertIsInstance(recorder.as_hooks(), LoadHooks)
 
 
 if __name__ == "__main__":

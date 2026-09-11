@@ -9,7 +9,7 @@ APPIMAGE="$TOOLS_DIR/Qucs-S-${QUCS_S_VERSION}-linux-x86_64.AppImage"
 APPDIR="$TOOLS_DIR/Qucs-S-${QUCS_S_VERSION}"
 DOWNLOAD_URL="https://github.com/ra3xdh/qucs_s/releases/download/${QUCS_S_VERSION}/Qucs-S-${QUCS_S_VERSION}-linux-x86_64.AppImage"
 
-if [[ ! -f pyproject.toml || ! -f training/grpo.py ]]; then
+if [[ ! -f pyproject.toml || ! -f training/multiturn_train.py ]]; then
     echo "Run this script from the qucs-llm-optimizer repository root." >&2
     exit 1
 fi
@@ -81,8 +81,8 @@ QUCSATOR_RF=$BIN_DIR/qucsator_rf
 QT_QPA_PLATFORM=offscreen
 EOF
 
-echo "Running one real-Qucs reward as an end-to-end check..."
-uv run qucs-grpo --dry-run --output-dir outputs/colab-dry-run
+echo "Running one real-Qucs multi-turn dry-run as an end-to-end check..."
+uv run qucs-multiturn --dry-run --output-dir outputs/colab-dry-run
 
 echo "Colab setup complete. Start training with:"
-echo "  source .env.colab && uv run qucs-grpo --output-dir outputs/colab-grpo"
+echo "  source .env.colab && uv run qucs-multiturn --resume-adapter <sft_lora> --output-dir outputs/colab-multiturn"

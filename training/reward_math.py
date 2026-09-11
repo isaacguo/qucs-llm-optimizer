@@ -1,4 +1,4 @@
-"""Shared depth + notch-frequency terms for one-step and multi-turn rewards.
+"""Shared depth + notch-frequency terms for multi-turn trajectory rewards.
 
 ``best_freq_hz`` is the sweep frequency of the deepest |S21|. Alignment is
 linear in |f_notch - f_target| and hits 0 at one stopband half-width (1 GHz).

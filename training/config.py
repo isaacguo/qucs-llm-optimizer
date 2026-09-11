@@ -15,67 +15,10 @@ T = TypeVar("T")
 
 
 @dataclass
-class ModelSection:
-    name: str = "unsloth/Qwen3-1.7B-bnb-4bit"
-    max_seq_length: int = 1024
-    lora_rank: int = 16
-
-
-@dataclass
 class MultiturnModelSection:
     name: str = "unsloth/Qwen3-1.7B-bnb-4bit"
     max_seq_length: int = 2048
     lora_rank: int = 16
-
-
-@dataclass
-class GrpoTrainSection:
-    steps: int = 100
-    generations: int = 8
-    learning_rate: float = 5e-6
-    weight_decay: float = 0.01
-    warmup_ratio: float = 0.1
-    lr_scheduler_type: str = "cosine"
-    optim: str = "adamw_8bit"
-    per_device_train_batch_size: int = 1
-    gradient_accumulation_steps: int = 4
-    max_prompt_length: int = 768
-    max_completion_length: int = 256
-    max_grad_norm: float = 0.1
-    temperature: float = 1.0
-    loss_type: str = "dr_grpo"
-
-
-@dataclass
-class GrpoDataSection:
-    tasks: int = 32
-    start_seed: int = 1000
-    max_iteration: int = 12
-    goal_freq_min_ghz: float = 4.0
-    goal_freq_max_ghz: float = 6.0
-
-
-@dataclass
-class GrpoRewardSection:
-    weights: list[float] = field(default_factory=lambda: [0.2, 0.2, 1.0])
-    beta: float = 0.01
-
-
-@dataclass
-class GrpoRuntimeSection:
-    output_dir: str = "outputs/grpo-qwen3-1.7b"
-    sim_workers: int = 2
-    use_vllm: bool = False
-    resume_from_checkpoint: str = ""
-
-
-@dataclass
-class GrpoConfig:
-    model: ModelSection = field(default_factory=ModelSection)
-    train: GrpoTrainSection = field(default_factory=GrpoTrainSection)
-    data: GrpoDataSection = field(default_factory=GrpoDataSection)
-    reward: GrpoRewardSection = field(default_factory=GrpoRewardSection)
-    runtime: GrpoRuntimeSection = field(default_factory=GrpoRuntimeSection)
 
 
 @dataclass
@@ -109,6 +52,8 @@ class MultiturnDataSection:
 
 @dataclass
 class MultiturnRewardSection:
+    """Reserved YAML section (`reward: {}`); knobs live in ``reward_math`` today."""
+
     pass
 
 
@@ -170,41 +115,6 @@ def from_mapping(cls: type[T], data: dict | None, path: str = "") -> T:
     return cls(**kwargs)
 
 
-GRPO_CLI_FIELD_MAP: dict[str, tuple[str, str]] = {
-    "model_name": ("model", "name"),
-    "tasks": ("data", "tasks"),
-    "start_seed": ("data", "start_seed"),
-    "max_iteration": ("data", "max_iteration"),
-    "goal_freq_min_ghz": ("data", "goal_freq_min_ghz"),
-    "goal_freq_max_ghz": ("data", "goal_freq_max_ghz"),
-    "steps": ("train", "steps"),
-    "generations": ("train", "generations"),
-    "sim_workers": ("runtime", "sim_workers"),
-    "output_dir": ("runtime", "output_dir"),
-    "resume_from_checkpoint": ("runtime", "resume_from_checkpoint"),
-    "use_vllm": ("runtime", "use_vllm"),
-}
-
-
-def merge_grpo_cli(config: GrpoConfig, args: argparse.Namespace) -> GrpoConfig:
-    cfg = copy.deepcopy(config)
-    for dest, (section, name) in GRPO_CLI_FIELD_MAP.items():
-        value = getattr(args, dest, None)
-        if value is None:
-            continue
-        setattr(getattr(cfg, section), name, value)
-    return cfg
-
-
-def resolve_grpo_config(args: argparse.Namespace) -> GrpoConfig:
-    config_path = getattr(args, "config", None)
-    if config_path:
-        cfg = from_mapping(GrpoConfig, load_yaml(config_path))
-    else:
-        cfg = GrpoConfig()
-    return merge_grpo_cli(cfg, args)
-
-
 MULTITURN_CLI_FIELD_MAP: dict[str, tuple[str, str]] = {
     "model_name": ("model", "name"),
     "max_seq_length": ("model", "max_seq_length"),
@@ -253,14 +163,11 @@ def resolve_multiturn_config(args: argparse.Namespace) -> MultiturnConfig:
     return merge_multiturn_cli(cfg, args)
 
 
-def to_model_config(
-    model: ModelSection | MultiturnModelSection, *, fast_inference: bool = False
-) -> ModelConfig:
+def to_model_config(model: MultiturnModelSection) -> ModelConfig:
     return ModelConfig(
         model_name=model.name,
         max_seq_length=model.max_seq_length,
         lora_rank=model.lora_rank,
-        fast_inference=fast_inference,
     )
 
 

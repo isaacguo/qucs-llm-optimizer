@@ -1,4 +1,4 @@
-"""Optional one-epoch Unsloth SFT warm-up from corpus index (or legacy state)."""
+"""Optional one-epoch SFT warm-up from corpus index (or legacy state)."""
 from __future__ import annotations
 
 import argparse
@@ -116,7 +116,7 @@ def main(argv: list[str] | None = None) -> None:
         learning_rate=2e-4,
         warmup_ratio=0.1,
         lr_scheduler_type="linear",
-        optim="adamw_8bit",
+        optim="adamw_torch",
         logging_steps=1,
         save_strategy="epoch",
         max_length=args.max_length,
