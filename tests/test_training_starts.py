@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import unittest
 
-from training.goals import GoalSpec
+from training.common.goals import GoalSpec
 from training.starts import is_start_too_deep, sample_params_with_headroom
 
 

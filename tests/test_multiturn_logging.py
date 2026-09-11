@@ -4,7 +4,7 @@ from __future__ import annotations
 import unittest
 
 from training.diagnostics import build_step_stats
-from training.goals import GoalSpec
+from training.common.goals import GoalSpec
 from training.rollout import Trajectory, TurnRecord
 
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import unittest
 
-from training.contracts import IntentParseError, parse_intent_completion
+from training.common.contracts import IntentParseError, parse_intent_completion
 
 
 class ParseIntentCompletionTests(unittest.TestCase):

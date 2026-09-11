@@ -15,7 +15,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 import run_step
 from state import RunState
-from training.goals import GoalSpec
+from training.common.goals import GoalSpec
 
 
 @dataclass

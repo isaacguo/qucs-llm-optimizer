@@ -42,8 +42,8 @@ from training.corpus import (  # noqa: E402
     index_record_from_run,
     load_index,
 )
-from training.environment import sample_params  # noqa: E402
-from training.goals import (  # noqa: E402
+from training.common.environment import sample_params  # noqa: E402
+from training.common.goals import (  # noqa: E402
     GoalDistributionConfig,
     GoalSpec,
     band_for,

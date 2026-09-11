@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from training.goals import (
+from training.common.goals import (
     GoalDistributionConfig,
     GoalSpec,
     is_goal_met,
@@ -15,7 +15,7 @@ from training.goals import (
 
 
 class LoadGoalDistributionTests(unittest.TestCase):
-    def test_loads_coldstart_defaults(self):
+    def test_loads_default_goal_distribution(self):
         path = Path("configs/goal_distribution.yaml")
         dist = load_goal_distribution(path)
         self.assertEqual(dist.freq_min_hz, 1e9)

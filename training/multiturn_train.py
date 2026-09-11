@@ -40,14 +40,14 @@ from training.config import (  # noqa: E402
     to_model_config,
 )
 from training.diagnostics import build_step_stats  # noqa: E402
-from training.goals import (  # noqa: E402
+from training.common.goals import (  # noqa: E402
     GoalDistributionConfig,
     GoalSpec,
     load_goal_distribution,
     sample_goal_from_distribution,
 )
-from training.modeling import load_policy  # noqa: E402
-from training.preflight import verify_runtime  # noqa: E402
+from training.common.modeling import load_policy  # noqa: E402
+from training.common.preflight import verify_runtime  # noqa: E402
 from training.rollout import (  # noqa: E402
     Trajectory,
     run_trajectory,
@@ -133,8 +133,8 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help=(
             "load a previously saved LoRA (checkpoint-* or final_lora) before "
-            "the first rollout, then keep training; required for cold-start "
-            "unless --allow-raw-base"
+            "the first rollout, then keep training; required unless "
+            "--allow-raw-base"
         ),
     )
     parser.add_argument(
@@ -143,7 +143,7 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help=(
             "escape hatch: allow training from a fresh random LoRA without "
-            "--resume-adapter (cold-start otherwise requires an SFT adapter)"
+            "--resume-adapter (otherwise an SFT adapter is required)"
         ),
     )
     parser.add_argument(
@@ -329,7 +329,8 @@ def train(config: MultiturnConfig) -> None:
 
     if not r.resume_adapter and not r.allow_raw_base:
         raise SystemExit(
-            "cold-start requires --resume-adapter / runtime.resume_adapter"
+            "multiturn training requires --resume-adapter / runtime.resume_adapter "
+            "(or pass --allow-raw-base)"
         )
 
     import torch

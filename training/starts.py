@@ -13,8 +13,8 @@ if str(SRC) not in sys.path:
 from cost import evaluate, s21_db  # noqa: E402
 from qucs_sim import simulate  # noqa: E402
 
-from training.environment import sample_params  # noqa: E402
-from training.goals import GoalSpec  # noqa: E402
+from training.common.environment import sample_params  # noqa: E402
+from training.common.goals import GoalSpec  # noqa: E402
 
 
 def is_start_too_deep(

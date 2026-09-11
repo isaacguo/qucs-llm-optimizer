@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import unittest
 
-from training.environment import sample_params
-from training.goals import DEFAULT_TARGET_DEPTH_DB, GoalSpec, sample_goal
+from training.common.environment import sample_params
+from training.common.goals import DEFAULT_TARGET_DEPTH_DB, GoalSpec, sample_goal
 from training.rollout import (
     REWARD_CLIP,
     mixed_terminal_reward,

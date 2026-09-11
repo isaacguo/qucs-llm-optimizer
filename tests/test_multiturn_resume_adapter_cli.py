@@ -1,4 +1,4 @@
-"""Cold-start multiturn: shared goal distribution + SFT resume gate (no GPU)."""
+"""Multiturn: shared goal distribution + SFT resume gate (no GPU)."""
 from __future__ import annotations
 
 import unittest
@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SHIPPED_GOAL_CONFIG = ROOT / "configs" / "goal_distribution.yaml"
 
 
-class MultiturnColdstartCliTests(unittest.TestCase):
+class MultiturnResumeAdapterCliTests(unittest.TestCase):
     def test_train_exits_without_resume_adapter(self):
         cfg = MultiturnConfig()
         self.assertEqual(cfg.runtime.resume_adapter, "")

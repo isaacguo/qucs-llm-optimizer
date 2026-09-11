@@ -9,7 +9,7 @@ from typing import Any, TypeVar, get_type_hints
 
 import yaml
 
-from training.modeling import ModelConfig
+from training.common.modeling import ModelConfig
 
 T = TypeVar("T")
 

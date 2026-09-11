@@ -21,7 +21,7 @@ from training.corpus import (  # noqa: E402
     gate_run,
     load_index,
 )
-from training.goals import GoalDistributionConfig, GoalSpec  # noqa: E402
+from training.common.goals import GoalDistributionConfig, GoalSpec  # noqa: E402
 from training.rollout import SYSTEM_PROMPT, TurnRecord, build_multiturn_prompt  # noqa: E402
 
 
@@ -401,7 +401,7 @@ class CorpusCliTests(unittest.TestCase):
     def test_prefer_coverage_avoids_saturated_bin(self):
         from dataclasses import asdict
 
-        from training.goals import load_goal_distribution, sample_goal_from_distribution
+        from training.common.goals import load_goal_distribution, sample_goal_from_distribution
 
         dist = load_goal_distribution(self.goal_config)
         saturated = sample_goal_from_distribution(0, dist)

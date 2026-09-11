@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import unittest
 
-from training.goals import GoalSpec
+from training.common.goals import GoalSpec
 from training.rollout import Trajectory, TurnRecord
 from training.trl_rollout import pack_rollout_from_trajectories
 

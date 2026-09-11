@@ -44,7 +44,7 @@ from tasks import TaskConfig, get_task
 _ROOT = Path(__file__).resolve().parent
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
-from training.goals import GoalSpec  # noqa: E402
+from training.common.goals import GoalSpec  # noqa: E402
 
 RUNS_ROOT = Path(__file__).resolve().parent / "runs"
 TARGET_BAND_HZ = (4e9, 6e9)

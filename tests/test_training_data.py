@@ -11,7 +11,7 @@ from unittest.mock import patch
 
 from training.corpus import append_index
 from training.data import load_sft_records
-from training.modeling import ModelConfig
+from training.common.modeling import ModelConfig
 from training.sft import build_parser, main as sft_main
 
 

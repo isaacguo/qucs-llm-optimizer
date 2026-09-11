@@ -5,7 +5,7 @@ import unittest
 from dataclasses import dataclass
 from typing import Any
 
-from training.modeling import (
+from training.common.modeling import (
     ModelConfig,
     LoadHooks,
     load_policy,

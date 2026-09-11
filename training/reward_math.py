@@ -5,7 +5,7 @@ linear in |f_notch - f_target| and hits 0 at one stopband half-width (1 GHz).
 """
 from __future__ import annotations
 
-from training.goals import BAND_HALF_WIDTH_HZ
+from training.common.goals import BAND_HALF_WIDTH_HZ
 
 REWARD_CLIP = 20.0
 BEST_WEIGHT = 0.7

@@ -7,8 +7,8 @@ import warnings
 from pathlib import Path
 
 from training.data import load_multiturn_sft_from_index, load_sft_records
-from training.modeling import ModelConfig, load_policy, mixed_precision_config
-from training.preflight import verify_runtime
+from training.common.modeling import ModelConfig, load_policy, mixed_precision_config
+from training.common.preflight import verify_runtime
 
 DEFAULT_MODEL = "unsloth/Qwen3-1.7B-bnb-4bit"
 DEFAULT_INDEX = "corpus/index.jsonl"
@@ -23,7 +23,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--index",
         default=DEFAULT_INDEX,
-        help="corpus index JSONL (default path for multiturn cold-start)",
+        help="corpus index JSONL (default path for SFT from teacher trajectories)",
     )
     parser.add_argument(
         "--runs-root",
@@ -60,7 +60,7 @@ def build_parser() -> argparse.ArgumentParser:
 def _load_records(args: argparse.Namespace) -> list[dict]:
     if args.state is not None:
         warnings.warn(
-            "--state is legacy single-file SFT; prefer --index for multiturn cold-start",
+            "--state is legacy single-file SFT; prefer --index for corpus-based SFT",
             stacklevel=2,
         )
         records = load_sft_records(Path(args.state))

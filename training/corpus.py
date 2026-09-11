@@ -15,7 +15,7 @@ if str(SRC) not in sys.path:
 
 from cost import s21_db  # noqa: E402
 
-from training.goals import (  # noqa: E402
+from training.common.goals import (  # noqa: E402
     GoalDistributionConfig,
     GoalSpec,
     is_goal_met,

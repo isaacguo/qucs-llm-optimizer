@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import unittest
 
-from training.environment import sample_params
+from training.common.environment import sample_params
 
 
 class SampleParamsTests(unittest.TestCase):
