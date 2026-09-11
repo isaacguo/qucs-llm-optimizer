@@ -1,6 +1,7 @@
 """Task dispatch: butterworth_bpf5 via run_step --task."""
 from __future__ import annotations
 
+import importlib
 import io
 import json
 import sys
@@ -17,7 +18,8 @@ sys.path.insert(0, str(ROOT / "src"))
 import run_step
 from qucs_sim import SimResult
 from state import RunState
-from tasks import get_task
+from task_registry import clear_plugins_for_tests
+from tasks import ensure_builtin_tasks, get_task
 
 
 def _synthetic_bpf_sim() -> SimResult:
@@ -39,6 +41,15 @@ def _init_args(run: str, *, task: str = "butterworth_bpf5", goal_json: str = "")
     )
 
 
+class _BpfPluginRegistered(unittest.TestCase):
+    """Re-register BPF after clear_plugins_for_tests (order-independent)."""
+
+    def setUp(self):
+        clear_plugins_for_tests()
+        ensure_builtin_tasks()
+        importlib.import_module("jobs.bpf5_agent.register").register()
+
+
 class RunStateTaskPersistenceTests(unittest.TestCase):
     def test_set_run_meta_persists_task(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -50,7 +61,7 @@ class RunStateTaskPersistenceTests(unittest.TestCase):
             self.assertEqual(reloaded.task, "butterworth_bpf5")
 
 
-class BpfInitDispatchTests(unittest.TestCase):
+class BpfInitDispatchTests(_BpfPluginRegistered):
     def test_init_bpf_sets_task_and_bpf_cost_keys(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
@@ -135,7 +146,7 @@ class BpfInitDispatchTests(unittest.TestCase):
             self.assertIn("target_freq_hz", state.goal)
 
 
-class BpfFormatTests(unittest.TestCase):
+class BpfFormatTests(_BpfPluginRegistered):
     def test_format_report_and_observation_bpf(self):
         from jobs.bpf5_agent.goals import default_goal
 
@@ -217,7 +228,7 @@ class BpfFormatTests(unittest.TestCase):
         self.assertNotIn("goal not met", text.lower())
 
 
-class BpfStepDispatchTests(unittest.TestCase):
+class BpfStepDispatchTests(_BpfPluginRegistered):
     def test_step_uses_bpf_variables_and_simulate_kwargs(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
@@ -277,7 +288,7 @@ class BpfStepDispatchTests(unittest.TestCase):
             self.assertLess(abs(new_l2 - seed_l2), 20.0)
 
 
-class BpfGoalValidationInitTests(unittest.TestCase):
+class BpfGoalValidationInitTests(_BpfPluginRegistered):
     def test_init_rejects_invalid_goal_json(self):
         bad = json.dumps(
             {
