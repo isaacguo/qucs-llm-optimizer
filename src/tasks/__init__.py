@@ -16,13 +16,7 @@ class TaskConfig:
     step_mode: str = "range"
 
 
-def get_task(name: str) -> TaskConfig:
-    if name == "butterfly_stub":
-        from tasks import butterfly_stub as m
-    elif name == "butterworth_bpf5":
-        from tasks import butterworth_bpf5 as m
-    else:
-        raise ValueError(f"unknown task: {name!r}")
+def _config_from_module(m) -> TaskConfig:
     return TaskConfig(
         name=m.TASK_NAME,
         variables=m.VARIABLES,
@@ -33,3 +27,26 @@ def get_task(name: str) -> TaskConfig:
         sweep_points=getattr(m, "SWEEP_POINTS", 181),
         step_mode=getattr(m, "STEP_MODE", "range"),
     )
+
+
+def _register_builtins() -> None:
+    from task_registry import register_builtin_config
+    from tasks import butterfly_stub as butterfly_stub_m
+    from tasks import butterworth_bpf5 as butterworth_bpf5_m
+
+    register_builtin_config(_config_from_module(butterfly_stub_m))
+    register_builtin_config(_config_from_module(butterworth_bpf5_m))
+
+
+def get_task(name: str) -> TaskConfig:
+    from task_registry import get_task as _get_task
+
+    try:
+        return _get_task(name)
+    except ValueError:
+        # Registry unit tests may call clear_plugins_for_tests(); restore builtins.
+        _register_builtins()
+        return _get_task(name)
+
+
+_register_builtins()
