@@ -193,6 +193,61 @@ class BpfReportTests(unittest.TestCase):
         self.assertIn("passband_min_s21_db", html)
         self.assertIn("total_cost", html)
 
+    def test_bpf_chart_best_matches_panel_total_cost_best(self):
+        """Panel best uses min(total_cost); chart best must agree even when
+        passband_min_s21_db peaks on a different iteration."""
+        params = {
+            "L1": 160.0, "C1": 7.0, "L2": 6.5, "C2": 170.0, "L3": 530.0,
+            "C3": 2.1, "L4": 6.5, "C4": 170.0, "L5": 160.0, "C5": 7.0,
+        }
+        # iter 0: best passband IL (-0.3) but worse total_cost
+        # iter 1: worse passband IL (-1.5) but best total_cost
+        history = [
+            {
+                "iteration": 0,
+                "params": params,
+                "cost": _bpf_cost(total_cost=0.9, passband_min_s21_db=-0.3),
+                "intent": None,
+                "note": "baseline",
+                "thinking": "",
+                "observation": None,
+            },
+            {
+                "iteration": 1,
+                "params": dict(params, L3=500.0),
+                "cost": _bpf_cost(total_cost=0.2, passband_min_s21_db=-1.5),
+                "intent": {"L3": "decrease"},
+                "note": "lower total_cost",
+                "thinking": "accept worse passband for lower total_cost",
+                "observation": {"from_iteration": 0, "report_text": "---"},
+            },
+        ]
+        (self.run_dir / "iter_000").mkdir(exist_ok=True)
+        (self.run_dir / "iter_001").mkdir(exist_ok=True)
+
+        html = build_report(
+            "bpf_disagree", self.run_dir, history, task="butterworth_bpf5"
+        )
+
+        self.assertIn('id="iter-001"', html)
+        self.assertRegex(
+            html,
+            r'<details class="iter is-best"[^>]*id="iter-001"',
+        )
+        self.assertNotRegex(
+            html,
+            r'<details class="iter is-best"[^>]*id="iter-000"',
+        )
+        # Chart best circle must mark the same iteration as the panel badge.
+        self.assertRegex(
+            html,
+            r'<circle class="dot best"[^>]*>\s*<title>iter 1:',
+        )
+        self.assertNotRegex(
+            html,
+            r'<circle class="dot best"[^>]*>\s*<title>iter 0:',
+        )
+
 
 class StateThinkingTests(unittest.TestCase):
     def test_record_persists_thinking_and_observation(self):

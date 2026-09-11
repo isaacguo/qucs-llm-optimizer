@@ -185,11 +185,11 @@ def _convergence_svg(history: list[dict], *, bpf: bool = False) -> str:
     def py(v: float) -> float:
         return pad_t + (hi - v) * (h - pad_t - pad_b) / (hi - lo)
 
-    # BPF: higher passband_min_s21_db (closer to 0) is better; notch: lower dB is better.
-    if bpf:
-        best_i = max(range(n), key=lambda i: vals[i])
-    else:
-        best_i = min(range(n), key=lambda i: vals[i])
+    # Align chart "best" with panels/cards: always min(total_cost).
+    best_i = min(
+        range(n),
+        key=lambda i: float(history[i]["cost"]["total_cost"]),
+    )
 
     grid, ticks = [], []
     step = 10
