@@ -148,10 +148,15 @@ fields degrade to placeholders.
 
 ## Training (multi-turn GRPO + SFT)
 
+Layout: top-level `corpus/` sits beside `training/`; shared helpers live in
+`training/common/`, SFT in `training/sft/`, and multi-turn GRPO in
+`training/grpo/`. CLI names (`qucs-sft`, `qucs-multiturn`, `qucs-corpus`) are
+unchanged.
+
 The optional `training/` package replaces the human strategy layer with a
 Qwen3-1.7B intent policy. Supported paths are:
 
-1. **SFT cold-start** from corpus teacher trajectories (`qucs-sft`)
+1. **SFT** from corpus teacher trajectories (`qucs-sft`)
 2. **Multi-turn GRPO** over real Qucs rollouts (`qucs-multiturn`)
 
 Single-step GRPO is not supported. Model loading uses HF + PEFT +
@@ -202,7 +207,7 @@ Then start multi-turn GRPO (typically after SFT) and stream its log:
 ```python
 !mkdir -p outputs/logs
 !source .env.colab && uv run qucs-multiturn \
-    --resume-adapter outputs/sft-coldstart/final_lora \
+    --resume-adapter outputs/sft-qwen3-1.7b/final_lora \
     --output-dir outputs/colab-multiturn \
     2>&1 | tee outputs/logs/colab-multiturn.log
 ```
@@ -213,10 +218,10 @@ Writing every checkpoint directly to Drive is more durable but usually slower
 than local `/content` storage. The training configuration selects BF16 on GPUs
 that support it and falls back to FP16 on GPUs such as T4.
 
-SFT cold-start trains from the corpus index: each indexed run is exported to
+SFT trains from the corpus index: each indexed run is exported to
 rollout-aligned multiturn chat records (`history_window` default 8,
 `max_length` 2048). Gate successful runs into `corpus/index.jsonl` first
-(see **Corpus cold-start** below), then:
+(see **Corpus → SFT → multiturn GRPO** below), then:
 
 ```bash
 uv run qucs-sft --dry-run   # count exported examples; no model load
@@ -225,9 +230,9 @@ uv run qucs-sft             # one shallow epoch → outputs/sft-qwen3-1.7b
 ```
 
 Legacy single-file mode remains via `--state runs/llm1/state.json` (prints a
-warning). Prefer the index path for multiturn cold-start.
+warning). Prefer the index path for corpus-based SFT.
 
-## Corpus cold-start (agent → SFT → multiturn GRPO)
+## Corpus → SFT → multiturn GRPO
 
 Collect hard-successful Cursor-agent trajectories under a shared goal
 distribution, export rollout-aligned SFT data, then resume multiturn GRPO
@@ -256,11 +261,11 @@ uv run qucs-corpus coverage
 # 5. Export + SFT (at milestones below)
 uv run qucs-corpus export --out /tmp/sft.jsonl
 uv run qucs-sft --index corpus/index.jsonl --dry-run
-uv run qucs-sft --index corpus/index.jsonl --output-dir outputs/sft-coldstart
+uv run qucs-sft --index corpus/index.jsonl --output-dir outputs/sft-qwen3-1.7b
 
-# 6. Multiturn GRPO cold-start from SFT LoRA
+# 6. Multiturn GRPO from SFT LoRA
 uv run qucs-multiturn \
-  --resume-adapter outputs/sft-coldstart/final_lora
+  --resume-adapter outputs/sft-qwen3-1.7b/final_lora
 ```
 
 Optional one-shot import of a legacy reference-shaped run (rewrites

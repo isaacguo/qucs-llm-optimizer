@@ -18,9 +18,9 @@ train = [
 ]
 
 [project.scripts]
-qucs-corpus = "training.corpus_cli:main"
-qucs-multiturn = "training.multiturn_train:main"
-qucs-sft = "training.sft:main"
+qucs-corpus = "corpus.cli:main"
+qucs-multiturn = "training.grpo.train:main"
+qucs-sft = "training.sft.train:main"
 
 [tool.uv]
 package = true
@@ -29,4 +29,4 @@ package = true
 py-modules = []
 
 [tool.setuptools.packages.find]
-include = ["training*"]
+include = ["training*", "corpus*"]

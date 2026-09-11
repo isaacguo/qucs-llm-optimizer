@@ -3,7 +3,7 @@
 TRL's ``GRPOTrainer(rollout_func=...)`` expects parallel lists of
 ``prompt_ids``, ``completion_ids``, and ``logprobs``. This module flattens
 already-collected ``Trajectory`` turns into that shape so a TRL trainer can
-consume the same environment loop as ``training.rollout.run_trajectory``.
+consume the same environment loop as ``training.grpo.rollout.run_trajectory``.
 
 Placeholder logprobs (zeros) are fine when the trainer recomputes log-probs
 from ``completion_ids`` under the current policy; callers that already have

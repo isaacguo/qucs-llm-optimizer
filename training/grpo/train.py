@@ -1,13 +1,13 @@
 """Custom on-policy multi-turn GRPO-style trainer.
 
-Owns Qucs-shaped trajectory advantages end-to-end. ``training.trl_rollout`` can
+Owns Qucs-shaped trajectory advantages end-to-end. ``training.grpo.trl_rollout`` can
 pack the same trajectories for TRL ``rollout_func``; this module remains the
 default trainer until that path is wired as the primary loop.
 
 Update rule (on-policy GRPO-style):
 1. For each of ``tasks_per_step`` goals, draw one shared initial circuit and
    roll out ``generations`` independent trajectories from that same start
-   (``training.rollout.run_trajectory``).
+   (``training.grpo.rollout.run_trajectory``).
 2. Score each trajectory with a mixed best-so-far / final dB reward, then
    form GRPO group-relative advantages and add a per-turn reward-to-go term
    so destroying steps are not reinforced as strongly as improving ones.

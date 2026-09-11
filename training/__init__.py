@@ -1,1 +1,4 @@
-"""Training packages: common helpers, GRPO multiturn, and SFT entrypoints."""
+"""Training packages: ``common`` helpers, ``grpo`` multiturn, and ``sft``.
+
+Corpus collection lives in the top-level ``corpus`` package beside ``training``.
+"""
