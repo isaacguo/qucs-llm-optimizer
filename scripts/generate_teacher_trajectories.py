@@ -3,7 +3,7 @@
 
 Plays the strategy layer with RF heuristics + written <thinking> on each step,
 using the real Qucs path through run_step / qucs_sim. Intended to fill
-corpus/index.jsonl toward the cold-start target (hundreds of runs).
+corpus/index.jsonl (hundreds of hard-successful runs).
 """
 from __future__ import annotations
 
@@ -20,7 +20,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT))
 
-from training.corpus import load_index  # noqa: E402
+from corpus.index import load_index  # noqa: E402
 
 
 def _run(cmd: list[str], *, check: bool = True) -> subprocess.CompletedProcess:
@@ -217,7 +217,7 @@ def generate_one(run_id: str, *, seed: int, prefer_coverage: bool) -> dict:
     if r.returncode != 0:
         return {"run_id": run_id, "ok": False, "stage": "init", "err": r.stderr or r.stdout}
 
-    think_dir = ROOT / "tmp" / "teacher_think" / run_id
+    think_dir = ROOT / "runs" / run_id / "think"
     think_dir.mkdir(parents=True, exist_ok=True)
 
     for step_i in range(19):

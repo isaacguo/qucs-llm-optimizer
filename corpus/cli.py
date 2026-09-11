@@ -34,7 +34,7 @@ if str(ROOT) not in sys.path:
 
 from state import RunState  # noqa: E402
 
-from training.corpus import (  # noqa: E402
+from corpus.index import (  # noqa: E402
     append_index,
     coverage_counts,
     export_from_index,

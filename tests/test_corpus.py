@@ -13,7 +13,7 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
 from cost import s21_db  # noqa: E402
-from training.corpus import (  # noqa: E402
+from corpus.index import (  # noqa: E402
     append_index,
     coverage_counts,
     export_from_index,
@@ -357,7 +357,7 @@ class CorpusCliTests(unittest.TestCase):
     """Smoke tests for qucs-corpus CLI (no Qucs)."""
 
     def setUp(self):
-        from training import corpus_cli
+        from corpus import cli as corpus_cli
 
         self.corpus_cli = corpus_cli
         self._td = tempfile.TemporaryDirectory()

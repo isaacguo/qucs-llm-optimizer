@@ -9,7 +9,7 @@ from contextlib import redirect_stdout
 from pathlib import Path
 from unittest.mock import patch
 
-from training.corpus import append_index
+from corpus.index import append_index
 from training.data import load_sft_records
 from training.common.modeling import ModelConfig
 from training.sft import build_parser, main as sft_main

@@ -39,6 +39,6 @@ def load_multiturn_sft_from_index(
     history_window: int = 8,
 ) -> list[dict]:
     """Thin wrapper: corpus index → multiturn SFT records isomorphic to rollout prompts."""
-    from training.corpus import export_from_index
+    from corpus.index import export_from_index
 
     return export_from_index(index_path, runs_root, history_window=history_window)
