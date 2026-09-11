@@ -10,9 +10,9 @@ from pathlib import Path
 from unittest.mock import patch
 
 from corpus.index import append_index
-from training.data import load_sft_records
 from training.common.modeling import ModelConfig
-from training.sft import build_parser, main as sft_main
+from training.sft.data import load_sft_records
+from training.sft.train import build_parser, main as sft_main
 
 
 def _mag_for_db(db: float) -> float:
@@ -127,7 +127,7 @@ class SftIndexCliTests(unittest.TestCase):
                 },
             )
             buf = io.StringIO()
-            with redirect_stdout(buf), patch("training.sft.load_policy") as load_policy:
+            with redirect_stdout(buf), patch("training.sft.train.load_policy") as load_policy:
                 sft_main(
                     [
                         "--index",
@@ -179,9 +179,9 @@ class SftIndexCliTests(unittest.TestCase):
             buf = io.StringIO()
             with (
                 redirect_stdout(buf),
-                patch("training.sft.verify_runtime", return_value={}),
+                patch("training.sft.train.verify_runtime", return_value={}),
                 patch(
-                    "training.sft.load_policy",
+                    "training.sft.train.load_policy",
                     side_effect=RuntimeError("stop-after-load_policy"),
                 ) as load_policy,
             ):

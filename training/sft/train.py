@@ -6,9 +6,9 @@ import json
 import warnings
 from pathlib import Path
 
-from training.data import load_multiturn_sft_from_index, load_sft_records
 from training.common.modeling import ModelConfig, load_policy, mixed_precision_config
 from training.common.preflight import verify_runtime
+from training.sft.data import load_multiturn_sft_from_index, load_sft_records
 
 DEFAULT_MODEL = "unsloth/Qwen3-1.7B-bnb-4bit"
 DEFAULT_INDEX = "corpus/index.jsonl"

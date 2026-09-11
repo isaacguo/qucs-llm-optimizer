@@ -3,10 +3,10 @@ from __future__ import annotations
 
 import unittest
 
-from training.sft import build_parser as build_sft_parser
+from training.sft.train import build_parser as build_sft_parser
 
 
-class OtherCliTests(unittest.TestCase):
+class SftCliTests(unittest.TestCase):
     def test_sft_is_explicit_and_shallow(self):
         args = build_sft_parser().parse_args([])
         self.assertEqual(args.epochs, 1)
