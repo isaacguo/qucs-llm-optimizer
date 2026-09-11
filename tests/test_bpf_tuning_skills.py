@@ -21,6 +21,15 @@ from jobs.bpf5_agent.goals import BpfGoalSpec  # noqa: E402
 class BpfTuningSkillsTests(unittest.TestCase):
     def test_load_skills_mentions_bw_aware_margin(self):
         text = load_skills_system_prompt()
+        self.assertTrue(text.strip())
+        self.assertIn("increase", text)
+        self.assertIn("decrease", text)
+        self.assertIn("## 角色", text)
+        self.assertIn("## 任务", text)
+        self.assertIn("## Harness", text)
+        self.assertIn("## Actions", text)
+        self.assertIn("## 做法", text)
+        self.assertIn("## 如何更好", text)
         self.assertIn("Skill A", text)
         self.assertIn("Narrower BW", text)
         self.assertIn("3 MHz", text)
