@@ -148,15 +148,16 @@ fields degrade to placeholders.
 
 ## Training (multi-turn GRPO + SFT)
 
-Layout: top-level `corpus/` sits beside `training/`; shared helpers live in
-`training/common/`, SFT in `training/sft/`, and multi-turn GRPO in
-`training/grpo/`. CLI names (`qucs-sft`, `qucs-multiturn`, `qucs-corpus`) are
-unchanged.
+Shared helpers live in `training/common/`, SFT in `training/sft/`, and
+multi-turn GRPO in `training/grpo/`. CLI entry points: `qucs-sft`,
+`qucs-multiturn`. The retired `qucs-corpus` package is gone; BPF teacher
+collection lives under `jobs/bpf5_agent/`. Historical notch index rows are
+archived at `archives/notch_index.jsonl` (not a live corpus package).
 
 The optional `training/` package replaces the human strategy layer with a
 Qwen3-4B-Instruct intent policy. Supported paths are:
 
-1. **SFT** from corpus teacher trajectories (`qucs-sft`)
+1. **SFT** from a JSONL run index (`qucs-sft --index PATH` is **required**)
 2. **Multi-turn GRPO** over real Qucs rollouts (`qucs-multiturn`)
 
 Single-step GRPO is not supported. Model loading uses HF + PEFT +
@@ -220,75 +221,53 @@ Writing every checkpoint directly to Drive is more durable but usually slower
 than local `/content` storage. The training configuration selects BF16 on GPUs
 that support it and falls back to FP16 on GPUs such as T4.
 
-SFT trains from the corpus index: each indexed run is exported to
-rollout-aligned multiturn chat records (`history_window` default 8,
-`max_length` 2048). Gate successful runs into `corpus/index.jsonl` first
-(see **Corpus → SFT → multiturn GRPO** below), then:
+SFT exports each indexed run to rollout-aligned multiturn chat records
+(`history_window` default 8, `max_length` 2048). **`--index` is required**
+(there is no default `corpus/index.jsonl` path):
 
 ```bash
-uv run qucs-sft --dry-run   # count exported examples; no model load
-uv run qucs-sft             # one shallow epoch → outputs/sft-qwen3-1.7b
-# overrides: --index PATH --runs-root runs --history-window 8 --max-length 2048
+uv run qucs-sft --index PATH/to/index.jsonl --dry-run
+uv run qucs-sft --index PATH/to/index.jsonl --output-dir outputs/sft-qwen3-1.7b
+# optional: --runs-root runs --history-window 8 --max-length 2048
 ```
 
 Legacy single-file mode remains via `--state runs/llm1/state.json` (prints a
-warning). Prefer the index path for corpus-based SFT.
+warning). Prefer `--index` for indexed SFT.
 
-## Corpus → SFT → multiturn GRPO
+## BPF5 teacher collection → SFT → multiturn GRPO
 
-Collect hard-successful Cursor-agent trajectories under a shared goal
-distribution, export rollout-aligned SFT data, then resume multiturn GRPO
-from the SFT LoRA.
+Collect hard-successful Cursor-agent BPF5 trajectories with the job activity
+driver, then train SFT from an explicit JSONL index of successful runs.
 
 ### Operator flow
 
 ```bash
-# 1. Assign a sampled goal + initial_params (does not simulate)
-uv run qucs-corpus assign --run r001
-# optional: --prefer-coverage --index corpus/index.jsonl
+# 1. BPF5 Cursor-agent activity (Auto model; bucket sampling + gate)
+PYTHONPATH=src:. python -m jobs.bpf5_agent.run_activity \
+  --activity auto --max-rollouts 1 --seed 0
 
-# 2. Teacher loop (Cursor agent / human via run_step)
-python3 run_step.py init    --run r001   # preserves goal; simulates baseline
-python3 run_step.py observe --run r001
-python3 run_step.py step    --run r001 --intent '{"ro":"decrease_strong"}' \
-    --note "…" --thinking-file /tmp/reasoning.md
-# repeat observe/step until goal met or iteration cap
+# Successful rollouts land under runs/<activity>/rollout_*/ with
+# state.json + completions.jsonl. Activity progress is local
+# runs/<activity>/progress.json (no global corpus index).
 
-# 3. Hard-success gate → append to corpus/index.jsonl if eligible
-uv run qucs-corpus gate --run r001
+# 2. Build or point SFT at a JSONL index of successful run_dir entries, then:
+uv run qucs-sft --index PATH/to/index.jsonl --dry-run
+uv run qucs-sft --index PATH/to/index.jsonl --output-dir outputs/sft-qwen3-1.7b
 
-# 4. Steer the next assign toward holes
-uv run qucs-corpus coverage
-
-# 5. Export + SFT (at milestones below)
-uv run qucs-corpus export --out /tmp/sft.jsonl
-uv run qucs-sft --index corpus/index.jsonl --dry-run
-uv run qucs-sft --index corpus/index.jsonl --output-dir outputs/sft-qwen3-1.7b
-
-# 6. Multiturn GRPO from SFT LoRA
+# 3. Multiturn GRPO from SFT LoRA
 uv run qucs-multiturn \
   --resume-adapter outputs/sft-qwen3-1.7b/final_lora
 ```
 
-Optional one-shot import of a legacy reference-shaped run (rewrites
-`state.json`: attaches goal **5.5 GHz / −70 dB** + corpus metadata, then
-gates/indexes if eligible). Prefer a copy so tracked runs stay clean:
-
-```bash
-cp -R runs/llm1 runs/llm1-import
-uv run qucs-corpus import-run --run llm1-import
-```
-
-If `state.goal` already exists and differs from that reference, `import-run`
-refuses unless you pass `--force`. Writing onto a goal-less run prints a
-stderr warning.
+Manual `run_step.py` init/observe/step against a rollout under `runs/` remains
+valid for debugging; the activity driver is the supported collection path.
 
 ### Smoke milestones
 
-At index sizes **50 / 150 / 300 / 500**, run export + `qucs-sft --dry-run`
-(and a short SFT when useful) so packing/prompt bugs surface early. Target
-coverage is **≥ 500** hard successes without large empty bins; there is no
-code hard-cap — scale is ops via `coverage` + `assign --prefer-coverage`.
+At index sizes **50 / 150 / 300 / 500**, run `qucs-sft --index … --dry-run`
+(and a short SFT when useful) so packing/prompt bugs surface early. BPF bucket
+quotas are enforced by `jobs/bpf5_agent` progress (20 buckets × 10 successes),
+not by a global `corpus/` CLI.
 
 ## Runs
 
