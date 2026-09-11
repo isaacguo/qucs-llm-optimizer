@@ -10,7 +10,7 @@ arithmetic — step size, iteration-based decay, bound clamping — lives in
 intent.py and is never touched by the strategy layer.
 
 Usage:
-    python run_step.py init  [--run NAME] [--task butterfly_stub|butterworth_bpf5]
+    python run_step.py init  [--run NAME] [--task TASK_NAME]
     python run_step.py step  --intent '{"ro":"decrease","alpha":"hold"}' \
                               [--note "text"] [--run NAME]
     python run_step.py report [--run NAME]
@@ -21,25 +21,21 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import json
-import math
 import sys
 from dataclasses import asdict
 from pathlib import Path
+from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 
 from cost import TARGET_DEPTH_DB, TARGET_NOTCH_HZ, evaluate, s21_db
 from decision_log import append_record, format_agent_completion
 from intent import BOUNDS, VARIABLES, apply_intent
-from jobs.bpf5_agent.cost import evaluate as evaluate_bpf
-from jobs.bpf5_agent.goals import BpfGoalSpec, default_goal as default_bpf_goal
-from jobs.bpf5_agent.goals import goal_from_dict as bpf_goal_from_dict
-from jobs.bpf5_agent.goals import is_goal_met as bpf_is_goal_met
-from jobs.bpf5_agent.goals import validate_goal as validate_bpf_goal
 from qucs_sim import simulate
 from report_html import write_report
 from state import RunState
-from tasks import TaskConfig, get_task
+from task_registry import get_plugin
+from tasks import get_task
 
 # GoalSpec lives under training/; keep import local-friendly for the CLI script.
 _ROOT = Path(__file__).resolve().parent
@@ -49,12 +45,11 @@ from training.common.goals import GoalSpec  # noqa: E402
 
 RUNS_ROOT = Path(__file__).resolve().parent / "runs"
 TARGET_BAND_HZ = (4e9, 6e9)
-_BPF_TASK = "butterworth_bpf5"
 _DEFAULT_TASK = "butterfly_stub"
 
 
 def discover_job_plugins(repo_root: Path) -> None:
-    """Load jobs/*/register.py and call register() (temporary; Task 3 refines)."""
+    """Load jobs/*/register.py and call register()."""
     jobs_root = repo_root / "jobs"
     if not jobs_root.is_dir():
         return
@@ -79,19 +74,29 @@ def discover_job_plugins(repo_root: Path) -> None:
 discover_job_plugins(_ROOT)
 
 
+def _try_get_plugin(task_name: str | None):
+    if not task_name:
+        return None
+    try:
+        return get_plugin(task_name)
+    except ValueError:
+        return None
+
+
 def _cli_task_name(args) -> str:
     raw = getattr(args, "task", None)
-    if isinstance(raw, str) and raw in (_DEFAULT_TASK, _BPF_TASK):
-        return raw
-    return _DEFAULT_TASK
+    if not isinstance(raw, str) or not raw.strip():
+        return _DEFAULT_TASK
+    try:
+        get_task(raw)
+    except ValueError:
+        print(f"unknown task: {raw}", file=sys.stderr)
+        sys.exit(1)
+    return raw
 
 
 def _task_name_from_state(state: RunState) -> str:
     return state.task if state.task else _DEFAULT_TASK
-
-
-def _is_bpf(task_name: str | None) -> bool:
-    return task_name == _BPF_TASK
 
 
 def _legacy_goal_dict() -> dict:
@@ -119,67 +124,30 @@ def _goal_from_state(state: RunState) -> GoalSpec:
     )
 
 
-def _bpf_goal_from_state(state: RunState) -> BpfGoalSpec:
-    raw = state.goal
-    if not raw or "f_low_hz" not in raw:
-        return default_bpf_goal()
-    return bpf_goal_from_dict(raw)
-
-
 def _evaluate_for_run(res, goal: GoalSpec) -> dict:
     return asdict(evaluate(res, goal.band_hz, target_hz=goal.target_freq_hz))
 
 
-def _evaluate_bpf_for_run(res, goal: BpfGoalSpec) -> dict:
-    cost = evaluate_bpf(res, goal).to_dict()
-    cost["goal_met"] = bpf_is_goal_met(cost, goal)
-    return cost
+def _goal_to_dict(goal: Any) -> dict:
+    if hasattr(goal, "to_dict"):
+        return goal.to_dict()
+    if isinstance(goal, dict):
+        return goal
+    raise TypeError(f"cannot serialize goal of type {type(goal)!r}")
 
 
-def _resolve_bpf_goal(goal_json: str, state: RunState) -> BpfGoalSpec:
-    """Parse / default BPF goal and validate; exit(1) on bad input."""
+def _resolve_plugin_goal(plugin, goal_json: str, state: RunState):
+    """Parse / default plugin goal and validate; exit(1) on bad input."""
     try:
         if goal_json.strip():
-            goal = bpf_goal_from_dict(json.loads(goal_json))
-        elif state.goal is None or "f_low_hz" not in state.goal:
-            goal = default_bpf_goal()
+            goal = plugin.goal_from_state(json.loads(goal_json))
         else:
-            goal = _bpf_goal_from_state(state)
-        validate_bpf_goal(goal)
+            goal = plugin.goal_from_state(state.goal)
+        plugin.validate_goal(goal)
     except (KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
-        print(f"invalid BPF goal: {exc}", file=sys.stderr)
+        print(f"invalid goal: {exc}", file=sys.stderr)
         sys.exit(1)
     return goal
-
-
-def _bpf_param_unit(var: str) -> str:
-    if var.startswith("L"):
-        return "nH"
-    if var.startswith("C"):
-        return "pF"
-    return ""
-
-
-def _fmt_param_value(val: float) -> str:
-    """Prefer fixed decimals that preserve round(..., 4) without .4g collapse."""
-    return f"{val:.4f}".rstrip("0").rstrip(".") if "." in f"{val:.4f}" else f"{val:.4f}"
-
-
-def _simulate_for_task(params: dict, workdir: Path, task: TaskConfig, bpf_goal: BpfGoalSpec | None):
-    if _is_bpf(task.name):
-        assert bpf_goal is not None
-        f0 = math.sqrt(bpf_goal.f_low_hz * bpf_goal.f_high_hz)
-        return simulate(
-            params,
-            workdir=workdir,
-            template_path=task.template_path,
-            export_layout=task.export_layout,
-            sweep_start_hz=bpf_goal.sweep_hz[0],
-            sweep_stop_hz=bpf_goal.sweep_hz[1],
-            sweep_points=task.sweep_points,
-            f0_hz=f0,
-        )
-    return simulate(params, workdir=workdir)
 
 
 def _cost_db_for_log(cost: dict) -> float:
@@ -193,11 +161,16 @@ def format_report(
     goal: GoalSpec | None = None,
     *,
     task: str | None = None,
-    bpf_goal: BpfGoalSpec | None = None,
+    bpf_goal: Any = None,
 ) -> str:
     """Render one history entry as the plain-text block the CLI prints."""
-    if _is_bpf(task):
-        return _format_report_bpf(entry, bpf_goal=bpf_goal)
+    task_name = task or _DEFAULT_TASK
+    plugin = _try_get_plugin(task_name)
+    if plugin is not None:
+        plugin_goal = bpf_goal if bpf_goal is not None else goal
+        if plugin_goal is None:
+            plugin_goal = plugin.goal_from_state(None)
+        return plugin.format_report(entry, plugin_goal)
     return _format_report_butterfly(entry, goal=goal)
 
 
@@ -242,51 +215,12 @@ def _format_report_butterfly(entry: dict, goal: GoalSpec | None = None) -> str:
     return "\n".join(lines)
 
 
-def _format_report_bpf(entry: dict, bpf_goal: BpfGoalSpec | None = None) -> str:
-    p, c = entry["params"], entry["cost"]
-    vars_ = tuple(p.keys()) if p else get_task(_BPF_TASK).variables
-    goal = bpf_goal or default_bpf_goal()
-    goal_met = c.get("goal_met")
-    if goal_met is None:
-        goal_met = bpf_is_goal_met(c, goal)
-    status = "goal met" if goal_met else "goal not met"
-    param_bits = []
-    for k in vars_:
-        unit = _bpf_param_unit(k)
-        suffix = f" {unit}" if unit else ""
-        param_bits.append(f"{k}={_fmt_param_value(p[k])}{suffix}")
-    sweep_lo, sweep_hi = goal.sweep_hz
-    lines = [
-        f"--- iteration {entry['iteration']} ---",
-        "params: " + ", ".join(param_bits),
-        f"total_cost = {c['total_cost']:.6f}",
-        f"passband min S21 = {c['passband_min_s21_db']:.2f} dB "
-        f"(f_low={c.get('f_low_hz', goal.f_low_hz)/1e6:.1f} MHz, "
-        f"f_high={c.get('f_high_hz', goal.f_high_hz)/1e6:.1f} MHz)",
-        f"stopband max S21 = {c['stopband_max_s21_db']:.2f} dB",
-        f"goal thresholds: passband_il_max_db={goal.passband_il_max_db:.2f} dB, "
-        f"stopband_atten_min_db={goal.stopband_atten_min_db:.2f} dB  [{status}]",
-        f"sweep window: {sweep_lo/1e6:.1f} .. {sweep_hi/1e6:.1f} MHz",
-    ]
-    if "passband_mean_s21_db" in c:
-        lines.append(f"passband mean S21 = {c['passband_mean_s21_db']:.2f} dB")
-    if "s11_passband_max_db" in c:
-        lines.append(f"passband max S11 = {c['s11_passband_max_db']:.2f} dB")
-    if "s21_peak_freq_hz" in c:
-        lines.append(f"S21 peak frequency = {c['s21_peak_freq_hz']/1e6:.2f} MHz")
-    if entry.get("intent"):
-        lines.append(f"intent used: {entry['intent']}")
-    if entry.get("note"):
-        lines.append(f"note: {entry['note']}")
-    return "\n".join(lines)
-
-
 def format_observation(
     entry: dict,
     goal: GoalSpec | None = None,
     *,
     task: str | None = None,
-    bpf_goal: BpfGoalSpec | None = None,
+    bpf_goal: Any = None,
     include_skills_system: bool = True,
 ) -> str:
     """
@@ -294,39 +228,28 @@ def format_observation(
     decides the next intent: the latest measurement plus the bounds it must
     stay inside. Stored verbatim on the next history entry.
 
-    For butterworth_bpf5, prepend the tuning-skills system prompt so each
-    round sees the same skill card (ablation / teacher context).
+    When a job plugin is registered for ``task``, delegate formatting
+    (including skills system text) to the plugin.
     """
     task_name = task or _DEFAULT_TASK
-    cfg = get_task(task_name) if _is_bpf(task_name) else None
-    variables = cfg.variables if cfg else VARIABLES
-    bounds = cfg.bounds if cfg else BOUNDS
+    plugin = _try_get_plugin(task_name)
+    if plugin is not None:
+        plugin_goal = bpf_goal if bpf_goal is not None else goal
+        if plugin_goal is None:
+            plugin_goal = plugin.goal_from_state(None)
+        return plugin.format_observation(
+            entry, plugin_goal, include_skills_system=include_skills_system
+        )
+
     p = entry["params"]
-    if _is_bpf(task_name):
-        bounds_txt = "\n".join(
-            f"  {v:<6} = {_fmt_param_value(p[v]):>10} {_bpf_param_unit(v):<2}  "
-            f"bounds [{bounds[v][0]}, {bounds[v][1]}]"
-            for v in variables
-        )
-    else:
-        bounds_txt = "\n".join(
-            f"  {v:<6} = {p[v]:>10.4g}   bounds [{bounds[v][0]}, {bounds[v][1]}]"
-            for v in variables
-        )
+    bounds_txt = "\n".join(
+        f"  {v:<6} = {p[v]:>10.4g}   bounds [{BOUNDS[v][0]}, {BOUNDS[v][1]}]"
+        for v in VARIABLES
+    )
     body = (
-        f"{format_report(entry, goal=goal, task=task_name, bpf_goal=bpf_goal)}\n\n"
+        f"{format_report(entry, goal=goal, task=task_name)}\n\n"
         f"free variables and bounds:\n{bounds_txt}"
     )
-    if _is_bpf(task_name) and include_skills_system:
-        from jobs.bpf5_agent.skills import load_skills_system_prompt
-
-        skills = load_skills_system_prompt()
-        return (
-            "=== SYSTEM: BPF tuning skills (read every round) ===\n"
-            f"{skills}\n"
-            "=== END SYSTEM ===\n\n"
-            f"{body}"
-        )
     return body
 
 
@@ -335,7 +258,7 @@ def _print_report(
     goal: GoalSpec | None = None,
     *,
     task: str | None = None,
-    bpf_goal: BpfGoalSpec | None = None,
+    bpf_goal: Any = None,
 ) -> None:
     print(format_report(entry, goal=goal, task=task, bpf_goal=bpf_goal))
 
@@ -369,25 +292,25 @@ def cmd_init(args):
     state.set_run_meta(task=task_name)
 
     goal_json = _goal_json_arg(args)
-    bpf_goal: BpfGoalSpec | None = None
+    plugin = _try_get_plugin(task_name)
+    plugin_goal = None
     butterfly_goal: GoalSpec | None = None
 
-    if _is_bpf(task_name):
-        bpf_goal = _resolve_bpf_goal(goal_json, state)
-        state.set_run_meta(goal=bpf_goal.to_dict())
+    if plugin is not None:
+        plugin_goal = _resolve_plugin_goal(plugin, goal_json, state)
+        state.set_run_meta(goal=_goal_to_dict(plugin_goal))
+        params = dict(state.initial_params) if state.initial_params else dict(task.initial_guess)
+        res = plugin.simulate(params, run_dir / "iter_000", plugin_goal)
+        cost = plugin.evaluate(res, plugin_goal)
     else:
         if goal_json.strip():
             state.set_run_meta(goal=json.loads(goal_json))
         elif state.goal is None:
             state.set_run_meta(goal=_legacy_goal_dict())
         butterfly_goal = _goal_from_state(state)
-
-    params = dict(state.initial_params) if state.initial_params else dict(task.initial_guess)
-    res = _simulate_for_task(params, run_dir / "iter_000", task, bpf_goal)
-    if _is_bpf(task_name):
-        cost = _evaluate_bpf_for_run(res, bpf_goal)  # type: ignore[arg-type]
-    else:
-        cost = _evaluate_for_run(res, butterfly_goal)  # type: ignore[arg-type]
+        params = dict(state.initial_params) if state.initial_params else dict(task.initial_guess)
+        res = simulate(params, workdir=run_dir / "iter_000")
+        cost = _evaluate_for_run(res, butterfly_goal)
 
     it = state.record(
         params,
@@ -414,7 +337,7 @@ def cmd_init(args):
                 "db_after": _cost_db_for_log(cost),
             },
         )
-    _print_report(state.history[it], goal=butterfly_goal, task=task_name, bpf_goal=bpf_goal)
+    _print_report(state.history[it], goal=butterfly_goal, task=task_name, bpf_goal=plugin_goal)
 
 
 def cmd_step(args):
@@ -432,14 +355,15 @@ def cmd_step(args):
         print(f"unknown variable(s) in intent: {unknown}; valid: {task.variables}", file=sys.stderr)
         sys.exit(1)
 
-    bpf_goal = _bpf_goal_from_state(state) if _is_bpf(task_name) else None
-    butterfly_goal = None if _is_bpf(task_name) else _goal_from_state(state)
+    plugin = _try_get_plugin(task_name)
+    plugin_goal = plugin.goal_from_state(state.goal) if plugin is not None else None
+    butterfly_goal = None if plugin is not None else _goal_from_state(state)
 
     prev_entry = state.history[-1]
     observation = {
         "from_iteration": prev_entry["iteration"],
         "report_text": format_observation(
-            prev_entry, goal=butterfly_goal, task=task_name, bpf_goal=bpf_goal
+            prev_entry, goal=butterfly_goal, task=task_name, bpf_goal=plugin_goal
         ),
     }
     new_iteration = state.iteration + 1
@@ -451,10 +375,11 @@ def cmd_step(args):
         bounds=task.bounds,
         step_mode=task.step_mode,
     )
-    res = _simulate_for_task(new_params, run_dir / f"iter_{new_iteration:03d}", task, bpf_goal)
-    if _is_bpf(task_name):
-        cost = _evaluate_bpf_for_run(res, bpf_goal)  # type: ignore[arg-type]
+    if plugin is not None:
+        res = plugin.simulate(new_params, run_dir / f"iter_{new_iteration:03d}", plugin_goal)
+        cost = plugin.evaluate(res, plugin_goal)
     else:
+        res = simulate(new_params, workdir=run_dir / f"iter_{new_iteration:03d}")
         cost = _evaluate_for_run(res, butterfly_goal)  # type: ignore[arg-type]
     thinking = _read_thinking(args)
     it = state.record(
@@ -481,7 +406,7 @@ def cmd_step(args):
         },
     )
     _print_report(
-        state.history[it], goal=butterfly_goal, task=task_name, bpf_goal=bpf_goal
+        state.history[it], goal=butterfly_goal, task=task_name, bpf_goal=plugin_goal
     )
 
 
@@ -492,14 +417,15 @@ def cmd_report(args):
         print(f"run '{args.run}' has no history yet", file=sys.stderr)
         sys.exit(1)
     task_name = _task_name_from_state(state)
-    bpf_goal = _bpf_goal_from_state(state) if _is_bpf(task_name) else None
-    goal = None if _is_bpf(task_name) else _goal_from_state(state)
+    plugin = _try_get_plugin(task_name)
+    plugin_goal = plugin.goal_from_state(state.goal) if plugin is not None else None
+    goal = None if plugin is not None else _goal_from_state(state)
     for entry in state.history:
-        _print_report(entry, goal=goal, task=task_name, bpf_goal=bpf_goal)
+        _print_report(entry, goal=goal, task=task_name, bpf_goal=plugin_goal)
         print()
     best = state.best()
     print("=== BEST SO FAR ===")
-    _print_report(best, goal=goal, task=task_name, bpf_goal=bpf_goal)
+    _print_report(best, goal=goal, task=task_name, bpf_goal=plugin_goal)
 
 
 def cmd_best(args):
@@ -510,9 +436,10 @@ def cmd_best(args):
         print(f"run '{args.run}' has no history yet", file=sys.stderr)
         sys.exit(1)
     task_name = _task_name_from_state(state)
-    bpf_goal = _bpf_goal_from_state(state) if _is_bpf(task_name) else None
-    goal = None if _is_bpf(task_name) else _goal_from_state(state)
-    _print_report(best, goal=goal, task=task_name, bpf_goal=bpf_goal)
+    plugin = _try_get_plugin(task_name)
+    plugin_goal = plugin.goal_from_state(state.goal) if plugin is not None else None
+    goal = None if plugin is not None else _goal_from_state(state)
+    _print_report(best, goal=goal, task=task_name, bpf_goal=plugin_goal)
 
 
 def cmd_observe(args):
@@ -523,9 +450,10 @@ def cmd_observe(args):
         print(f"run '{args.run}' has no history yet", file=sys.stderr)
         sys.exit(1)
     task_name = _task_name_from_state(state)
-    bpf_goal = _bpf_goal_from_state(state) if _is_bpf(task_name) else None
-    goal = None if _is_bpf(task_name) else _goal_from_state(state)
-    print(format_observation(state.history[-1], goal=goal, task=task_name, bpf_goal=bpf_goal))
+    plugin = _try_get_plugin(task_name)
+    plugin_goal = plugin.goal_from_state(state.goal) if plugin is not None else None
+    goal = None if plugin is not None else _goal_from_state(state)
+    print(format_observation(state.history[-1], goal=goal, task=task_name, bpf_goal=plugin_goal))
 
 
 def cmd_conclude(args):
@@ -576,8 +504,8 @@ def main():
     p_init.add_argument(
         "--task",
         default=_DEFAULT_TASK,
-        choices=[_DEFAULT_TASK, _BPF_TASK],
-        help="optimization task (default: butterfly_stub)",
+        help="optimization task name (registered plugin or builtin; "
+             f"default: {_DEFAULT_TASK})",
     )
     p_init.add_argument(
         "--goal-json",

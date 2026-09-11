@@ -61,6 +61,20 @@ class RunStateTaskPersistenceTests(unittest.TestCase):
             self.assertEqual(reloaded.task, "butterworth_bpf5")
 
 
+class RunStepNoBpfHardcodingTests(unittest.TestCase):
+    def test_run_step_does_not_import_jobs_bpf_modules_at_top_level(self):
+        import run_step as rs
+
+        # 顶层加载后，sys.modules 可以有 jobs（因 discover），但 run_step 源码不得出现
+        src = Path(rs.__file__).read_text(encoding="utf-8")
+        self.assertNotIn("from cost_bpf", src)
+        self.assertNotIn("from goals_bpf", src)
+        self.assertNotIn("from bpf_tuning_skills", src)
+        self.assertNotIn("_is_bpf", src)  # 用 get_plugin 有无代替
+        self.assertNotIn("from jobs.bpf5_agent", src)
+        self.assertNotIn("import jobs.bpf5_agent", src)
+
+
 class BpfInitDispatchTests(_BpfPluginRegistered):
     def test_init_bpf_sets_task_and_bpf_cost_keys(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -73,7 +87,9 @@ class BpfInitDispatchTests(_BpfPluginRegistered):
                 return _synthetic_bpf_sim()
 
             with mock.patch.object(run_step, "RUNS_ROOT", tmp_path):
-                with mock.patch.object(run_step, "simulate", side_effect=fake_simulate):
+                with mock.patch(
+                    "jobs.bpf5_agent.plugin.simulate", side_effect=fake_simulate
+                ):
                     buf = io.StringIO()
                     with redirect_stdout(buf):
                         run_step.cmd_init(_init_args("bpf_init"))
@@ -180,9 +196,18 @@ class BpfFormatTests(_BpfPluginRegistered):
         self.assertIn("stopband_atten_min_db", text)
         self.assertIn("goal not met", text.lower())
 
+        from jobs.bpf5_agent.skills import DEFAULT_SKILLS_PATH, load_skills_system_prompt
+
+        job_skills = load_skills_system_prompt()
         obs = run_step.format_observation(entry, bpf_goal=goal, task="butterworth_bpf5")
         self.assertIn("=== SYSTEM: BPF tuning skills", obs)
         self.assertIn("Skill A", obs)
+        self.assertIn(job_skills, obs)
+        self.assertTrue(DEFAULT_SKILLS_PATH.exists())
+        self.assertIn(
+            "jobs/bpf5_agent/prompts/bpf_tuning_skills_system.md",
+            str(DEFAULT_SKILLS_PATH).replace("\\", "/"),
+        )
         self.assertIn("L3", obs)
         self.assertIn("C3", obs)
         self.assertIn("bounds", obs.lower())
@@ -239,7 +264,9 @@ class BpfStepDispatchTests(_BpfPluginRegistered):
                 return _synthetic_bpf_sim()
 
             with mock.patch.object(run_step, "RUNS_ROOT", tmp_path):
-                with mock.patch.object(run_step, "simulate", side_effect=fake_simulate):
+                with mock.patch(
+                    "jobs.bpf5_agent.plugin.simulate", side_effect=fake_simulate
+                ):
                     with redirect_stdout(io.StringIO()):
                         run_step.cmd_init(_init_args("bpf_step"))
                         run_step.cmd_step(
@@ -267,8 +294,9 @@ class BpfStepDispatchTests(_BpfPluginRegistered):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
             with mock.patch.object(run_step, "RUNS_ROOT", tmp_path):
-                with mock.patch.object(
-                    run_step, "simulate", return_value=_synthetic_bpf_sim()
+                with mock.patch(
+                    "jobs.bpf5_agent.plugin.simulate",
+                    return_value=_synthetic_bpf_sim(),
                 ):
                     with redirect_stdout(io.StringIO()):
                         run_step.cmd_init(_init_args("bpf_rel"))

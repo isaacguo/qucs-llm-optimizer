@@ -38,7 +38,8 @@ class Bpf5Plugin:
         return goals_mod.default_goal().to_dict()
 
     def goal_from_state(self, raw: dict | None) -> Any:
-        if not raw or "f_low_hz" not in raw:
+        # None / empty → defaults; non-empty dict → strict parse (CLI --goal-json).
+        if not raw:
             return goals_mod.default_goal()
         return goals_mod.goal_from_dict(raw)
 
