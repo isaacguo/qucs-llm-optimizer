@@ -102,6 +102,11 @@ def resolve_qucsrflayout() -> str:
     )
 
 
+_BPF_PARAM_KEYS = (
+    "L1", "C1", "L2", "C2", "L3", "C3", "L4", "C4", "L5", "C5",
+)
+
+
 def _template_values(
     params: dict,
     f0_hz: float,
@@ -123,17 +128,41 @@ def _template_values(
     }
 
 
+def _bpf_template_values(
+    params: dict,
+    f0_hz: float,
+    sweep_start_hz: float,
+    sweep_stop_hz: float,
+    sweep_points: int,
+) -> dict:
+    return {
+        "f0_hz": f0_hz,
+        "sweep_start_hz": sweep_start_hz,
+        "sweep_stop_hz": sweep_stop_hz,
+        "sweep_points": sweep_points,
+        **{k: params[k] for k in _BPF_PARAM_KEYS},
+    }
+
+
 def render_schematic(
     params: dict,
     f0_hz: float,
     sweep_start_hz: float,
     sweep_stop_hz: float,
     sweep_points: int,
+    template_path: Path | None = None,
 ) -> str:
-    tpl = SCH_TEMPLATE_PATH.read_text()
-    return tpl.format(**_template_values(
-        params, f0_hz, sweep_start_hz, sweep_stop_hz, sweep_points
-    ))
+    path = template_path if template_path is not None else SCH_TEMPLATE_PATH
+    tpl = path.read_text()
+    if path.resolve() == SCH_TEMPLATE_PATH.resolve():
+        values = _template_values(
+            params, f0_hz, sweep_start_hz, sweep_stop_hz, sweep_points
+        )
+    else:
+        values = _bpf_template_values(
+            params, f0_hz, sweep_start_hz, sweep_stop_hz, sweep_points
+        )
+    return tpl.format(**values)
 
 
 def export_netlist_from_sch(sch_path: Path, net_path: Path) -> Path:
