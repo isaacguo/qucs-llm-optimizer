@@ -41,10 +41,10 @@ def _random_goals(
 ) -> list[tuple[int, GoalSpec]]:
     """``num_goals`` goals with both frequency and target depth varied.
 
-    Uses seeds far outside any range multiturn_train.py has used so there is
+    Uses seeds far outside any range ``training.grpo.train`` has used so there is
     no accidental overlap with the training seed stream. Depth is sampled
     independently of ``sample_goal``'s own RNG stream (which only varies
-    frequency) so this does not have to touch training/goals.py.
+    frequency) so this does not have to touch ``training/common/goals.py``.
     """
     depth_rng = random.Random(seed_base ^ 0xD3B7)
     out = []

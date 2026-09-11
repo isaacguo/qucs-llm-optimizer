@@ -1,6 +1,6 @@
 """Multi-turn on-policy rollout collection for the butterfly-stub optimizer.
 
-Unlike ``training/environment.py`` (one isolated random state per training
+Unlike ``training/common/environment.py`` (one isolated random state per training
 example), this module runs a *sequential* trajectory: the model sees its own
 past decisions and their real simulated outcomes, decides the next intent,
 and that intent is applied to the *same* running parameter set.
@@ -35,7 +35,6 @@ from training.common.contracts import IntentParseError, parse_intent_completion 
 from training.common.environment import sample_params  # noqa: E402
 from training.common.goals import GoalSpec, is_goal_met as _is_goal_met  # noqa: E402
 from training.common.prompts import (  # noqa: E402
-    SYSTEM_PROMPT,
     TurnRecord,
     build_multiturn_prompt,
     stop_is_allowed,

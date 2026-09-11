@@ -9,7 +9,7 @@ APPIMAGE="$TOOLS_DIR/Qucs-S-${QUCS_S_VERSION}-linux-x86_64.AppImage"
 APPDIR="$TOOLS_DIR/Qucs-S-${QUCS_S_VERSION}"
 DOWNLOAD_URL="https://github.com/ra3xdh/qucs_s/releases/download/${QUCS_S_VERSION}/Qucs-S-${QUCS_S_VERSION}-linux-x86_64.AppImage"
 
-if [[ ! -f pyproject.toml || ! -f training/multiturn_train.py ]]; then
+if [[ ! -f pyproject.toml || ! -f training/grpo/train.py ]]; then
     echo "Run this script from the qucs-llm-optimizer repository root." >&2
     exit 1
 fi
