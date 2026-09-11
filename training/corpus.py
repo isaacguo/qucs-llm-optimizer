@@ -85,13 +85,22 @@ def gate_run(state: dict) -> dict:
 
 
 def append_index(index_path: Path, record: dict) -> None:
-    """Append one JSON line to ``index_path`` (create parents if needed)."""
+    """Append one JSON line to ``index_path`` (create parents if needed).
+
+    Uses an exclusive flock so parallel corpus workers cannot interleave lines.
+    """
+    import fcntl
+
     index_path = Path(index_path)
     index_path.parent.mkdir(parents=True, exist_ok=True)
     line = json.dumps(record, sort_keys=True) + "\n"
     with open(index_path, "a", encoding="utf-8") as fh:
-        fh.write(line)
-        fh.flush()
+        fcntl.flock(fh.fileno(), fcntl.LOCK_EX)
+        try:
+            fh.write(line)
+            fh.flush()
+        finally:
+            fcntl.flock(fh.fileno(), fcntl.LOCK_UN)
 
 
 def load_index(index_path: Path) -> list[dict]:

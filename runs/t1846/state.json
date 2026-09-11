@@ -1,0 +1,263 @@
+{
+  "iteration": 5,
+  "params": {
+    "ri": 0.5814,
+    "ro": 5.3428,
+    "alpha": 96.5946,
+    "Wf": 1.2181,
+    "Lc": 8.6103
+  },
+  "history": [
+    {
+      "iteration": 0,
+      "params": {
+        "ri": 0.5814,
+        "ro": 12.5917,
+        "alpha": 96.5946,
+        "Wf": 1.2181,
+        "Lc": 8.9035
+      },
+      "cost": {
+        "total_cost": 0.7271172522612944,
+        "target_freq_hz": 6700000000.0,
+        "target_s21_mag": 0.7271172522612944,
+        "mean_cost": 0.7372793785520948,
+        "low_edge_cost": 0.5709153278919373,
+        "center_cost": 0.7271172522612944,
+        "high_edge_cost": 0.9150018643899238,
+        "stopband_max_s21": 0.9150018643899238,
+        "worst_freq_hz": 7700000000.0,
+        "best_freq_hz": 2150000000.0,
+        "best_s21_mag": 0.002512454574614031,
+        "passband_low_mean": 0.2627409365055533,
+        "passband_high_mean": 0.6926779463260805,
+        "zin_norm_at_center": 0.6581563595176091,
+        "band_hz": [
+          5708443048.5429,
+          7708443048.5429
+        ]
+      },
+      "intent": null,
+      "note": "baseline initial guess",
+      "thinking": "",
+      "observation": null
+    },
+    {
+      "iteration": 1,
+      "params": {
+        "ri": 0.5814,
+        "ro": 10.5457,
+        "alpha": 96.5946,
+        "Wf": 1.2181,
+        "Lc": 8.9035
+      },
+      "cost": {
+        "total_cost": 0.5741095507977441,
+        "target_freq_hz": 6700000000.0,
+        "target_s21_mag": 0.5741095507977441,
+        "mean_cost": 0.5781633596754494,
+        "low_edge_cost": 0.45372769620257836,
+        "center_cost": 0.5741095507977441,
+        "high_edge_cost": 0.7003547109370816,
+        "stopband_max_s21": 0.7003547109370816,
+        "worst_freq_hz": 7700000000.0,
+        "best_freq_hz": 2700000000.0,
+        "best_s21_mag": 0.0035728515869184662,
+        "passband_low_mean": 0.22929708676613003,
+        "passband_high_mean": 0.8669273213456957,
+        "zin_norm_at_center": 0.7932128972071573,
+        "band_hz": [
+          5708443048.5429,
+          7708443048.5429
+        ]
+      },
+      "intent": {
+        "ro": "decrease_strong"
+      },
+      "note": "notch 2.15GHz vs 6.71; shrink ro strong",
+      "thinking": "Evidence: deepest notch at 2.150 GHz; |S21| at target is -2.8 dB. Target 6.708 GHz implies frequency ratio ~3.12. Apply {'ro': 'decrease_strong'} to move resonance before chasing depth.",
+      "observation": {
+        "from_iteration": 0,
+        "report_text": "--- iteration 0 ---\nparams: ri=0.581, ro=12.592, alpha=96.595, Wf=1.218, Lc=8.903\ntotal_cost |S21| @ 6.70 GHz = 0.727117 (-2.77 dB)  [goal -75 dB / 1.777e-04]\ndeepest notch |S21|       = 0.002512 (-52.00 dB) @ 2.150 GHz\nstopband max |S21| (aux)  = 0.9150 @ 7.700 GHz\nmean |S21| in stopband             = 0.7373\nlow_edge  (5.7 GHz)  |S21| = 0.5709\nband mid  (6.7 GHz)  |S21| = 0.7271\nhigh_edge (7.7 GHz)  |S21| = 0.9150\npassband |S21| mean (<5.7 GHz) = 0.2627\npassband |S21| mean (>7.7 GHz) = 0.6927\n|Zin|/Z0 at stopband mid (aux) = 0.6582\nnote: baseline initial guess\n\nfree variables and bounds:\n  ri     =    0.581   bounds [0.1, 1.5]\n  ro     =   12.592   bounds [3.0, 14.0]\n  alpha  =   96.595   bounds [30.0, 150.0]\n  Wf     =    1.218   bounds [0.2, 2.5]\n  Lc     =    8.903   bounds [0.2, 10.0]"
+      }
+    },
+    {
+      "iteration": 2,
+      "params": {
+        "ri": 0.5814,
+        "ro": 8.6429,
+        "alpha": 96.5946,
+        "Wf": 1.2181,
+        "Lc": 8.9035
+      },
+      "cost": {
+        "total_cost": 0.4353401726593357,
+        "target_freq_hz": 6700000000.0,
+        "target_s21_mag": 0.4353401726593357,
+        "mean_cost": 0.43656748619811625,
+        "low_edge_cost": 0.32384428030475126,
+        "center_cost": 0.4353401726593357,
+        "high_edge_cost": 0.5382124464983742,
+        "stopband_max_s21": 0.5382124464983742,
+        "worst_freq_hz": 7700000000.0,
+        "best_freq_hz": 3500000000.0,
+        "best_s21_mag": 0.004305409373727177,
+        "passband_low_mean": 0.22748279906162447,
+        "passband_high_mean": 0.6677943281950255,
+        "zin_norm_at_center": 0.9311979224075034,
+        "band_hz": [
+          5708443048.5429,
+          7708443048.5429
+        ]
+      },
+      "intent": {
+        "ro": "decrease_strong"
+      },
+      "note": "fit wants ro~5.767 (now 10.546); notch 2.70->6.71",
+      "thinking": "Two-point radial fit targets ro\u22485.767 mm for 6.708 GHz (now notch 2.700 GHz at ro=10.546). Intent {'ro': 'decrease_strong'}.",
+      "observation": {
+        "from_iteration": 1,
+        "report_text": "--- iteration 1 ---\nparams: ri=0.581, ro=10.546, alpha=96.595, Wf=1.218, Lc=8.903\ntotal_cost |S21| @ 6.70 GHz = 0.574110 (-4.82 dB)  [goal -75 dB / 1.777e-04]\ndeepest notch |S21|       = 0.003573 (-48.94 dB) @ 2.700 GHz\nstopband max |S21| (aux)  = 0.7004 @ 7.700 GHz\nmean |S21| in stopband             = 0.5782\nlow_edge  (5.7 GHz)  |S21| = 0.4537\nband mid  (6.7 GHz)  |S21| = 0.5741\nhigh_edge (7.7 GHz)  |S21| = 0.7004\npassband |S21| mean (<5.7 GHz) = 0.2293\npassband |S21| mean (>7.7 GHz) = 0.8669\n|Zin|/Z0 at stopband mid (aux) = 0.7932\nintent used: {'ro': 'decrease_strong'}\nnote: notch 2.15GHz vs 6.71; shrink ro strong\n\nfree variables and bounds:\n  ri     =    0.581   bounds [0.1, 1.5]\n  ro     =   10.546   bounds [3.0, 14.0]\n  alpha  =   96.595   bounds [30.0, 150.0]\n  Wf     =    1.218   bounds [0.2, 2.5]\n  Lc     =    8.903   bounds [0.2, 10.0]"
+      }
+    },
+    {
+      "iteration": 3,
+      "params": {
+        "ri": 0.5814,
+        "ro": 6.8733,
+        "alpha": 96.5946,
+        "Wf": 1.2181,
+        "Lc": 8.9035
+      },
+      "cost": {
+        "total_cost": 0.26079482236341917,
+        "target_freq_hz": 6700000000.0,
+        "target_s21_mag": 0.26079482236341917,
+        "mean_cost": 0.2606292625394132,
+        "low_edge_cost": 0.1405177070652605,
+        "center_cost": 0.26079482236341917,
+        "high_edge_cost": 0.36353926143537024,
+        "stopband_max_s21": 0.36353926143537024,
+        "worst_freq_hz": 7700000000.0,
+        "best_freq_hz": 4700000000.0,
+        "best_s21_mag": 0.003619851483873143,
+        "passband_low_mean": 0.30047924401715737,
+        "passband_high_mean": 0.47737811688206894,
+        "zin_norm_at_center": 1.1243048745059605,
+        "band_hz": [
+          5708443048.5429,
+          7708443048.5429
+        ]
+      },
+      "intent": {
+        "ro": "decrease_strong"
+      },
+      "note": "fit wants ro~5.767 (now 8.643); notch 3.50->6.71",
+      "thinking": "Two-point radial fit targets ro\u22485.767 mm for 6.708 GHz (now notch 3.500 GHz at ro=8.643). Intent {'ro': 'decrease_strong'}.",
+      "observation": {
+        "from_iteration": 2,
+        "report_text": "--- iteration 2 ---\nparams: ri=0.581, ro=8.643, alpha=96.595, Wf=1.218, Lc=8.903\ntotal_cost |S21| @ 6.70 GHz = 0.435340 (-7.22 dB)  [goal -75 dB / 1.777e-04]\ndeepest notch |S21|       = 0.004305 (-47.32 dB) @ 3.500 GHz\nstopband max |S21| (aux)  = 0.5382 @ 7.700 GHz\nmean |S21| in stopband             = 0.4366\nlow_edge  (5.7 GHz)  |S21| = 0.3238\nband mid  (6.7 GHz)  |S21| = 0.4353\nhigh_edge (7.7 GHz)  |S21| = 0.5382\npassband |S21| mean (<5.7 GHz) = 0.2275\npassband |S21| mean (>7.7 GHz) = 0.6678\n|Zin|/Z0 at stopband mid (aux) = 0.9312\nintent used: {'ro': 'decrease_strong'}\nnote: fit wants ro~5.767 (now 10.546); notch 2.70->6.71\n\nfree variables and bounds:\n  ri     =    0.581   bounds [0.1, 1.5]\n  ro     =    8.643   bounds [3.0, 14.0]\n  alpha  =   96.595   bounds [30.0, 150.0]\n  Wf     =    1.218   bounds [0.2, 2.5]\n  Lc     =    8.903   bounds [0.2, 10.0]"
+      }
+    },
+    {
+      "iteration": 4,
+      "params": {
+        "ri": 0.5814,
+        "ro": 6.8733,
+        "alpha": 96.5946,
+        "Wf": 1.2181,
+        "Lc": 8.6103
+      },
+      "cost": {
+        "total_cost": 0.2622827424495777,
+        "target_freq_hz": 6700000000.0,
+        "target_s21_mag": 0.2622827424495777,
+        "mean_cost": 0.26203828378920574,
+        "low_edge_cost": 0.1409453161439855,
+        "center_cost": 0.2622827424495777,
+        "high_edge_cost": 0.3655128318320553,
+        "stopband_max_s21": 0.3655128318320553,
+        "worst_freq_hz": 7700000000.0,
+        "best_freq_hz": 4700000000.0,
+        "best_s21_mag": 0.0036179592126287957,
+        "passband_low_mean": 0.30024818851097124,
+        "passband_high_mean": 0.4777537347368698,
+        "zin_norm_at_center": 1.2908416656055943,
+        "band_hz": [
+          5708443048.5429,
+          7708443048.5429
+        ]
+      },
+      "intent": {
+        "Lc": "decrease_slight"
+      },
+      "note": "break repeated intent stall",
+      "thinking": "break repeated intent stall",
+      "observation": {
+        "from_iteration": 3,
+        "report_text": "--- iteration 3 ---\nparams: ri=0.581, ro=6.873, alpha=96.595, Wf=1.218, Lc=8.903\ntotal_cost |S21| @ 6.70 GHz = 0.260795 (-11.67 dB)  [goal -75 dB / 1.777e-04]\ndeepest notch |S21|       = 0.003620 (-48.83 dB) @ 4.700 GHz\nstopband max |S21| (aux)  = 0.3635 @ 7.700 GHz\nmean |S21| in stopband             = 0.2606\nlow_edge  (5.7 GHz)  |S21| = 0.1405\nband mid  (6.7 GHz)  |S21| = 0.2608\nhigh_edge (7.7 GHz)  |S21| = 0.3635\npassband |S21| mean (<5.7 GHz) = 0.3005\npassband |S21| mean (>7.7 GHz) = 0.4774\n|Zin|/Z0 at stopband mid (aux) = 1.1243\nintent used: {'ro': 'decrease_strong'}\nnote: fit wants ro~5.767 (now 8.643); notch 3.50->6.71\n\nfree variables and bounds:\n  ri     =    0.581   bounds [0.1, 1.5]\n  ro     =    6.873   bounds [3.0, 14.0]\n  alpha  =   96.595   bounds [30.0, 150.0]\n  Wf     =    1.218   bounds [0.2, 2.5]\n  Lc     =    8.903   bounds [0.2, 10.0]"
+      }
+    },
+    {
+      "iteration": 5,
+      "params": {
+        "ri": 0.5814,
+        "ro": 5.3428,
+        "alpha": 96.5946,
+        "Wf": 1.2181,
+        "Lc": 8.6103
+      },
+      "cost": {
+        "total_cost": 5.497439704286754e-05,
+        "target_freq_hz": 6700000000.0,
+        "target_s21_mag": 5.497439704286754e-05,
+        "mean_cost": 0.06514825203570243,
+        "low_edge_cost": 0.1406594699689725,
+        "center_cost": 5.497439704286754e-05,
+        "high_edge_cost": 0.1208378371269778,
+        "stopband_max_s21": 0.13320436131207847,
+        "worst_freq_hz": 5750000000.0,
+        "best_freq_hz": 6700000000.0,
+        "best_s21_mag": 5.497439704286754e-05,
+        "passband_low_mean": 0.5235504710867144,
+        "passband_high_mean": 0.24166057800620913,
+        "zin_norm_at_center": 1.7267247392521323,
+        "band_hz": [
+          5708443048.5429,
+          7708443048.5429
+        ]
+      },
+      "intent": {
+        "ro": "decrease_strong"
+      },
+      "note": "fit wants ro~5.767 (now 6.873); notch 4.70->6.71",
+      "thinking": "Two-point radial fit targets ro\u22485.767 mm for 6.708 GHz (now notch 4.700 GHz at ro=6.873). Intent {'ro': 'decrease_strong'}.",
+      "observation": {
+        "from_iteration": 4,
+        "report_text": "--- iteration 4 ---\nparams: ri=0.581, ro=6.873, alpha=96.595, Wf=1.218, Lc=8.610\ntotal_cost |S21| @ 6.70 GHz = 0.262283 (-11.62 dB)  [goal -75 dB / 1.777e-04]\ndeepest notch |S21|       = 0.003618 (-48.83 dB) @ 4.700 GHz\nstopband max |S21| (aux)  = 0.3655 @ 7.700 GHz\nmean |S21| in stopband             = 0.2620\nlow_edge  (5.7 GHz)  |S21| = 0.1409\nband mid  (6.7 GHz)  |S21| = 0.2623\nhigh_edge (7.7 GHz)  |S21| = 0.3655\npassband |S21| mean (<5.7 GHz) = 0.3002\npassband |S21| mean (>7.7 GHz) = 0.4778\n|Zin|/Z0 at stopband mid (aux) = 1.2908\nintent used: {'Lc': 'decrease_slight'}\nnote: break repeated intent stall\n\nfree variables and bounds:\n  ri     =    0.581   bounds [0.1, 1.5]\n  ro     =    6.873   bounds [3.0, 14.0]\n  alpha  =   96.595   bounds [30.0, 150.0]\n  Wf     =    1.218   bounds [0.2, 2.5]\n  Lc     =    8.610   bounds [0.2, 10.0]"
+      }
+    }
+  ],
+  "goal": {
+    "target_freq_hz": 6708443048.5429,
+    "band_hz": [
+      5708443048.5429,
+      7708443048.5429
+    ],
+    "target_depth_db": -75.00492608239225
+  },
+  "start_seed": 289069,
+  "initial_params": {
+    "ri": 0.5814,
+    "ro": 12.5917,
+    "alpha": 96.5946,
+    "Wf": 1.2181,
+    "Lc": 8.9035
+  },
+  "corpus": {
+    "eligible": true,
+    "reason": "goal_met",
+    "best_db": -85.19679050533398,
+    "goal_met_iteration": 5
+  }
+}

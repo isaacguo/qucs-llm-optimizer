@@ -398,6 +398,32 @@ class CorpusCliTests(unittest.TestCase):
         # assign must not simulate: no baseline history entry yet
         self.assertFalse(state["history"])
 
+    def test_prefer_coverage_avoids_saturated_bin(self):
+        from dataclasses import asdict
+
+        from training.goals import load_goal_distribution, sample_goal_from_distribution
+
+        dist = load_goal_distribution(self.goal_config)
+        saturated = sample_goal_from_distribution(0, dist)
+        sat_bin = self.corpus_cli._bin_for_goal(saturated, dist)
+        index = [
+            {
+                "run_id": f"sat{i}",
+                "goal": {
+                    "target_freq_hz": saturated.target_freq_hz,
+                    "target_depth_db": saturated.target_depth_db,
+                    "band_hz": list(saturated.band_hz),
+                },
+            }
+            for i in range(8)
+        ]
+        goal, used_seed = self.corpus_cli._sample_goal_prefer_coverage(0, dist, index)
+        chosen = self.corpus_cli._bin_for_goal(goal, dist)
+        self.assertNotEqual(chosen, sat_bin)
+        self.assertGreaterEqual(used_seed, 0)
+        # Sanity: asdict round-trip still a GoalSpec-shaped goal
+        self.assertIn("target_freq_hz", asdict(goal))
+
     def test_gate_appends_eligible_run_to_index(self):
         run_dir = self.runs_root / "r_ok"
         run_dir.mkdir(parents=True)

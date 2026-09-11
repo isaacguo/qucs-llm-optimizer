@@ -12,9 +12,10 @@ Optional legacy import (rewrites state.json; copy the run first):
   qucs-corpus import-run --run llm1-import
   # refuses if existing goal differs unless --force
 
-``--prefer-coverage`` (assign): samples a short seed window and picks the goal
-whose coverage bin is least filled in the current index. If the index is empty
-or missing, sampling is identical to the normal path.
+``--prefer-coverage`` (assign): searches a seed window and picks the goal whose
+coverage bin is least filled in the current index, preferring empty bins
+first. If the index is empty or missing, sampling is identical to the normal
+path.
 """
 from __future__ import annotations
 
@@ -50,7 +51,8 @@ from training.goals import (  # noqa: E402
     sample_goal_from_distribution,
 )
 
-_PREFER_COVERAGE_TRIES = 32
+# Wide enough that sparse empty bins remain findable late in corpus growth.
+_PREFER_COVERAGE_TRIES = 256
 
 # Reference goal for the historical runs/llm1 trajectory (5.5 GHz / −70 dB).
 _LLM1_TARGET_FREQ_HZ = 5.5e9
@@ -84,11 +86,17 @@ def _sample_goal_prefer_coverage(
     dist: GoalDistributionConfig,
     index: list[dict],
 ) -> tuple[GoalSpec, int]:
-    """Pick seed in [seed, seed+N) whose goal lands in the least-covered bin."""
+    """Pick seed in [seed, seed+N) whose goal lands in the least-covered bin.
+
+    Empty bins (count 0) win immediately; otherwise the lowest count in the
+    window wins so coverage stays roughly even as the corpus grows.
+    """
     counts = coverage_counts(index, dist)
     best_seed = seed
     best_goal = sample_goal_from_distribution(seed, dist)
     best_count = counts.get(_bin_for_goal(best_goal, dist), 0)
+    if best_count == 0:
+        return best_goal, best_seed
     for offset in range(1, _PREFER_COVERAGE_TRIES):
         cand_seed = seed + offset
         cand_goal = sample_goal_from_distribution(cand_seed, dist)
