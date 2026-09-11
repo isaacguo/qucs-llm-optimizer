@@ -24,6 +24,7 @@ from pathlib import Path
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent
 SCH_TEMPLATE_PATH = _REPO_ROOT / "templates" / "butterfly_stub.sch.tpl"
+BPF_TEMPLATE_PATH = _REPO_ROOT / "templates" / "butterworth_bpf5.sch.tpl"
 
 # Fixed substrate: Rogers RO4003C, 20 mil, 1oz copper.
 SUBSTRATE = dict(er=3.38, h_mm=0.508, t_mm=0.035, tand=0.0027, rho=1.72e-08, d_m=1.5e-07)
@@ -154,14 +155,17 @@ def render_schematic(
 ) -> str:
     path = template_path if template_path is not None else SCH_TEMPLATE_PATH
     tpl = path.read_text()
-    if path.resolve() == SCH_TEMPLATE_PATH.resolve():
+    resolved = path.resolve()
+    if resolved == SCH_TEMPLATE_PATH.resolve():
         values = _template_values(
             params, f0_hz, sweep_start_hz, sweep_stop_hz, sweep_points
         )
-    else:
+    elif resolved == BPF_TEMPLATE_PATH.resolve():
         values = _bpf_template_values(
             params, f0_hz, sweep_start_hz, sweep_stop_hz, sweep_points
         )
+    else:
+        raise ValueError(f"unsupported schematic template: {path}")
     return tpl.format(**values)
 
 
@@ -289,7 +293,7 @@ def run_qucsator(net_path: Path, dat_path: Path) -> Path:
 
 
 _COMPLEX_RE = re.compile(
-    r"([+-]?\d+\.\d+e[+-]\d+)([+-])j(\d+\.\d+e[+-]\d+)"
+    r"([+-]?\d+\.\d+e[+-]\d+)(?:([+-])j(\d+\.\d+e[+-]\d+))?$"
 )
 
 
@@ -313,6 +317,9 @@ def parse_dataset(dat_path: Path) -> SimResult:
             if not m:
                 raise ValueError(f"cannot parse complex value: {ln!r}")
             re_part = float(m.group(1))
+            if m.group(2) is None:
+                values.append(complex(re_part, 0.0))
+                continue
             sign = 1.0 if m.group(2) == "+" else -1.0
             im_part = sign * float(m.group(3))
             values.append(complex(re_part, im_part))
@@ -334,6 +341,7 @@ def simulate(
     sweep_points: int = 181,
     workdir: Path | None = None,
     export_layout: bool = True,
+    template_path: Path | None = None,
 ) -> SimResult:
     def _run(wd: Path) -> SimResult:
         wd.mkdir(parents=True, exist_ok=True)
@@ -343,7 +351,14 @@ def simulate(
         svg_path = wd / "layout.svg"
 
         sch_path.write_text(
-            render_schematic(params, f0_hz, sweep_start_hz, sweep_stop_hz, sweep_points)
+            render_schematic(
+                params,
+                f0_hz,
+                sweep_start_hz,
+                sweep_stop_hz,
+                sweep_points,
+                template_path=template_path,
+            )
         )
         export_netlist_from_sch(sch_path, net_path)
         if export_layout:
