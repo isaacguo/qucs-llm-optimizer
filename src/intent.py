@@ -59,21 +59,34 @@ def _parse_intent_token(token: str) -> tuple[int, str]:
     return sign, mag
 
 
-def apply_intent(params: dict, intent: dict, iteration: int) -> dict:
+def apply_intent(
+    params: dict,
+    intent: dict,
+    iteration: int,
+    *,
+    variables: tuple[str, ...] | None = None,
+    bounds: dict[str, tuple[float, float]] | None = None,
+) -> dict:
     """
     params:    current {var: value}
     intent:    {var: token} for a subset (or all) of VARIABLES; missing vars
                are treated as "hold"
     iteration: 0-based iteration count, used for the step-decay schedule
+    variables / bounds: optional overrides (defaults to butterfly module tables)
     """
+    vars_ = variables if variables is not None else VARIABLES
+    bounds_ = bounds if bounds is not None else BOUNDS
+    unknown = set(intent) - set(vars_)
+    if unknown:
+        raise ValueError(f"unknown intent keys for task: {sorted(unknown)}")
     decay = max(_DECAY_RATE ** iteration, _MIN_SCALE)
     new_params = dict(params)
-    for var in VARIABLES:
+    for var in vars_:
         token = intent.get(var, "hold")
         sign, mag_key = _parse_intent_token(token)
         if sign == 0:
             continue
-        lo, hi = BOUNDS[var]
+        lo, hi = bounds_[var]
         step = sign * _MAGNITUDE_FRAC[mag_key] * decay * (hi - lo)
         new_val = params[var] + step
         new_val = min(max(new_val, lo), hi)
