@@ -24,7 +24,7 @@ class TestBpf5Buckets(unittest.TestCase):
         self.assertEqual(SWEEP_MHZ, (0.0, 300.0))
         self.assertEqual(BW_CHOICES_MHZ, (5, 10, 15))
         self.assertEqual(SUCCESS_PER_BUCKET, 10)
-        self.assertEqual(MAX_STEPS, 20)
+        self.assertEqual(MAX_STEPS, 19)
 
     def test_sample_passband_inside_sweep(self):
         rng = random.Random(0)

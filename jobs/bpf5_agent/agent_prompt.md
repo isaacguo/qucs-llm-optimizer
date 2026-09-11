@@ -10,8 +10,9 @@ qualitative intents only; you never write numeric L/C values.
 
 ## Task
 
-Drive **one** rollout to `goal_met` in **≤ 20** steps using the harness below.
-Intent JSON is **your** choice (do not call any Python intent picker).
+Drive **one** rollout to `goal_met` in **≤ 19** strategy steps (harness iterations
+1..19 after baseline iteration 0; max reachable iteration is 19) using the harness
+below. Intent JSON is **your** choice (do not call any Python intent picker).
 
 ## Harness
 
@@ -19,7 +20,10 @@ Workspace root: `{repo}`
 Rollout run id (relative to `runs/`): `{run_id}`
 Bucket / sample hint: bucket={bucket}, cf_mhz={cf_mhz}, bw_mhz={bw_mhz}
 
-Do all work only inside this repo. Do NOT commit or push. Do NOT edit training code.
+Do all work only inside this repo. Do NOT commit or push.
+Do NOT edit repository source (`src/`, `jobs/`, `training/`, `scripts/`, tests,
+prompts, templates, or package metadata). Write only under `runs/` via
+`run_step.py` (and temp files you delete).
 
 ## Actions
 
@@ -33,7 +37,7 @@ Allowed intent values: `increase` / `decrease` / `hold` with optional `_slight` 
 2) `cd {repo}`
 3) Init (goal/task meta already assigned under the rollout dir):
    `uv run python run_step.py init --run {run_id} --task butterworth_bpf5`
-4) Loop (max 20 steps total including baseline awareness; stop early on success):
+4) Loop (max 19 strategy steps after baseline; stop early on success):
    - `uv run python run_step.py observe --run {run_id}`
    - Read observation + `runs/{run_id}/state.json`. Diagnose PB/SB vs goal window.
    - Choose a qualitative intent dict.

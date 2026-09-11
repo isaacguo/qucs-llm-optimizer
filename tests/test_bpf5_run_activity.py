@@ -50,6 +50,8 @@ class TestBuildRolloutPrompt(unittest.TestCase):
         self.assertIn("--thinking", prompt)
         self.assertIn("completions.jsonl", prompt)
         self.assertIn("goal_met", prompt)
+        self.assertRegex(prompt, r"≤\s*19|max 19|≤ 19")
+        self.assertRegex(prompt, r"(?i)do not edit.*source|only under `runs/`")
         # Explicit: do not require a think/ directory layout
         self.assertRegex(prompt, r"(?i)do not.*think/")
         self.assertNotRegex(prompt, r"(?i)write .* to .*think/")
@@ -67,24 +69,36 @@ class TestRunActivityMocked(unittest.TestCase):
                 self.assertIn("--model", cmd)
                 self.assertEqual(cmd[cmd.index("--model") + 1], "auto")
                 # Agent "succeeds": write a goal_met history into the assigned rollout.
-                # Find the rollout dir under activity (created by assign before invoke).
+                # Find the newest empty-ish rollout dir under activity.
                 activity_dir = runs_root / activity_id
-                rollouts = [p for p in activity_dir.iterdir() if p.is_dir()]
+                rollouts = sorted(
+                    p for p in activity_dir.iterdir() if p.is_dir() and p.name.startswith("rollout_")
+                )
                 self.assertEqual(len(rollouts), 1)
                 rollout = rollouts[0]
                 state_path = rollout / "state.json"
                 state = json.loads(state_path.read_text(encoding="utf-8"))
                 state["history"] = [
                     {
+                        "iteration": 0,
+                        "cost": {"goal_met": False},
+                        "params": {},
+                        "intent": None,
+                        "note": "",
+                    },
+                    {
                         "iteration": 3,
                         "cost": {"goal_met": True},
                         "params": {},
                         "intent": None,
                         "note": "",
-                    }
+                    },
                 ]
                 state["iteration"] = 3
                 state_path.write_text(json.dumps(state, indent=2), encoding="utf-8")
+                (rollout / "completions.jsonl").write_text(
+                    '{"iteration": 3}\n', encoding="utf-8"
+                )
                 return 0
 
             with mock.patch(
@@ -176,6 +190,91 @@ class TestRunActivityMocked(unittest.TestCase):
         self.assertTrue(
             all("choose_intent_from_skills" not in name for name in imported)
         )
+
+    def test_resume_same_activity_same_seed_does_not_double_count(self):
+        """C1: second invoke must not re-count an already-gated success."""
+        with tempfile.TemporaryDirectory() as td:
+            runs_root = Path(td) / "runs"
+            repo = Path(td) / "repo"
+            repo.mkdir()
+            activity_id = "bpf_agent_resume_same"
+            call_n = {"n": 0}
+
+            def fake_agent(cmd, *, cwd, env=None, timeout_s=None):
+                call_n["n"] += 1
+                activity_dir = runs_root / activity_id
+                candidates = sorted(
+                    p
+                    for p in activity_dir.iterdir()
+                    if p.is_dir() and p.name.startswith("rollout_")
+                )
+                # First invoke: write a real success on the assigned empty dir.
+                # Later invokes: no-op (agent may skip work on resume) — must not
+                # let gate re-count a prior success via a reused directory.
+                if call_n["n"] > 1:
+                    return 0
+                rollout = candidates[-1]
+                state_path = rollout / "state.json"
+                state = json.loads(state_path.read_text(encoding="utf-8"))
+                state["history"] = [
+                    {
+                        "iteration": 0,
+                        "cost": {"goal_met": False},
+                        "params": {},
+                        "intent": None,
+                        "note": "",
+                    },
+                    {
+                        "iteration": 2,
+                        "cost": {"goal_met": True},
+                        "params": {},
+                        "intent": None,
+                        "note": "",
+                    },
+                ]
+                state["iteration"] = 2
+                state_path.write_text(json.dumps(state, indent=2), encoding="utf-8")
+                (rollout / "completions.jsonl").write_text(
+                    '{"iteration": 2}\n', encoding="utf-8"
+                )
+                return 0
+
+            with mock.patch(
+                "jobs.bpf5_agent.run_activity.invoke_agent",
+                side_effect=fake_agent,
+            ):
+                first = run_activity(
+                    runs_root=runs_root,
+                    activity_id=activity_id,
+                    max_rollouts=1,
+                    seed=7,
+                    repo=repo,
+                )
+                kept_before = sorted(
+                    p.name
+                    for p in (runs_root / activity_id).iterdir()
+                    if p.is_dir() and p.name.startswith("rollout_")
+                )
+                second = run_activity(
+                    runs_root=runs_root,
+                    activity_id=activity_id,
+                    max_rollouts=1,
+                    seed=7,
+                    repo=repo,
+                )
+
+            self.assertEqual(first["ok"], 1)
+            self.assertEqual(second["ok"], 0)
+            progress = ProgressStore(runs_root / activity_id / "progress.json")
+            self.assertEqual(sum(progress.load()["counts"]), 1)
+            # First successful tree must still be present (not deleted/replaced).
+            kept_after = sorted(
+                p.name
+                for p in (runs_root / activity_id).iterdir()
+                if p.is_dir() and p.name.startswith("rollout_")
+            )
+            self.assertEqual(kept_after, kept_before)
+            self.assertEqual(len(kept_after), 1)
 
 
 if __name__ == "__main__":

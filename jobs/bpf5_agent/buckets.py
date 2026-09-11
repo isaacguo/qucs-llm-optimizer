@@ -8,7 +8,8 @@ BUCKET_WIDTH_MHZ = 15
 SWEEP_MHZ = (0.0, 300.0)
 BW_CHOICES_MHZ = (5, 10, 15)
 SUCCESS_PER_BUCKET = 10
-MAX_STEPS = 20
+# Harness MAX_ITERATIONS=20 → reachable iterations 0..19; strategy success ≤ 19.
+MAX_STEPS = 19
 
 
 def _bucket_cf_range(bucket: int) -> tuple[float, float]:

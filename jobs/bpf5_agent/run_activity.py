@@ -101,6 +101,26 @@ def _delete_rollout(rollout_dir: Path) -> None:
         shutil.rmtree(rollout_dir, ignore_errors=True)
 
 
+def _count_rollout_dirs(activity_dir: Path) -> int:
+    if not activity_dir.is_dir():
+        return 0
+    return sum(
+        1
+        for p in activity_dir.iterdir()
+        if p.is_dir() and p.name.startswith("rollout_")
+    )
+
+
+def _attempt_rng(seed: int, attempt: int, prior_rollouts: int) -> random.Random:
+    """Derive a per-attempt RNG so resume with the same seed samples differently."""
+    mixed = (
+        (int(seed) & 0xFFFFFFFF)
+        ^ ((int(attempt) * 0x9E3779B9) & 0xFFFFFFFF)
+        ^ ((int(prior_rollouts) * 0x85EBCA6B) & 0xFFFFFFFF)
+    )
+    return random.Random(mixed)
+
+
 def run_one_rollout(
     *,
     runs_root: Path,
@@ -131,7 +151,7 @@ def run_one_rollout(
     )
     cmd = build_agent_cmd(repo, prompt)
     invoke_agent(cmd, cwd=repo, timeout_s=timeout_s)
-    if gate_rollout(rollout_dir):
+    if gate_rollout(rollout_dir, expected_goal=goal):
         on_success(progress, bucket)
         return True
     _delete_rollout(rollout_dir)
@@ -152,13 +172,14 @@ def run_activity(
     activity_dir = runs_root / activity_id
     activity_dir.mkdir(parents=True, exist_ok=True)
     progress = ProgressStore(activity_dir / "progress.json")
-    rng = random.Random(int(seed))
     ok_n = 0
     attempts = 0
     for _ in range(int(max_rollouts)):
         if progress.is_complete():
             break
         attempts += 1
+        prior = _count_rollout_dirs(activity_dir)
+        rng = _attempt_rng(int(seed), attempts, prior)
         if run_one_rollout(
             runs_root=runs_root,
             activity_id=activity_id,
