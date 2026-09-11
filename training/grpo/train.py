@@ -25,21 +25,21 @@ from contextlib import contextmanager
 from dataclasses import replace
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 from decision_log import append_record  # noqa: E402
 
-from training.config import (  # noqa: E402
+from training.grpo.config import (  # noqa: E402
     MultiturnConfig,
     MultiturnDataSection,
     config_to_dict,
     resolve_multiturn_config,
     to_model_config,
 )
-from training.diagnostics import build_step_stats  # noqa: E402
+from training.grpo.diagnostics import build_step_stats  # noqa: E402
 from training.common.goals import (  # noqa: E402
     GoalDistributionConfig,
     GoalSpec,
@@ -48,13 +48,13 @@ from training.common.goals import (  # noqa: E402
 )
 from training.common.modeling import load_policy  # noqa: E402
 from training.common.preflight import verify_runtime  # noqa: E402
-from training.rollout import (  # noqa: E402
+from training.grpo.rollout import (  # noqa: E402
     Trajectory,
     run_trajectory,
     shaped_turn_advantages,
     trajectory_to_json,
 )
-from training.starts import sample_params_with_headroom  # noqa: E402
+from training.grpo.starts import sample_params_with_headroom  # noqa: E402
 
 
 def resolve_multiturn_goal_distribution(data: MultiturnDataSection) -> GoalDistributionConfig:

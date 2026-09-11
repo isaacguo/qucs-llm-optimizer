@@ -5,7 +5,7 @@ import math
 import statistics
 from typing import Any
 
-from training.rollout import Trajectory
+from training.grpo.rollout import Trajectory
 
 
 def _percentile(values: list[float], pct: float) -> float:

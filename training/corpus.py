@@ -20,7 +20,7 @@ from training.common.goals import (  # noqa: E402
     GoalSpec,
     is_goal_met,
 )
-from training.rollout import TurnRecord, build_multiturn_prompt  # noqa: E402
+from training.common.prompts import TurnRecord, build_multiturn_prompt  # noqa: E402
 
 
 def _goal_from_state(raw: dict | GoalSpec) -> GoalSpec:

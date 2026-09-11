@@ -5,7 +5,7 @@ import unittest
 
 from training.common.environment import sample_params
 from training.common.goals import DEFAULT_TARGET_DEPTH_DB, GoalSpec, sample_goal
-from training.rollout import (
+from training.grpo.rollout import (
     REWARD_CLIP,
     mixed_terminal_reward,
     run_trajectory,
@@ -270,7 +270,7 @@ class RolloutBehaviourTests(unittest.TestCase):
 
 class ShapedAdvantageTests(unittest.TestCase):
     def test_destroying_turn_gets_lower_advantage_than_improving_turn(self):
-        from training.rollout import Trajectory, TurnRecord
+        from training.grpo.rollout import Trajectory, TurnRecord
 
         def fake_traj(deltas, reward):
             turns = []

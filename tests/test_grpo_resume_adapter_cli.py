@@ -4,8 +4,8 @@ from __future__ import annotations
 import unittest
 from pathlib import Path
 
-from training.config import MultiturnConfig, from_mapping, load_yaml
-from training.multiturn_train import (
+from training.grpo.config import MultiturnConfig, from_mapping, load_yaml
+from training.grpo.train import (
     build_parser,
     sample_multiturn_goal,
     train,
@@ -26,7 +26,7 @@ class MultiturnResumeAdapterCliTests(unittest.TestCase):
 
     def test_allow_raw_base_flag_defaults_false(self):
         args = build_parser().parse_args([])
-        from training.config import resolve_multiturn_config
+        from training.grpo.config import resolve_multiturn_config
 
         cfg = resolve_multiturn_config(args)
         self.assertIs(cfg.runtime.allow_raw_base, False)

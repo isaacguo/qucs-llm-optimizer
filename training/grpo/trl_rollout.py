@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from typing import Sequence
 
-from training.rollout import Trajectory
+from training.grpo.rollout import Trajectory
 
 
 def _prompt_text(tokenizer, messages: list[dict[str, str]]) -> str:

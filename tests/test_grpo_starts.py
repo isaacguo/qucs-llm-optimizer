@@ -4,7 +4,7 @@ from __future__ import annotations
 import unittest
 
 from training.common.goals import GoalSpec
-from training.starts import is_start_too_deep, sample_params_with_headroom
+from training.grpo.starts import is_start_too_deep, sample_params_with_headroom
 
 
 class StartHeadroomTests(unittest.TestCase):

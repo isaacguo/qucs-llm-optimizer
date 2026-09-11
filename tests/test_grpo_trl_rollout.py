@@ -4,8 +4,8 @@ from __future__ import annotations
 import unittest
 
 from training.common.goals import GoalSpec
-from training.rollout import Trajectory, TurnRecord
-from training.trl_rollout import pack_rollout_from_trajectories
+from training.grpo.rollout import Trajectory, TurnRecord
+from training.grpo.trl_rollout import pack_rollout_from_trajectories
 
 
 def _turn(text: str, turn_index: int = 0) -> TurnRecord:

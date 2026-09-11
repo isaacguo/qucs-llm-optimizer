@@ -5,13 +5,13 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from training.config import (
+from training.grpo.config import (
     MultiturnConfig,
     from_mapping,
     load_yaml,
     resolve_multiturn_config,
 )
-from training.multiturn_train import build_parser as build_multiturn_parser
+from training.grpo.train import build_parser as build_multiturn_parser
 
 
 class LoadYamlTests(unittest.TestCase):
@@ -62,7 +62,7 @@ class MultiturnConfigTests(unittest.TestCase):
 
     def test_train_accepts_config_parameter(self):
         import inspect
-        from training import multiturn_train
+        from training.grpo import train as multiturn_train
 
         params = inspect.signature(multiturn_train.train).parameters
         self.assertIn("config", params)

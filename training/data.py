@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from training.rollout import SYSTEM_PROMPT
+from training.common.prompts import SYSTEM_PROMPT
 
 
 def load_sft_records(state_path: Path) -> list[dict]:

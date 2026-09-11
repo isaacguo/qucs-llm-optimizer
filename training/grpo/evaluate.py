@@ -27,8 +27,8 @@ import random
 
 from training.common.goals import GoalSpec, heldout_goals, sample_goal
 from training.common.modeling import ModelConfig, load_policy
-from training.multiturn_train import _make_generate_fn
-from training.rollout import run_trajectory, trajectory_to_json
+from training.grpo.train import _make_generate_fn
+from training.grpo.rollout import run_trajectory, trajectory_to_json
 
 
 def _random_goals(

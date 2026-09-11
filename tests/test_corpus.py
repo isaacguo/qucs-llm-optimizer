@@ -22,7 +22,7 @@ from training.corpus import (  # noqa: E402
     load_index,
 )
 from training.common.goals import GoalDistributionConfig, GoalSpec  # noqa: E402
-from training.rollout import SYSTEM_PROMPT, TurnRecord, build_multiturn_prompt  # noqa: E402
+from training.common.prompts import SYSTEM_PROMPT, TurnRecord, build_multiturn_prompt  # noqa: E402
 
 
 def _mag_for_db(db: float) -> float:

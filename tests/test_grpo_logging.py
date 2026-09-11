@@ -3,9 +3,9 @@ from __future__ import annotations
 
 import unittest
 
-from training.diagnostics import build_step_stats
+from training.grpo.diagnostics import build_step_stats
 from training.common.goals import GoalSpec
-from training.rollout import Trajectory, TurnRecord
+from training.grpo.rollout import Trajectory, TurnRecord
 
 
 def _traj(reward, reason, deltas, seed=1):
@@ -88,7 +88,7 @@ class LoraSnapshotTests(unittest.TestCase):
         import torch
         from torch import nn
 
-        from training.multiturn_train import _snapshot_lora, _use_lora_snapshot
+        from training.grpo.train import _snapshot_lora, _use_lora_snapshot
 
         class Toy(nn.Module):
             def __init__(self):

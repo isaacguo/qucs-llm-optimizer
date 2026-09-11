@@ -1,1 +1,1 @@
-"""Multi-turn GRPO and SFT training for the Qucs intent policy."""
+"""Training packages: common helpers, GRPO multiturn, and SFT entrypoints."""

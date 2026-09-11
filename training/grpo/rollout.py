@@ -22,7 +22,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
@@ -40,7 +40,7 @@ from training.common.prompts import (  # noqa: E402
     build_multiturn_prompt,
     stop_is_allowed,
 )
-from training.reward_math import (  # noqa: E402
+from training.grpo.reward_math import (  # noqa: E402
     FREQ_WEIGHT,
     REWARD_CLIP,
     clip_reward,
