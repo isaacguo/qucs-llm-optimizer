@@ -16,7 +16,7 @@ T = TypeVar("T")
 
 @dataclass
 class MultiturnModelSection:
-    name: str = "unsloth/Qwen3-1.7B-bnb-4bit"
+    name: str = "unsloth/Qwen3-4B-Instruct-2507-bnb-4bit"
     max_seq_length: int = 2048
     lora_rank: int = 16
 

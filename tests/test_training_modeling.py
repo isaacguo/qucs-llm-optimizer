@@ -72,10 +72,10 @@ class ModelSetupTests(unittest.TestCase):
             {"bf16": False, "fp16": True},
         )
 
-    def test_defaults_target_qwen3_1_7b_on_eight_gb_profile(self):
+    def test_defaults_target_qwen3_4b_instruct_on_eight_gb_profile(self):
         config = ModelConfig()
-        self.assertEqual(config.model_name, "unsloth/Qwen3-1.7B-bnb-4bit")
-        self.assertEqual(config.max_seq_length, 1024)
+        self.assertEqual(config.model_name, "unsloth/Qwen3-4B-Instruct-2507-bnb-4bit")
+        self.assertEqual(config.max_seq_length, 2048)
         self.assertEqual(config.lora_rank, 16)
         self.assertTrue(config.load_in_4bit)
 

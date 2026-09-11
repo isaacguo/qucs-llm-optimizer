@@ -7,8 +7,8 @@ from typing import Any, Callable
 
 @dataclass(frozen=True)
 class ModelConfig:
-    model_name: str = "unsloth/Qwen3-1.7B-bnb-4bit"
-    max_seq_length: int = 1024
+    model_name: str = "unsloth/Qwen3-4B-Instruct-2507-bnb-4bit"
+    max_seq_length: int = 2048
     lora_rank: int = 16
     load_in_4bit: bool = True
 

@@ -66,7 +66,7 @@ def main(argv: list[str] | None = None) -> None:
             "base model as a baseline"
         ),
     )
-    parser.add_argument("--model-name", default="unsloth/Qwen3-1.7B-bnb-4bit")
+    parser.add_argument("--model-name", default="unsloth/Qwen3-4B-Instruct-2507-bnb-4bit")
     parser.add_argument("--max-seq-length", type=int, default=2048)
     parser.add_argument("--episodes-per-goal", type=int, default=3)
     parser.add_argument("--start-seed", type=int, default=9000)

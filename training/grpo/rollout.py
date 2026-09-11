@@ -42,14 +42,13 @@ from training.common.prompts import (  # noqa: E402
 from training.grpo.reward_math import (  # noqa: E402
     FREQ_WEIGHT,
     REWARD_CLIP,
-    clip_reward,
+    finalize_trajectory_reward,
     frequency_alignment,
     mixed_terminal_reward,
 )
 
 STOP_BONUS = 1.0
 STOP_BONUS_IMPROVE_EPS = 0.2
-clip_db_reward = clip_reward
 
 
 @dataclass
@@ -267,13 +266,14 @@ def run_trajectory(
         best_freq_hz=traj.best_freq_hz,
         final_freq_hz=current_freq,
         target_freq_hz=goal.target_freq_hz,
+        target_depth_db=goal.target_depth_db,
     )
     if (
         traj.terminated_reason == "stop"
         and traj.best_db < initial_db - STOP_BONUS_IMPROVE_EPS
     ):
-        reward = clip_db_reward(reward + STOP_BONUS, reward_clip)
-    traj.reward = reward
+        reward += STOP_BONUS
+    traj.reward = finalize_trajectory_reward(reward, traj.terminated_reason)
     return traj
 
 

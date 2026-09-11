@@ -30,3 +30,8 @@ py-modules = []
 
 [tool.setuptools.packages.find]
 include = ["training*", "corpus*"]
+
+[dependency-groups]
+dev = [
+    "matplotlib>=3.11.1",
+]

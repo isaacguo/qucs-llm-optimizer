@@ -154,15 +154,17 @@ Layout: top-level `corpus/` sits beside `training/`; shared helpers live in
 unchanged.
 
 The optional `training/` package replaces the human strategy layer with a
-Qwen3-1.7B intent policy. Supported paths are:
+Qwen3-4B-Instruct intent policy. Supported paths are:
 
 1. **SFT** from corpus teacher trajectories (`qucs-sft`)
 2. **Multi-turn GRPO** over real Qucs rollouts (`qucs-multiturn`)
 
 Single-step GRPO is not supported. Model loading uses HF + PEFT +
-bitsandbytes QLoRA. The default hub id is `unsloth/Qwen3-1.7B-bnb-4bit`
-(Hugging Face weights only). Training never replaces the Qucs reward with a
-mock or learned judge.
+bitsandbytes QLoRA. The default hub id is
+`unsloth/Qwen3-4B-Instruct-2507-bnb-4bit` (Hugging Face weights only; non-thinking).
+Training never replaces the Qucs reward with a mock or learned judge. Layout
+export is skipped only during reward evaluation; the electrical simulation is
+the same one used by `run_step.py`.
 
 Install:
 

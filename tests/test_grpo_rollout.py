@@ -5,6 +5,7 @@ import unittest
 
 from training.common.environment import sample_params
 from training.common.goals import DEFAULT_TARGET_DEPTH_DB, GoalSpec, sample_goal
+from training.grpo.reward_math import finalize_trajectory_reward
 from training.grpo.rollout import (
     REWARD_CLIP,
     mixed_terminal_reward,
@@ -12,6 +13,19 @@ from training.grpo.rollout import (
     shaped_turn_advantages,
     trajectory_to_json,
 )
+
+
+def _mixed_from_traj(traj) -> float:
+    return mixed_terminal_reward(
+        traj.initial_db,
+        traj.best_db,
+        traj.turns[-1].db_after,
+        initial_freq_hz=traj.initial_freq_hz,
+        best_freq_hz=traj.best_freq_hz,
+        final_freq_hz=traj.final_freq_hz,
+        target_freq_hz=traj.goal.target_freq_hz,
+        target_depth_db=traj.goal.target_depth_db,
+    )
 
 
 def _mag(db: float) -> float:
@@ -81,6 +95,22 @@ class RewardMathTests(unittest.TestCase):
         )
         self.assertGreater(on, off)
 
+    def test_spec_term_separates_clipped_near_miss_from_goal_depth(self):
+        near_miss = mixed_terminal_reward(
+            -7.3, -30.0, -25.0, clip=20.0, target_depth_db=-50.0
+        )
+        hit_spec = mixed_terminal_reward(
+            -7.3, -56.0, -56.0, clip=20.0, target_depth_db=-50.0
+        )
+        self.assertGreater(hit_spec - near_miss, 8.0)
+
+    def test_finalize_scales_non_success_and_bonuses_goal_met(self):
+        mixed = 20.0
+        self.assertAlmostEqual(finalize_trajectory_reward(mixed, "goal_met"), 25.0)
+        self.assertAlmostEqual(finalize_trajectory_reward(mixed, "patience"), 2.0)
+        self.assertAlmostEqual(finalize_trajectory_reward(mixed, "max_turns"), 2.0)
+        self.assertAlmostEqual(finalize_trajectory_reward(mixed, "stop"), 2.0)
+
 
 class RolloutBehaviourTests(unittest.TestCase):
     def setUp(self):
@@ -118,6 +148,28 @@ class RolloutBehaviourTests(unittest.TestCase):
         self.assertEqual(traj.terminated_reason, "goal_met")
         self.assertEqual(traj.num_turns, 1)
         self.assertLess(traj.turns[0].db_after, -30.0)
+
+    def test_goal_met_reward_beats_clipped_near_miss(self):
+        self.goal = GoalSpec(
+            target_freq_hz=5.0e9,
+            band_hz=(4.0e9, 6.0e9),
+            target_depth_db=-50.0,
+        )
+
+        def generate(_messages):
+            return '<intent>{"ro":"decrease_strong"}</intent>'
+
+        miss = self._run(
+            generate, max_turns=4, patience=10, db_by_ro={8.0: -7.3, 7.0: -30.0}
+        )
+        hit = self._run(
+            generate, max_turns=4, patience=10, db_by_ro={8.0: -7.3, 7.0: -56.0}
+        )
+        self.assertEqual(hit.terminated_reason, "goal_met")
+        self.assertNotEqual(miss.terminated_reason, "goal_met")
+        self.assertGreater(hit.reward - miss.reward, 8.0)
+        self.assertLess(abs(miss.reward), 5.0)
+        self.assertGreater(hit.reward, 20.0)
 
     def test_first_turn_stop_is_ignored_when_goal_not_met(self):
         n = {"i": 0}
@@ -174,8 +226,8 @@ class RolloutBehaviourTests(unittest.TestCase):
             db_by_ro={8.0: -10.0, 6.0: -20.0, 5.0: -22.0, 9.0: -8.0},
         )
         self.assertEqual(traj.terminated_reason, "stop")
-        base = mixed_terminal_reward(traj.initial_db, traj.best_db, traj.turns[-1].db_after)
-        self.assertAlmostEqual(traj.reward, min(REWARD_CLIP, base + 1.0), places=3)
+        base = _mixed_from_traj(traj)
+        self.assertAlmostEqual(traj.reward, 0.1 * (base + 1.0), places=3)
 
     def test_stop_without_real_gain_gets_no_bonus(self):
         def generate(_messages):
@@ -183,8 +235,8 @@ class RolloutBehaviourTests(unittest.TestCase):
 
         traj = self._run(generate, max_turns=4, patience=10, db_by_ro={8.0: -32.0})
         self.assertEqual(traj.terminated_reason, "stop")
-        base = mixed_terminal_reward(traj.initial_db, traj.best_db, traj.turns[-1].db_after)
-        self.assertAlmostEqual(traj.reward, base, places=3)
+        base = _mixed_from_traj(traj)
+        self.assertAlmostEqual(traj.reward, 0.1 * base, places=3)
 
     def test_first_turn_stop_ok_if_already_at_goal(self):
         def generate(_messages):
@@ -207,6 +259,20 @@ class RolloutBehaviourTests(unittest.TestCase):
         )
         self.assertEqual(traj.terminated_reason, "patience")
         self.assertEqual(traj.num_turns, 3)
+        self.assertLess(abs(traj.reward), 5.0)
+
+    def test_max_turns_near_miss_reward_stays_near_zero(self):
+        def generate(_messages):
+            return '<intent>{"Lc":"increase_slight"}</intent>'
+
+        traj = self._run(
+            generate,
+            max_turns=3,
+            patience=0,
+            db_by_ro={8.0: -10.0},
+        )
+        self.assertEqual(traj.terminated_reason, "max_turns")
+        self.assertLess(abs(traj.reward), 5.0)
 
     def test_injected_params_ignore_seed_sampling(self):
         seen = []
