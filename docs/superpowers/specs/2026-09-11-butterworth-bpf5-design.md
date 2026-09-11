@@ -1,7 +1,7 @@
 # 5th-order Butterworth LC band-pass filter task (`butterworth_bpf5`)
 
 **Date:** 2026-09-11  
-**Status:** Draft (awaiting user review of this file)  
+**Status:** Approved  
 **Approach:** Parallel task package beside the butterfly notch (Approach 1)
 
 ## Goal
