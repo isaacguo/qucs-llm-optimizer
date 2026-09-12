@@ -1,0 +1,28 @@
+---
+description: Strict decoupling — src is generic framework, jobs hold task-specific code
+alwaysApply: true
+---
+
+# `src/` vs `jobs/` — 完全解耦
+
+职责必须分清，**禁止**把具体采集/任务逻辑混进 `src/`。
+
+| 位置 | 职责 |
+|------|------|
+| **`src/`** | **通用训练 / 优化框架**与跨任务共享能力：仿真入口、`run_step` 契约、state、decision_log、通用 intent 算术、与具体采集策略无关的基础设施 |
+| **`jobs/<job_id>/`** | **针对某一具体任务**的全部实现：桶采样、assign、gate、进度、该任务的采集驱动、任务专属 prompt/策略文案、该任务独有的成功判定与配额 |
+| **`runs/`** | **仅产出**（activity / rollout 产物），无业务包 |
+
+## 硬规则
+
+- **新写**的桶采样、assign、gate、采集调度、任务专属成功条件 → **只能**进 `jobs/<job_id>/`。
+- **禁止**在 `src/` 新增「只服务某一个采集 job」的模块或分支。
+- **已批准迁出（实现时执行）：** `bpf_tuning_skills.py`、`goals_bpf.py`、`cost_bpf.py`、`tasks/butterworth_bpf5.py`（及该任务模板/prompt 归属）→ `jobs/<job_id>/`；`src/` 只留通用 task 注册/发现，禁止 BPF 硬编码分支。
+- Job 代码可以 **调用** `src/` 的通用 API；`src/` **不得** import `jobs/`（避免框架反向依赖具体任务）。
+- 发现 `src/` 里仍有已批准迁出的任务专属代码时：按设计迁到对应 `jobs/`，**不要**在 `src/` 上继续叠该任务逻辑。
+
+```text
+❌ BAD: 在 src/ 里加 bpf_bucket_sample.py / 按桶的 assign
+❌ BAD: src/ 里 if task == "butterworth_bpf5": 写一整套采集策略
+✅ GOOD: jobs/bpf5_agent/ 实现采样与采集；src/ 只提供 init/observe/step 与通用仿真
+```

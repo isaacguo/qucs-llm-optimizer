@@ -1,0 +1,10 @@
+`RESULT bpf_agent_smoke1_20260912_095053/rollout_b14_cf221p453_bw10 OK`
+
+**摘要：** 第 17 步达到 `goal_met`（≤19）。PB≈−0.90 dB，SB≈−41.2 dB，peak≈220 MHz。
+
+**策略要点：**
+1. **Skill 0（非对称）：** `relative` 步长下若对 L↑/C↓ 用相同幅度，LC≈不变、中心几乎不动；接近目标的臂要 hold，继续动差距大的臂。
+2. **Skill A：** peak 进窗后 SB 已过、PB 仍差 → widen-BW。
+3. **Skill F：** PB 只差 0.01 dB 时 slight widen 收口。
+
+--- STDERR ---

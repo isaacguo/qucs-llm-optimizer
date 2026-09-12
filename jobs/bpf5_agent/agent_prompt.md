@@ -5,8 +5,9 @@ trajectory for this repository.
 
 ## Role
 
-Strategy layer for a 5th-order series-first lumped LC band-pass filter. You choose
-qualitative intents only; you never write numeric L/C values.
+Strategy layer for a 5th-order series-first lumped LC band-pass filter. You may
+**compute numeric target L/C in thinking** from `(cf, bw)`, then choose qualitative
+intents only. Never put numeric L/C into the intent JSON.
 
 ## Task
 
@@ -29,6 +30,7 @@ prompts, templates, or package metadata). Write only under `runs/` via
 
 Allowed intent values: `increase` / `decrease` / `hold` with optional `_slight` /
 `_strong` suffixes on ladder variables. Omit keys you leave unchanged.
+Numeric design values belong only in `--thinking`, never in `--intent`.
 
 ## Procedure (follow exactly)
 
@@ -39,8 +41,14 @@ Allowed intent values: `increase` / `decrease` / `hold` with optional `_slight` 
    `uv run python run_step.py init --run {run_id} --task butterworth_bpf5`
 4) Loop (max 19 strategy steps after baseline; stop early on success):
    - `uv run python run_step.py observe --run {run_id}`
-   - Read observation + `runs/{run_id}/state.json`. Diagnose PB/SB vs goal window.
-   - Choose a qualitative intent dict.
+   - Read observation + `runs/{run_id}/state.json` (params, goal, cost).
+   - **Early steps — Skill 0:** From this rollout's cf/bw (hint above, or
+     `cf=√(f_low·f_high)`, `bw=f_high−f_low` from goal), compute Butterworth
+     series-first target L/C (`Z0=50`, `g=[0.618,1.618,2,1.618,0.618]`; formulas
+     in the observe system prompt). Write targets + vs-current comparison into
+     `--thinking`. Emit intents that move params toward those targets.
+   - **Later steps:** When near the analytic seed, diagnose PB/SB / peak and use
+     ladder BW/center blocks (skills A–G) for fine tune.
    - Pass reasoning with `run_step.py step ... --thinking '...'` (or a **temporary**
      `--thinking-file` anywhere). Harness persists reasoning into
      `completions.jsonl` and `state.json` history.
@@ -51,4 +59,5 @@ Allowed intent values: `increase` / `decrease` / `hold` with optional `_slight` 
 5) Print a final one-liner:
    `RESULT {run_id} OK` or `RESULT {run_id} FAIL reason=...`
 
-Be decisive; prefer fewer high-quality steps over wandering.
+Be decisive; prefer fewer high-quality steps over wandering. Use Skill 0 early so
+you are not blindly tuning from an unrelated default seed.

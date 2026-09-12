@@ -1,0 +1,22 @@
+---
+description: Forbidden wording and teacher choices for this repo
+alwaysApply: true
+---
+
+# Wording and teacher rules
+
+## Forbidden terms
+
+- Do **not** use `cold-start`, `coldstart`, or "SFT cold-start" / "GRPO cold-start" in code, help text, README, tests, paths, or chat explanations for this repo.
+- Prefer plain words: SFT, multiturn GRPO, `--resume-adapter`, teacher trajectories, index.
+
+## Teachers
+
+- Cursor-agent teacher collection = `agent` CLI deciding intents via `run_step` observe/step.
+- Rule-based BPF scripts (`choose_intent_from_skills`, skills ablation/generalization drivers) are **not** a substitute when the user asked for Cursor agent.
+- Do not call teacher trajectory ops "inference" of the training policy.
+
+## Communication
+
+- Use plain language. Avoid opaque jargon (e.g. "侧车") when "reasoning files under `runs/<id>/think/`" is clearer.
+- When correcting a past mistake, state the rule going forward; do not re-offer the banned option.

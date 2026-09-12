@@ -1,0 +1,30 @@
+---
+description: Keep generic framework, job code, and run outputs in separate trees
+alwaysApply: true
+---
+
+# 框架 / Job / 产出 三分
+
+**`runs/` — 仅产出**（禁止放库或 CLI 包）：
+
+- `runs/<activity>/` — `state.json`、`completions.jsonl`、仿真、报告、activity 内进度文件
+- 无强制全局 `runs/index.*`
+
+**`src/` — 通用训练 / 优化框架**（跨任务、与具体采集策略解耦）：
+
+- 共享 harness、state、decision_log、通用仿真/意图算术等
+- **禁止**混入具体采集任务（桶、assign、gate、job 配额/调度）
+
+**`jobs/<job_id>/` — 具体任务实现**（与 `src/` 完全解耦）：
+
+- 该任务的桶采样、assign、gate、进度、采集驱动、任务专属文案
+
+其它：`scripts/` 仅可做薄启动器；`training/`、`tests/`、`prompts/`、`templates/` 按既有用途。
+
+细则见 `src-vs-jobs.mdc`。推理正式落盘为 `completions.jsonl` + `state.json` history，不要求独立 `think/` 布局。
+
+```text
+❌ BAD: 具体 job 的 assign/gate 放进 src/
+❌ BAD: 业务包放进 runs/
+✅ GOOD: jobs/<job>/ 做任务；src/ 做通用框架；runs/ 只存产物
+```

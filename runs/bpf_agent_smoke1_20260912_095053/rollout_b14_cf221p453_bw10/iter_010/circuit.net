@@ -1,0 +1,16 @@
+# Qucs 25.2.0  /Volumes/Datasets/workspace_ssd/qucs-llm-optimizer/runs/bpf_agent_smoke1_20260912_095053/rollout_b14_cf221p453_bw10/iter_010/circuit.sch
+
+Pac:P1 _net0 gnd Num="1" Z="50 Ohm" P="0 dBm" f="221396905.77425343Hz" Temp="26.85"
+L:L1 _net0 _net1 L="456.1293 nH" I=""
+C:C1 _net1 _net2 C="1.5631 pF" V=""
+L:L2 gnd _net2 L="1.4925 nH" I=""
+C:C2 gnd _net2 C="477.681 pF" V=""
+L:L3 _net2 _net3 L="1476.1464 nH" I=""
+C:C3 _net3 _net4 C="0.483 pF" V=""
+L:L4 gnd _net4 L="1.4925 nH" I=""
+C:C4 gnd _net4 C="477.681 pF" V=""
+L:L5 _net4 _net5 L="456.1293 nH" I=""
+C:C5 _net5 _net6 C="1.5631 pF" V=""
+Pac:P2 _net6 gnd Num="2" Z="50 Ohm" P="0 dBm" f="221396905.77425343Hz" Temp="26.85"
+.SP:SP1 Type="lin" Start="0.0Hz" Stop="300000000.0Hz" Points="301" Noise="no" NoiseIP="1" NoiseOP="2" saveCVs="no" saveAll="no"
+Eqn:Eqn1 S11_dB="dB(S[1,1])" S21_dB="dB(S[2,1])" S11_phase="phase(S[1,1])" S21_phase="phase(S[2,1])" Export="yes"

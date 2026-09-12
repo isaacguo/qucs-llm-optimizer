@@ -1,0 +1,19 @@
+---
+description: Never change the user's design without an explicit proposed-change gate
+alwaysApply: true
+---
+
+# Design authority — no silent changes
+
+- Treat the user's stated design as binding. Do **not** reinterpret, "improve", or substitute a different approach without asking.
+- If a change seems necessary, stop and label it clearly as **拟议改动** (proposed change): what, why, what stays unchanged. Wait for approval before editing code or docs that encode the design.
+- Do **not** implement creative/collection/training pipeline work until the user approved the design for that work (brainstorm → approve → then code).
+- Do **not** swap the teacher: if the user said **Cursor agent**, do not use rule-based skills, heuristic teachers, or `choose_intent_from_skills` as a stand-in.
+- Do **not** reopen paths or folders the user already banned (e.g. after "delete X / don't mention X", stop proposing X).
+- Discovering that `src/` still contains task-specific modules that were approved to move: migrate them under `jobs/` per the approved design; do not add more task logic in `src/`.
+
+```text
+❌ BAD: Quietly point BPF collection at skills ablation "for now"
+❌ BAD: Add job-specific assign/gate under src/ "just this once"
+✅ GOOD: "拟议改动: delete rule-based scripts; new script uses Cursor agent only. OK?"
+```

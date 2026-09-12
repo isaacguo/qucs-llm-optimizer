@@ -30,10 +30,16 @@ class BpfTuningSkillsTests(unittest.TestCase):
         self.assertIn("## Actions", text)
         self.assertIn("## 做法", text)
         self.assertIn("## 如何更好", text)
+        self.assertIn("Skill 0", text)
+        self.assertIn("Design synthes", text)  # Design synthesis from cf/bw
+        self.assertIn("0.618", text)
         self.assertIn("Skill A", text)
         self.assertIn("Narrower BW", text)
         self.assertIn("3 MHz", text)
         self.assertIn("passband recovery", text.lower())
+        # Numeric L/C may appear in thinking; intent JSON stays qualitative.
+        self.assertIn("thinking", text.lower())
+        self.assertIn("intent", text.lower())
 
     def test_peak_margin_caps_at_3mhz_for_wide_bw(self):
         self.assertAlmostEqual(peak_margin_hz(5e6), 2.5e6)

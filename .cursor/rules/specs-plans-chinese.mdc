@@ -1,0 +1,30 @@
+---
+description: Specs and plans must be written in Simplified Chinese
+alwaysApply: true
+---
+
+# Spec / plan 语言：必须中文
+
+凡本仓库由 agent **新写或改写**的设计文档与实现计划，正文必须用**简体中文**。禁止整篇英文 spec / plan。
+
+## 适用范围
+
+- `docs/superpowers/specs/**`（design / spec）
+- `docs/superpowers/plans/**`（implementation plan）
+- 对话里贴出的同等设计说明、实现计划正文
+
+## 保留原文（不要强行翻译）
+
+- 代码标识符、路径、命令、flag、环境变量
+- 类 / 函数 / 模块名、JSON key、日志原文
+- 专有名词与产品名（如 `Cursor`、`Qucs`、`GRPO`）
+- 用户已锁定的英文术语表条目（可中文释义，术语本身可保留）
+
+## 示例
+
+```text
+❌ BAD: 整篇 "# Goal / Motivation / Design" 用英文写 spec
+✅ GOOD: 「目标 / 动机 / 设计」用简体中文写；`run_step.py`、`butterworth_bpf5` 保持原样
+```
+
+已存在的英文历史文档不必主动全文重写，除非用户要求；**之后新生成的** spec / plan 一律中文。
